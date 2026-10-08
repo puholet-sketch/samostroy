@@ -71,13 +71,17 @@ export default function ChecklistPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Чек-лист продаж</h1>
+      <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-end sm:justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Чек-лист продаж</h1>
           <p className="text-sm text-gray-500 mt-1">{template.description}</p>
         </div>
-        <div className="flex gap-2">
-          <select className="input w-64" value={objectId} onChange={(e) => setObjectId(e.target.value)}>
+        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+          <select
+            className="input w-full sm:w-64"
+            value={objectId}
+            onChange={(e) => setObjectId(e.target.value)}
+          >
             {objects.map((o) => (
               <option key={o.id} value={o.id}>
                 {o.title}
@@ -85,7 +89,11 @@ export default function ChecklistPage() {
             ))}
           </select>
           {writable && (
-            <button type="button" className="btn-secondary" onClick={() => setEditTemplate((v) => !v)}>
+            <button
+              type="button"
+              className="btn-secondary w-full sm:w-auto"
+              onClick={() => setEditTemplate((v) => !v)}
+            >
               {editTemplate ? 'К ответам' : 'Править шаблон'}
             </button>
           )}
@@ -107,11 +115,11 @@ export default function ChecklistPage() {
               .map((item) => {
                 const ans = ocl?.answers[item.id]
                 return (
-                  <li key={item.id} className="flex gap-3 items-start">
+                  <li key={item.id} className="flex gap-3 items-start min-h-11">
                     {!editTemplate && (
                       <input
                         type="checkbox"
-                        className="mt-1"
+                        className="mt-2 h-5 w-5 shrink-0 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
                         disabled={!writable || !ocl}
                         checked={Boolean(ans?.done)}
                         onChange={() => toggleAnswer(item.id)}

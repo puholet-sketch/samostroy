@@ -48,8 +48,8 @@ export default function PipelinePanel({
         <p className="text-sm text-gray-500">Нет этапов, открытых для клиента (clientVisible).</p>
       )}
 
-      <div className="overflow-x-auto">
-        <table className="min-w-full text-sm">
+      <div className="table-scroll">
+        <table className="min-w-[720px] w-full text-sm">
           <thead>
             <tr className="text-left text-xs text-gray-500 border-b">
               <th className="py-2 pr-2">№</th>

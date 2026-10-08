@@ -1,22 +1,49 @@
 import { useEffect, useMemo, useState } from 'react'
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet'
-import L from 'leaflet'
 import { Link } from 'react-router-dom'
 import { useObjects } from '../../hooks/useObjects'
 import { useAuth } from '../../contexts/AuthContext'
 import { api } from '../../services/api'
-
-const markerIcon = new L.Icon({
-  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41],
-})
+import { formatPct, formatRub } from '../reports/financeMetrics'
+import {
+  MOSCOW_BOUNDS,
+  STATUS_LABEL_RU,
+  STATUS_PIN_COLOR,
+  createObjectMarkerIcon,
+  financeByObjectId,
+} from './mapMarkers'
+import type { ObjectStatus } from '../../services/types'
 
 type Suggest = { display_name: string; lat: string; lon: string }
+
+type BasemapId = 'voyager' | 'light' | 'satellite'
+
+const BASEMAPS: Record<
+  BasemapId,
+  { label: string; url: string; attribution: string; maxZoom: number }
+> = {
+  voyager: {
+    label: 'Чистая',
+    url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+    attribution:
+      '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
+    maxZoom: 20,
+  },
+  light: {
+    label: 'Светлая',
+    url: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+    attribution:
+      '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
+    maxZoom: 20,
+  },
+  satellite: {
+    label: 'Спутник',
+    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+    attribution:
+      'Tiles &copy; Esri &mdash; Source: Esri, Maxar, Earthstar Geographics',
+    maxZoom: 19,
+  },
+}
 
 function FlyTo({ lat, lng }: { lat: number; lng: number }) {
   const map = useMap()
@@ -26,6 +53,8 @@ function FlyTo({ lat, lng }: { lat: number; lng: number }) {
   return null
 }
 
+const LEGEND_STATUSES: ObjectStatus[] = ['lead', 'design', 'contract', 'in_progress', 'done']
+
 export default function MapPage() {
   const { objects, reload } = useObjects()
   const { can } = useAuth()
@@ -34,6 +63,18 @@ export default function MapPage() {
   const [focus, setFocus] = useState<{ lat: number; lng: number } | null>(null)
   const [selectedId, setSelectedId] = useState<string>('')
   const [msg, setMsg] = useState('')
+  const [basemap, setBasemap] = useState<BasemapId>('voyager')
+  const tiles = BASEMAPS[basemap]
+
+  const financeMap = useMemo(() => financeByObjectId(objects), [objects])
+
+  const markerIcons = useMemo(() => {
+    const m = new Map<string, ReturnType<typeof createObjectMarkerIcon>>()
+    objects.forEach((o, index) => {
+      m.set(o.id, createObjectMarkerIcon({ object: o, finance: financeMap.get(o.id), index }))
+    })
+    return m
+  }, [objects, financeMap])
 
   const center = useMemo(() => {
     if (focus) return focus
@@ -90,8 +131,28 @@ export default function MapPage() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Карта</h1>
-        <p className="text-sm text-gray-500 mt-1">Москва и МО · поиск адресов через Nominatim (OSM)</p>
+        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
+          <div>
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Карта</h1>
+            <p className="text-sm text-gray-500 mt-1">Москва и МО · подложка CARTO / Esri</p>
+          </div>
+          <div className="flex rounded-lg border border-gray-200 bg-white p-0.5 self-stretch sm:self-auto">
+            {(Object.keys(BASEMAPS) as BasemapId[]).map((id) => (
+              <button
+                key={id}
+                type="button"
+                className={`flex-1 sm:flex-none min-h-10 px-3 py-2 text-sm rounded-md transition-colors ${
+                  basemap === id
+                    ? 'bg-primary-600 text-white'
+                    : 'text-gray-600 hover:bg-gray-50'
+                }`}
+                onClick={() => setBasemap(id)}
+              >
+                {BASEMAPS[id].label}
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
 
       <div className="card p-4 space-y-3">
@@ -143,27 +204,84 @@ export default function MapPage() {
         {msg && <p className="text-sm text-green-600">{msg}</p>}
       </div>
 
-      <div className="card p-2 h-[480px]">
-        <MapContainer center={[center.lat, center.lng]} zoom={9} scrollWheelZoom className="h-full w-full rounded-xl">
+      <div className="card p-2 relative h-[min(70vh,560px)] min-h-[280px]">
+        <MapContainer
+          center={[center.lat, center.lng]}
+          zoom={9}
+          minZoom={8}
+          maxBounds={MOSCOW_BOUNDS}
+          maxBoundsViscosity={0.85}
+          scrollWheelZoom
+          className="h-full w-full rounded-xl"
+        >
           <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>'
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            key={basemap}
+            attribution={tiles.attribution}
+            url={tiles.url}
+            maxZoom={tiles.maxZoom}
+            subdomains={basemap === 'satellite' ? undefined : 'abcd'}
           />
           {focus && <FlyTo lat={focus.lat} lng={focus.lng} />}
-          {objects.map((o) => (
-            <Marker key={o.id} position={[o.lat, o.lng]} icon={markerIcon}>
-              <Popup>
-                <div className="text-sm">
-                  <div className="font-semibold">{o.title}</div>
-                  <div className="text-gray-600">{o.address}</div>
-                  <Link to={`/objects/${o.id}`} className="text-primary-600 underline">
-                    Карточка
-                  </Link>
-                </div>
-              </Popup>
-            </Marker>
-          ))}
+          {objects.map((o) => {
+            const fin = financeMap.get(o.id)
+            const planned = fin?.planned ?? 0
+            const paid = fin?.paid ?? 0
+            const remaining = fin?.remaining ?? 0
+            const pct = fin?.pctPaid ?? 0
+            const pctW = planned > 0 ? Math.min(100, Math.max(0, pct)) : 0
+            return (
+              <Marker key={o.id} position={[o.lat, o.lng]} icon={markerIcons.get(o.id)}>
+                <Popup className="ss-map-popup-wrap" maxWidth={280}>
+                  <div className="ss-map-popup">
+                    <div className="ss-map-popup__title">{o.title}</div>
+                    <div className="ss-map-popup__addr">{o.address}</div>
+                    <div className="ss-map-popup__status">
+                      <span
+                        className="ss-map-popup__dot"
+                        style={{ background: STATUS_PIN_COLOR[o.status] }}
+                      />
+                      {STATUS_LABEL_RU[o.status] ?? o.status}
+                    </div>
+                    <div className="ss-map-popup__finance">
+                      <div className="ss-map-popup__row">
+                        <span>Сумма ремонта (план)</span>
+                        <strong>{formatRub(planned)}</strong>
+                      </div>
+                      <div className="ss-map-popup__row">
+                        <span>Оплачено</span>
+                        <strong className="text-green-700">{formatRub(paid)}</strong>
+                      </div>
+                      <div className="ss-map-popup__row">
+                        <span>Остаток</span>
+                        <strong className="text-red-700">{formatRub(remaining)}</strong>
+                      </div>
+                      <div className="ss-map-popup__bar" title={formatPct(pct)}>
+                        <span className="ss-map-popup__bar-paid" style={{ width: `${pctW}%` }} />
+                      </div>
+                      <div className="ss-map-popup__pct">{formatPct(pct)} оплачено</div>
+                    </div>
+                    <Link to={`/objects/${o.id}`} className="ss-map-popup__link">
+                      Карточка объекта
+                    </Link>
+                  </div>
+                </Popup>
+              </Marker>
+            )
+          })}
         </MapContainer>
+
+        <div className="ss-map-legend" aria-label="Легенда статусов">
+          <div className="ss-map-legend__title">Статус объекта</div>
+          <ul className="ss-map-legend__list">
+            {LEGEND_STATUSES.map((s) => (
+              <li key={s}>
+                <span className="ss-map-legend__swatch" style={{ background: STATUS_PIN_COLOR[s] }} />
+                {STATUS_LABEL_RU[s]}
+              </li>
+            ))}
+          </ul>
+          <p className="ss-map-legend__hint">Полоска: оплачено (зелёный) / остаток</p>
+        </div>
       </div>
     </div>
   )

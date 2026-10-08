@@ -22,6 +22,7 @@ const MODULE_LABEL: Record<ModuleKey, string> = {
   checklist: 'Чек-лист',
   reports_ops: 'Отчёт ops',
   reports_sales: 'Воронка',
+  reports_finance: 'Финансы',
   security: 'Безопасность',
 }
 
@@ -78,7 +79,7 @@ export default function SecurityPage() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Безопасность</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Безопасность</h1>
           <p className="text-sm text-gray-500 mt-1">Матрица роль × модуль × read/write</p>
         </div>
         <button type="button" className="btn-primary" disabled={saving} onClick={() => void save()}>
@@ -87,8 +88,8 @@ export default function SecurityPage() {
       </div>
       {msg && <p className="text-sm text-green-600">{msg}</p>}
 
-      <div className="card overflow-x-auto">
-        <table className="min-w-full text-sm">
+      <div className="card table-scroll">
+        <table className="min-w-[640px] w-full text-sm">
           <thead>
             <tr className="bg-primary-50 text-left">
               <th className="p-3 font-semibold text-primary-800">Модуль</th>
@@ -113,18 +114,20 @@ export default function SecurityPage() {
                   return (
                     <td key={role} className="p-3">
                       <div className="flex gap-3">
-                        <label className="inline-flex items-center gap-1 text-xs">
+                        <label className="inline-flex items-center gap-1.5 text-xs min-h-9">
                           <input
                             type="checkbox"
+                            className="h-4 w-4 rounded border-gray-300 text-primary-600"
                             checked={flag.read}
                             disabled={lockOwnerSec}
                             onChange={() => toggle(role, mod, 'read')}
                           />
                           R
                         </label>
-                        <label className="inline-flex items-center gap-1 text-xs">
+                        <label className="inline-flex items-center gap-1.5 text-xs min-h-9">
                           <input
                             type="checkbox"
+                            className="h-4 w-4 rounded border-gray-300 text-primary-600"
                             checked={flag.write}
                             disabled={lockOwnerSec}
                             onChange={() => toggle(role, mod, 'write')}

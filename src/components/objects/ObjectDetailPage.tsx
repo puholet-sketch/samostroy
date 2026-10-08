@@ -12,6 +12,8 @@ export default function ObjectDetailPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [msg, setMsg] = useState('')
+  const [structureBusy, setStructureBusy] = useState(false)
+  const [structureMsg, setStructureMsg] = useState('')
 
   useEffect(() => {
     void (async () => {
@@ -54,24 +56,64 @@ export default function ObjectDetailPage() {
 
   const isClient = user?.role === 'client'
   const writable = can('objects', 'write') && !isClient
+  const tasksWritable = can('tasks', 'write') && !isClient
+
+  async function createIssueStructure() {
+    if (!obj || !user || !tasksWritable) return
+    setStructureBusy(true)
+    setStructureMsg('')
+    const res = await api.tasks.ensureStructureFromTemplate(obj.id, { actorId: user.id })
+    setStructureMsg(
+      res.created > 0
+        ? `Структура задач: создано ${res.created} элементов`
+        : 'Структура задач уже существует',
+    )
+    setStructureBusy(false)
+  }
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <Link to="/objects" className="text-sm text-primary-600 hover:underline">
+      <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-start sm:justify-between gap-3">
+        <div className="min-w-0">
+          <Link
+            to="/objects"
+            className="inline-flex items-center min-h-11 text-sm text-primary-600 hover:underline"
+          >
             ← Объекты
           </Link>
-          <h1 className="text-2xl font-bold text-gray-900 mt-1">{obj.title}</h1>
-          <p className="text-sm text-gray-500">{obj.address}</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mt-1 break-words">{obj.title}</h1>
+          <p className="text-sm text-gray-500 break-words">{obj.address}</p>
         </div>
-        {writable && (
-          <button type="button" className="btn-primary" onClick={() => void save()} disabled={saving}>
-            {saving ? 'Сохранение…' : 'Сохранить'}
-          </button>
-        )}
+        <div className="flex flex-col sm:flex-row flex-wrap gap-2 w-full sm:w-auto">
+          {tasksWritable && (
+            <button
+              type="button"
+              className="btn-secondary w-full sm:w-auto"
+              disabled={structureBusy}
+              onClick={() => void createIssueStructure()}
+            >
+              {structureBusy ? 'Создание…' : 'Создать структуру по шаблону'}
+            </button>
+          )}
+          {can('tasks') && (
+            <Link to="/tasks" className="btn-secondary w-full sm:w-auto justify-center">
+              К задачам
+            </Link>
+          )}
+          {writable && (
+            <button
+              type="button"
+              className="btn-primary w-full sm:w-auto"
+              onClick={() => void save()}
+              disabled={saving}
+            >
+              {saving ? 'Сохранение…' : 'Сохранить'}
+            </button>
+          )}
+        </div>
       </div>
       {msg && <p className="text-sm text-green-600">{msg}</p>}
+      {structureMsg && <p className="text-sm text-green-600">{structureMsg}</p>}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="lg:col-span-2 space-y-4">

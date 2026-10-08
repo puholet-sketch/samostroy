@@ -19,7 +19,9 @@ export default function Dashboard() {
   useEffect(() => {
     void (async () => {
       const tasks = await api.tasks.list()
-      setTaskCount(tasks.filter((t) => t.status !== 'done').length)
+      setTaskCount(
+        tasks.filter((t) => t.issueType === 'task' && t.status !== 'done').length,
+      )
       const dr = await api.dailyReports.get()
       setLateHint(`Дедлайн ежедневного отчёта: ${dr.deadlineLocal}`)
     })()
@@ -31,7 +33,7 @@ export default function Dashboard() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Дашборд</h1>
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Дашборд</h1>
         <p className="text-sm text-gray-500 mt-1">
           {user?.role === 'owner'
             ? 'Обзор компании: объекты, задачи, отчёты'

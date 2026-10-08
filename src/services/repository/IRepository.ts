@@ -1,4 +1,5 @@
 import type {
+  AppNotification,
   ChecklistsData,
   DailyReportsData,
   FunnelEvent,
@@ -19,7 +20,13 @@ export interface IRepository {
   saveObject(obj: RenovationObject): Promise<void>
   getStageTemplate(): Promise<StageTemplate>
   getTasks(): Promise<Task[]>
+  getTask(id: string): Promise<Task | null>
   saveTask(task: Task): Promise<void>
+  saveTasks(tasks: Task[]): Promise<void>
+  /** Deletes issue and all descendants. */
+  deleteTask(id: string): Promise<void>
+  getNotifications(): Promise<AppNotification[]>
+  saveNotifications(items: AppNotification[]): Promise<void>
   getChecklists(): Promise<ChecklistsData>
   saveChecklists(data: ChecklistsData): Promise<void>
   getDailyReports(): Promise<DailyReportsData>

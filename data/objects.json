@@ -31,9 +31,9 @@
     "stages": [
       { "n": 1, "name": "Подготовка объекта", "plannedAmount": 72000, "status": "closed", "actSigned": true, "paid": true, "paidAmount": 72000, "paidAt": "2026-02-10", "clientVisible": true },
       { "n": 2, "name": "Возведение перегородок и коробов", "plannedAmount": 140000, "status": "closed", "actSigned": true, "paid": true, "paidAmount": 140000, "paidAt": "2026-02-28", "clientVisible": true },
-      { "n": 3, "name": "Черновая электрика", "plannedAmount": 190000, "status": "in_progress", "actSigned": false, "paid": false, "paidAmount": 0, "paidAt": null, "clientVisible": true },
-      { "n": 4, "name": "Черновая сантехника и отопление", "plannedAmount": 155000, "status": "planned", "actSigned": false, "paid": false, "paidAmount": 0, "paidAt": null, "clientVisible": false },
-      { "n": 5, "name": "Звукоизоляция стен и подготовка потолков", "plannedAmount": 155000, "status": "planned", "actSigned": false, "paid": false, "paidAmount": 0, "paidAt": null, "clientVisible": false },
+      { "n": 3, "name": "Черновая электрика", "plannedAmount": 190000, "status": "closed", "actSigned": true, "paid": true, "paidAmount": 190000, "paidAt": "2026-03-12", "clientVisible": true },
+      { "n": 4, "name": "Черновая сантехника и отопление", "plannedAmount": 155000, "status": "done_pending_act", "actSigned": false, "paid": false, "paidAmount": 0, "paidAt": null, "clientVisible": true },
+      { "n": 5, "name": "Звукоизоляция стен и подготовка потолков", "plannedAmount": 155000, "status": "in_progress", "actSigned": false, "paid": false, "paidAmount": 0, "paidAt": null, "clientVisible": true },
       { "n": 6, "name": "Штукатурка стен и откосов", "plannedAmount": 170000, "status": "planned", "actSigned": false, "paid": false, "paidAmount": 0, "paidAt": null, "clientVisible": false },
       { "n": 7, "name": "Тёплый пол, шумоизоляция пола и стяжка", "plannedAmount": 170000, "status": "planned", "actSigned": false, "paid": false, "paidAmount": 0, "paidAt": null, "clientVisible": false },
       { "n": 8, "name": "Шпаклёвка и подготовка стен", "plannedAmount": 138000, "status": "planned", "actSigned": false, "paid": false, "paidAmount": 0, "paidAt": null, "clientVisible": false },
@@ -55,7 +55,7 @@
     "lng": 37.2634,
     "sellerId": "u-seller-1",
     "clientUserId": null,
-    "status": "lead",
+    "status": "contract",
     "areaM2": 120,
     "contacts": [
       { "name": "Анна Демо", "phone": "+7 (900) 222-33-44", "note": "WhatsApp" }
@@ -77,9 +77,9 @@
       "nextStepAt": "2026-03-25"
     },
     "stages": [
-      { "n": 1, "name": "Подготовка объекта", "plannedAmount": 95000, "status": "planned", "actSigned": false, "paid": false, "paidAmount": 0, "paidAt": null, "clientVisible": false },
-      { "n": 2, "name": "Возведение перегородок и коробов", "plannedAmount": 180000, "status": "planned", "actSigned": false, "paid": false, "paidAmount": 0, "paidAt": null, "clientVisible": false },
-      { "n": 3, "name": "Черновая электрика", "plannedAmount": 250000, "status": "planned", "actSigned": false, "paid": false, "paidAmount": 0, "paidAt": null, "clientVisible": false },
+      { "n": 1, "name": "Подготовка объекта", "plannedAmount": 95000, "status": "closed", "actSigned": true, "paid": true, "paidAmount": 95000, "paidAt": "2026-03-05", "clientVisible": true },
+      { "n": 2, "name": "Возведение перегородок и коробов", "plannedAmount": 180000, "status": "closed", "actSigned": true, "paid": true, "paidAmount": 180000, "paidAt": "2026-03-18", "clientVisible": true },
+      { "n": 3, "name": "Черновая электрика", "plannedAmount": 250000, "status": "in_progress", "actSigned": false, "paid": true, "paidAmount": 125000, "paidAt": "2026-03-20", "clientVisible": true },
       { "n": 4, "name": "Черновая сантехника и отопление", "plannedAmount": 210000, "status": "planned", "actSigned": false, "paid": false, "paidAmount": 0, "paidAt": null, "clientVisible": false },
       { "n": 5, "name": "Звукоизоляция стен и подготовка потолков", "plannedAmount": 200000, "status": "planned", "actSigned": false, "paid": false, "paidAmount": 0, "paidAt": null, "clientVisible": false },
       { "n": 6, "name": "Штукатурка стен и откосов", "plannedAmount": 220000, "status": "planned", "actSigned": false, "paid": false, "paidAmount": 0, "paidAt": null, "clientVisible": false },
@@ -125,8 +125,8 @@
       "nextStepAt": "2026-03-18"
     },
     "stages": [
-      { "n": 1, "name": "Подготовка объекта", "plannedAmount": 68000, "status": "planned", "actSigned": false, "paid": false, "paidAmount": 0, "paidAt": null, "clientVisible": false },
-      { "n": 2, "name": "Возведение перегородок и коробов", "plannedAmount": 135000, "status": "planned", "actSigned": false, "paid": false, "paidAmount": 0, "paidAt": null, "clientVisible": false },
+      { "n": 1, "name": "Подготовка объекта", "plannedAmount": 68000, "status": "closed", "actSigned": true, "paid": true, "paidAmount": 68000, "paidAt": "2026-02-25", "clientVisible": true },
+      { "n": 2, "name": "Возведение перегородок и коробов", "plannedAmount": 135000, "status": "done_pending_act", "actSigned": true, "paid": false, "paidAmount": 0, "paidAt": null, "clientVisible": true },
       { "n": 3, "name": "Черновая электрика", "plannedAmount": 185000, "status": "planned", "actSigned": false, "paid": false, "paidAmount": 0, "paidAt": null, "clientVisible": false },
       { "n": 4, "name": "Черновая сантехника и отопление", "plannedAmount": 152000, "status": "planned", "actSigned": false, "paid": false, "paidAmount": 0, "paidAt": null, "clientVisible": false },
       { "n": 5, "name": "Звукоизоляция стен и подготовка потолков", "plannedAmount": 152000, "status": "planned", "actSigned": false, "paid": false, "paidAmount": 0, "paidAt": null, "clientVisible": false },

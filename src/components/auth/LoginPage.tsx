@@ -1,6 +1,7 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
+import { BrandLogo } from '../common/BrandLogo'
 
 export default function LoginPage() {
   const { user, loading, login } = useAuth()
@@ -8,6 +9,13 @@ export default function LoginPage() {
   const [password, setPassword] = useState('owner123')
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
+
+  useEffect(() => {
+    document.title = 'Вход — СамоСтрой'
+    return () => {
+      document.title = 'СамоСтрой — CRM ремонта'
+    }
+  }, [])
 
   if (!loading && user) return <Navigate to="/" replace />
 
@@ -21,11 +29,11 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 via-white to-secondary-100 px-4">
-      <div className="card w-full max-w-md p-8">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 via-white to-accent-50 px-4 py-8 overflow-x-hidden">
+      <div className="card w-full max-w-md p-6 sm:p-8">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-primary-600">Самострой</h1>
-          <p className="mt-1 text-sm text-gray-500">CRM и операционка ремонтной компании</p>
+          <BrandLogo to={null} size="lg" />
+          <p className="mt-2 text-sm text-gray-500">CRM и операционка ремонтной компании</p>
         </div>
         <form onSubmit={onSubmit} className="space-y-4">
           <div>

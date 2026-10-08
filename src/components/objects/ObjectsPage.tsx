@@ -16,7 +16,7 @@ export default function ObjectsPage() {
     <div className="space-y-6">
       <div className="flex items-end justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Объекты</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Объекты</h1>
           <p className="text-sm text-gray-500 mt-1">CRM-карточки для продавцов и производство</p>
         </div>
         <span className="text-sm text-gray-400">{loading ? '…' : `${objects.length} шт.`}</span>

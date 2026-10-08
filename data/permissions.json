@@ -9,6 +9,7 @@
     "checklist",
     "reports_ops",
     "reports_sales",
+    "reports_finance",
     "security"
   ],
   "matrix": {
@@ -22,6 +23,7 @@
       "checklist": { "read": true, "write": true },
       "reports_ops": { "read": true, "write": true },
       "reports_sales": { "read": true, "write": true },
+      "reports_finance": { "read": true, "write": true },
       "security": { "read": true, "write": true }
     },
     "seller": {
@@ -34,6 +36,7 @@
       "checklist": { "read": true, "write": true },
       "reports_ops": { "read": false, "write": false },
       "reports_sales": { "read": true, "write": false },
+      "reports_finance": { "read": true, "write": false },
       "security": { "read": false, "write": false }
     },
     "foreman": {
@@ -46,6 +49,7 @@
       "checklist": { "read": false, "write": false },
       "reports_ops": { "read": true, "write": false },
       "reports_sales": { "read": false, "write": false },
+      "reports_finance": { "read": true, "write": false },
       "security": { "read": false, "write": false }
     },
     "builder": {
@@ -58,6 +62,7 @@
       "checklist": { "read": false, "write": false },
       "reports_ops": { "read": false, "write": false },
       "reports_sales": { "read": false, "write": false },
+      "reports_finance": { "read": false, "write": false },
       "security": { "read": false, "write": false }
     },
     "supervisor": {
@@ -70,6 +75,7 @@
       "checklist": { "read": false, "write": false },
       "reports_ops": { "read": true, "write": false },
       "reports_sales": { "read": false, "write": false },
+      "reports_finance": { "read": true, "write": false },
       "security": { "read": false, "write": false }
     },
     "client": {
@@ -82,6 +88,7 @@
       "checklist": { "read": false, "write": false },
       "reports_ops": { "read": false, "write": false },
       "reports_sales": { "read": false, "write": false },
+      "reports_finance": { "read": false, "write": false },
       "security": { "read": false, "write": false }
     }
   }

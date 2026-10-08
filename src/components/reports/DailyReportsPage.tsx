@@ -49,7 +49,7 @@ export default function DailyReportsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Ежедневные отчёты</h1>
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Ежедневные отчёты</h1>
         <p className="text-sm text-gray-500 mt-1">{data.timezoneNote}</p>
       </div>
 
@@ -64,29 +64,38 @@ export default function DailyReportsPage() {
 
       <div className="space-y-3">
         {reports.map((r) => (
-          <div key={r.id} className="card p-4 flex flex-wrap items-start justify-between gap-3">
-            <div>
-              <div className="font-medium text-gray-900">{objectTitle(r.objectId)}</div>
+          <div
+            key={r.id}
+            className="card p-4 flex flex-col sm:flex-row sm:flex-wrap sm:items-start sm:justify-between gap-3"
+          >
+            <div className="min-w-0">
+              <div className="font-medium text-gray-900 break-words">{objectTitle(r.objectId)}</div>
               <div className="text-xs text-gray-500 mt-0.5">
                 {r.date} · автор {r.authorId}
                 {r.clientVisible ? ' · видно клиенту' : ''}
               </div>
-              <p className="text-sm text-gray-700 mt-2">{r.summary || 'Черновик без текста'}</p>
+              <p className="text-sm text-gray-700 mt-2 break-words">
+                {r.summary || 'Черновик без текста'}
+              </p>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
               <span
                 className={
                   r.status === 'submitted'
-                    ? 'badge-green'
+                    ? 'badge-green self-start'
                     : r.status === 'late'
-                      ? 'badge-red'
-                      : 'badge-yellow'
+                      ? 'badge-red self-start'
+                      : 'badge-yellow self-start'
                 }
               >
                 {r.status}
               </span>
               {writable && r.status === 'draft' && (
-                <button type="button" className="btn-primary" onClick={() => void submitDraft(r.id)}>
+                <button
+                  type="button"
+                  className="btn-primary w-full sm:w-auto"
+                  onClick={() => void submitDraft(r.id)}
+                >
                   Сдать до {data.deadlineLocal}
                 </button>
               )}

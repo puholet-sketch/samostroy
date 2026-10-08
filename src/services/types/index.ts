@@ -16,6 +16,7 @@ export type ModuleKey =
   | 'checklist'
   | 'reports_ops'
   | 'reports_sales'
+  | 'reports_finance'
   | 'security'
 
 export type PermissionFlag = { read: boolean; write: boolean }
@@ -103,14 +104,54 @@ export type StageTemplate = {
 
 export type TaskStatus = 'todo' | 'in_progress' | 'waiting_client' | 'paused' | 'done'
 
+export type TaskPriority = 'low' | 'medium' | 'high'
+
+/** Jira-like: Epic → Story → Task (no subtasks). */
+export type IssueType = 'epic' | 'story' | 'task'
+
+export type TaskComment = {
+  id: string
+  authorId: string
+  text: string
+  createdAt: string
+}
+
+/**
+ * Work item (issue). Kept as `Task` for repository compatibility.
+ * Hierarchy: epic (parentId null) → story → task.
+ * Stage payment acts: stories under «Ремонт» with stageNumber 1–14.
+ */
 export type Task = {
   id: string
   objectId: string
+  issueType: IssueType
+  /** null for epic; epic id for top stories; story id for stage stories / tasks */
+  parentId: string | null
+  /** Set on stage stories linked to contract payment stages 1–14 */
+  stageNumber: number | null
   title: string
+  description: string
+  /** Empty string = unassigned (typical for epic/story) */
   assigneeId: string
+  reporterId: string
   status: TaskStatus
-  priority: 'low' | 'medium' | 'high'
+  priority: TaskPriority
   dueDate: string | null
+  createdAt: string
+  updatedAt: string
+  comments: TaskComment[]
+}
+
+export type NotificationKind = 'task_assigned'
+
+export type AppNotification = {
+  id: string
+  userId: string
+  kind: NotificationKind
+  title: string
+  body: string
+  taskId: string
+  read: boolean
   createdAt: string
 }
 

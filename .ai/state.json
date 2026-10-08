@@ -1,14 +1,14 @@
 {
-  "status": "mvp1_build_ok",
-  "goal": "CRM/ops Самострой: auth, security, objects, pipeline, map, tasks MVP",
-  "next": "Ручной smoke: login owner → security/objects/map; при необходимости media upload UI",
+  "status": "issue_hierarchy_ok",
+  "goal": "СамоСтрой: Jira Epic→Story→Task hierarchy + brand + notifications",
+  "next": "Smoke: /tasks Структура tree; object «Создать структуру по шаблону»; task assign → bell",
   "blockers": [],
   "hot_files": [
-    "src/App.tsx",
-    "src/contexts/AuthContext.tsx",
-    "src/services/repository/JsonRepository.ts",
-    "data/permissions.json",
-    "data/objects.json"
+    "data/tasks.json",
+    "src/lib/issues.ts",
+    "src/services/api/index.ts",
+    "src/components/tasks/TasksPage.tsx",
+    "src/components/tasks/TaskDetailPage.tsx"
   ],
   "updated": "2026-10-09"
 }
