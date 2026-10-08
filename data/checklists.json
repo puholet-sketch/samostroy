@@ -1,0 +1,73 @@
+{
+  "templates": [
+    {
+      "id": "tpl-sales-design-repair",
+      "name": "Чек-лист продаж: дизайн → ремонт",
+      "description": "Лучшие практики воронки: discovery, бюджет, сроки, дизайн-пакет, договор.",
+      "editable": true,
+      "items": [
+        { "id": "q1", "section": "Discovery", "text": "Какая цель ремонта (переезд, аренда, для себя)?", "required": true },
+        { "id": "q2", "section": "Discovery", "text": "Кто принимает решения и кто влияет на выбор?", "required": true },
+        { "id": "q3", "section": "Discovery", "text": "Есть ли готовый дизайн / нужны ли услуги дизайна?", "required": true },
+        { "id": "q4", "section": "Бюджет", "text": "Озвучен ориентир бюджета «под ключ» (работы + материалы)?", "required": true },
+        { "id": "q5", "section": "Бюджет", "text": "Готовность к поэтапной оплате по актам?", "required": true },
+        { "id": "q6", "section": "Сроки", "text": "Желаемая дата старта и дедлайн заселения?", "required": true },
+        { "id": "q7", "section": "Сроки", "text": "Есть ли ограничения по шуму / доступу / соседям?", "required": false },
+        { "id": "q8", "section": "Дизайн-пакет", "text": "Согласован объём: обмер, планировка, 3D, ведомость материалов?", "required": true },
+        { "id": "q9", "section": "Дизайн-пакет", "text": "Клиент понимает, что ремонт стартует после утверждённого РД?", "required": true },
+        { "id": "q10", "section": "Объект", "text": "Зафиксированы пожелания по стилю, материалам, инженерии?", "required": true },
+        { "id": "q11", "section": "Объект", "text": "Режим материалов: под ключ или материалы заказчика?", "required": true },
+        { "id": "q12", "section": "Договор", "text": "Показана 14-этапная схема работ и логика актов?", "required": true },
+        { "id": "q13", "section": "Договор", "text": "Согласованы исключения (натяжные, двери, кондиционирование и т.п.)?", "required": true },
+        { "id": "q14", "section": "Договор", "text": "Назначен следующий шаг и дата контроля?", "required": true },
+        { "id": "q15", "section": "Доверие", "text": "Переданы кейсы / фото похожих объектов?", "required": false }
+      ]
+    }
+  ],
+  "objectChecklists": [
+    {
+      "id": "ocl-obj-1",
+      "objectId": "obj-1",
+      "templateId": "tpl-sales-design-repair",
+      "answers": {
+        "q1": { "done": true, "note": "для себя, переезд летом" },
+        "q2": { "done": true, "note": "супруги вместе" },
+        "q3": { "done": true, "note": "дизайн нужен" },
+        "q4": { "done": true, "note": "~1.7 млн работы" },
+        "q5": { "done": true, "note": "" },
+        "q6": { "done": true, "note": "старт февраль 2026" },
+        "q7": { "done": false, "note": "" },
+        "q8": { "done": true, "note": "РД утверждён" },
+        "q9": { "done": true, "note": "" },
+        "q10": { "done": true, "note": "" },
+        "q11": { "done": true, "note": "под ключ" },
+        "q12": { "done": true, "note": "" },
+        "q13": { "done": true, "note": "" },
+        "q14": { "done": true, "note": "контроль схемы электрики" },
+        "q15": { "done": true, "note": "" }
+      }
+    },
+    {
+      "id": "ocl-obj-3",
+      "objectId": "obj-3",
+      "templateId": "tpl-sales-design-repair",
+      "answers": {
+        "q1": { "done": true, "note": "для себя" },
+        "q2": { "done": true, "note": "сам клиент" },
+        "q3": { "done": true, "note": "сначала дизайн" },
+        "q4": { "done": false, "note": "обсуждаем" },
+        "q5": { "done": false, "note": "" },
+        "q6": { "done": true, "note": "июнь 2026" },
+        "q7": { "done": false, "note": "" },
+        "q8": { "done": false, "note": "концепция в работе" },
+        "q9": { "done": true, "note": "" },
+        "q10": { "done": true, "note": "минимализм" },
+        "q11": { "done": true, "note": "под ключ" },
+        "q12": { "done": false, "note": "" },
+        "q13": { "done": false, "note": "" },
+        "q14": { "done": true, "note": "презентация 18.03" },
+        "q15": { "done": false, "note": "" }
+      }
+    }
+  ]
+}

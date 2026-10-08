@@ -1,0 +1,39 @@
+{
+  "deadlineLocal": "21:00",
+  "timezoneNote": "Дедлайн ежедневного отчёта — 21:00 (локальное время бригады).",
+  "reports": [
+    {
+      "id": "dr-1",
+      "objectId": "obj-1",
+      "authorId": "u-builder-1",
+      "date": "2026-03-08",
+      "submittedAt": "2026-03-08T20:15:00Z",
+      "status": "submitted",
+      "summary": "Проложена силовая разводка в коридоре, установлены 8 подрозетников.",
+      "mediaPaths": [],
+      "clientVisible": false
+    },
+    {
+      "id": "dr-2",
+      "objectId": "obj-1",
+      "authorId": "u-foreman-1",
+      "date": "2026-03-07",
+      "submittedAt": "2026-03-07T20:45:00Z",
+      "status": "submitted",
+      "summary": "Приёмка этапа 2 закрыта, акт подписан.",
+      "mediaPaths": [],
+      "clientVisible": true
+    },
+    {
+      "id": "dr-3",
+      "objectId": "obj-1",
+      "authorId": "u-builder-1",
+      "date": "2026-03-09",
+      "submittedAt": null,
+      "status": "draft",
+      "summary": "",
+      "mediaPaths": [],
+      "clientVisible": false
+    }
+  ]
+}

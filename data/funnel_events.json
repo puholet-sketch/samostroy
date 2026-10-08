@@ -1,0 +1,7 @@
+[
+  { "id": "fe-1", "objectId": "obj-2", "stage": "lead", "at": "2026-03-01T12:00:00Z", "byUserId": "u-seller-1", "note": "Входящий лид с сайта" },
+  { "id": "fe-2", "objectId": "obj-2", "stage": "discovery", "at": "2026-03-03T15:00:00Z", "byUserId": "u-seller-1", "note": "Первичный звонок" },
+  { "id": "fe-3", "objectId": "obj-3", "stage": "design", "at": "2026-02-22T10:00:00Z", "byUserId": "u-seller-1", "note": "Старт дизайн-пакета" },
+  { "id": "fe-4", "objectId": "obj-1", "stage": "contract", "at": "2026-01-20T11:00:00Z", "byUserId": "u-seller-1", "note": "Договор подписан" },
+  { "id": "fe-5", "objectId": "obj-1", "stage": "production", "at": "2026-02-05T09:00:00Z", "byUserId": "u-owner", "note": "Старт работ" }
+]

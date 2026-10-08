@@ -1,0 +1,51 @@
+[
+  {
+    "id": "u-owner",
+    "login": "owner",
+    "password": "owner123",
+    "name": "Алексей Директоров",
+    "role": "owner",
+    "active": true
+  },
+  {
+    "id": "u-seller-1",
+    "login": "seller",
+    "password": "seller123",
+    "name": "Мария Продажова",
+    "role": "seller",
+    "active": true
+  },
+  {
+    "id": "u-foreman-1",
+    "login": "foreman",
+    "password": "foreman123",
+    "name": "Игорь Прорабов",
+    "role": "foreman",
+    "active": true
+  },
+  {
+    "id": "u-builder-1",
+    "login": "builder",
+    "password": "builder123",
+    "name": "Сергей Мастеров",
+    "role": "builder",
+    "active": true
+  },
+  {
+    "id": "u-supervisor-1",
+    "login": "supervisor",
+    "password": "super123",
+    "name": "Ольга Надзорова",
+    "role": "supervisor",
+    "active": true
+  },
+  {
+    "id": "u-client-1",
+    "login": "client",
+    "password": "client123",
+    "name": "Демо Клиентов",
+    "role": "client",
+    "linkedObjectIds": ["obj-1"],
+    "active": true
+  }
+]

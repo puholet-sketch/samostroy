@@ -1,0 +1,88 @@
+{
+  "modules": [
+    "dashboard",
+    "objects",
+    "pipeline",
+    "map",
+    "tasks",
+    "daily_reports",
+    "checklist",
+    "reports_ops",
+    "reports_sales",
+    "security"
+  ],
+  "matrix": {
+    "owner": {
+      "dashboard": { "read": true, "write": true },
+      "objects": { "read": true, "write": true },
+      "pipeline": { "read": true, "write": true },
+      "map": { "read": true, "write": true },
+      "tasks": { "read": true, "write": true },
+      "daily_reports": { "read": true, "write": true },
+      "checklist": { "read": true, "write": true },
+      "reports_ops": { "read": true, "write": true },
+      "reports_sales": { "read": true, "write": true },
+      "security": { "read": true, "write": true }
+    },
+    "seller": {
+      "dashboard": { "read": true, "write": false },
+      "objects": { "read": true, "write": true },
+      "pipeline": { "read": true, "write": false },
+      "map": { "read": true, "write": true },
+      "tasks": { "read": true, "write": true },
+      "daily_reports": { "read": false, "write": false },
+      "checklist": { "read": true, "write": true },
+      "reports_ops": { "read": false, "write": false },
+      "reports_sales": { "read": true, "write": false },
+      "security": { "read": false, "write": false }
+    },
+    "foreman": {
+      "dashboard": { "read": true, "write": false },
+      "objects": { "read": true, "write": false },
+      "pipeline": { "read": true, "write": true },
+      "map": { "read": true, "write": false },
+      "tasks": { "read": true, "write": true },
+      "daily_reports": { "read": true, "write": true },
+      "checklist": { "read": false, "write": false },
+      "reports_ops": { "read": true, "write": false },
+      "reports_sales": { "read": false, "write": false },
+      "security": { "read": false, "write": false }
+    },
+    "builder": {
+      "dashboard": { "read": true, "write": false },
+      "objects": { "read": true, "write": false },
+      "pipeline": { "read": true, "write": false },
+      "map": { "read": true, "write": false },
+      "tasks": { "read": true, "write": true },
+      "daily_reports": { "read": true, "write": true },
+      "checklist": { "read": false, "write": false },
+      "reports_ops": { "read": false, "write": false },
+      "reports_sales": { "read": false, "write": false },
+      "security": { "read": false, "write": false }
+    },
+    "supervisor": {
+      "dashboard": { "read": true, "write": false },
+      "objects": { "read": true, "write": false },
+      "pipeline": { "read": true, "write": true },
+      "map": { "read": true, "write": false },
+      "tasks": { "read": true, "write": true },
+      "daily_reports": { "read": true, "write": false },
+      "checklist": { "read": false, "write": false },
+      "reports_ops": { "read": true, "write": false },
+      "reports_sales": { "read": false, "write": false },
+      "security": { "read": false, "write": false }
+    },
+    "client": {
+      "dashboard": { "read": true, "write": false },
+      "objects": { "read": true, "write": false },
+      "pipeline": { "read": true, "write": false },
+      "map": { "read": false, "write": false },
+      "tasks": { "read": false, "write": false },
+      "daily_reports": { "read": true, "write": false },
+      "checklist": { "read": false, "write": false },
+      "reports_ops": { "read": false, "write": false },
+      "reports_sales": { "read": false, "write": false },
+      "security": { "read": false, "write": false }
+    }
+  }
+}
