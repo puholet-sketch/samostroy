@@ -16,18 +16,20 @@ import type { ObjectStatus } from '../../services/types'
 
 type Suggest = { display_name: string; lat: string; lon: string }
 
-type BasemapId = 'street' | 'light' | 'satellite'
+type BasemapId = 'hot' | 'light' | 'satellite'
 
-/** Бесплатные тайлы без API key (CARTO больше требует ключ). */
+/** Бесплатные тайлы без API key. */
 const BASEMAPS: Record<
   BasemapId,
-  { label: string; url: string; attribution: string; maxZoom: number }
+  { label: string; url: string; attribution: string; maxZoom: number; subdomains?: string }
 > = {
-  street: {
-    label: 'Улицы',
-    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
-    attribution: 'Tiles &copy; Esri &mdash; Source: Esri, HERE, Garmin, USGS, EPA',
+  hot: {
+    label: 'HOT',
+    url: 'https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png',
+    attribution:
+      '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://www.hotosm.org/">HOT</a>',
     maxZoom: 19,
+    subdomains: 'abc',
   },
   light: {
     label: 'Светлая',
@@ -62,7 +64,7 @@ export default function MapPage() {
   const [focus, setFocus] = useState<{ lat: number; lng: number } | null>(null)
   const [selectedId, setSelectedId] = useState<string>('')
   const [msg, setMsg] = useState('')
-  const [basemap, setBasemap] = useState<BasemapId>('street')
+  const [basemap, setBasemap] = useState<BasemapId>('hot')
   const tiles = BASEMAPS[basemap]
 
   const financeMap = useMemo(() => financeByObjectId(objects), [objects])
@@ -133,7 +135,7 @@ export default function MapPage() {
         <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
           <div>
             <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Карта</h1>
-            <p className="text-sm text-gray-500 mt-1">Москва и МО · подложка Esri (без API key)</p>
+            <p className="text-sm text-gray-500 mt-1">Москва и МО · OSM HOT по умолчанию</p>
           </div>
           <div className="flex rounded-lg border border-gray-200 bg-white p-0.5 self-stretch sm:self-auto">
             {(Object.keys(BASEMAPS) as BasemapId[]).map((id) => (
@@ -218,6 +220,7 @@ export default function MapPage() {
             attribution={tiles.attribution}
             url={tiles.url}
             maxZoom={tiles.maxZoom}
+            {...(tiles.subdomains ? { subdomains: tiles.subdomains } : {})}
           />
           {focus && <FlyTo lat={focus.lat} lng={focus.lng} />}
           {objects.map((o) => {
