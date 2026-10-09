@@ -48,7 +48,11 @@
   }
 
   .badge {
-    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+    @apply inline-flex items-center justify-center px-2.5 rounded-full text-xs font-medium leading-none;
+    /* Cyrillic glyphs sit low with default line-box — equal optical padding */
+    padding-top: 0.35rem;
+    padding-bottom: 0.3rem;
+    min-height: 1.35rem;
   }
 
   .badge-gray {
