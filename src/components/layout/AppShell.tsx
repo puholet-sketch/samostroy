@@ -196,7 +196,7 @@ export function AppShell() {
         <CheckBadgeIcon className="h-4 w-4 shrink-0" />
         <span>
           <span className="text-primary-500 font-semibold">Само</span>
-          <span className="text-accent-500 font-semibold">Строй</span>
+          <span className="text-emerald-600 font-semibold">Строй</span>
           {' '}MVP · demo data · media paths only
         </span>
       </footer>

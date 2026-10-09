@@ -13,7 +13,7 @@ const SIZE: Record<NonNullable<BrandLogoProps['size']>, string> = {
   lg: 'text-xl sm:text-2xl',
 }
 
-/** Wordmark СамоСтрой: «Само» — primary blue, «Строй» — accent amber. */
+/** Wordmark СамоСтрой: «Само» — primary blue, «Строй» — green. */
 export function BrandLogo({ to = '/', className = '', size = 'md' }: BrandLogoProps) {
   const mark = (
     <span
@@ -21,7 +21,7 @@ export function BrandLogo({ to = '/', className = '', size = 'md' }: BrandLogoPr
       aria-label="СамоСтрой"
     >
       <span className="text-primary-600">Само</span>
-      <span className="text-accent-500">Строй</span>
+      <span className="text-emerald-600">Строй</span>
     </span>
   )
 
