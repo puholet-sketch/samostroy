@@ -76,7 +76,7 @@ export default function MapPage() {
   const [focus, setFocus] = useState<{ lat: number; lng: number } | null>(null)
   const [selectedId, setSelectedId] = useState<string>('')
   const [msg, setMsg] = useState('')
-  const [basemap, setBasemap] = useState<BasemapId>('hot')
+  const [basemap, setBasemap] = useState<BasemapId>('light')
   const tiles = BASEMAPS[basemap]
 
   const financeMap = useMemo(() => financeByObjectId(objects), [objects])
@@ -147,7 +147,7 @@ export default function MapPage() {
         <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
           <div>
             <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Карта</h1>
-            <p className="text-sm text-gray-500 mt-1">Москва и МО · OSM HOT по умолчанию</p>
+            <p className="text-sm text-gray-500 mt-1">Москва и МО · светлая подложка по умолчанию</p>
           </div>
           <div className="flex rounded-lg border border-gray-200 bg-white p-0.5 self-stretch sm:self-auto">
             {(Object.keys(BASEMAPS) as BasemapId[]).map((id) => (
