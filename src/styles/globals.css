@@ -79,13 +79,52 @@
     @apply block text-sm font-medium text-gray-700 mb-1;
   }
 
-  /* Horizontal scroll board (kanban) with snap on small screens */
+  /* Mobile: one near-full-width column + snap swipe; desktop: grid overrides width */
   .kanban-scroll {
-    @apply flex gap-3 overflow-x-auto pb-2 -mx-3 px-3 sm:mx-0 sm:px-0 snap-x snap-mandatory;
+    @apply flex gap-3 overflow-x-auto overflow-y-hidden pb-3 snap-x snap-mandatory;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    /* full-bleed scroll track without clipping cards */
+    margin-left: -0.75rem;
+    margin-right: -0.75rem;
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+
+  @media (min-width: 640px) {
+    .kanban-scroll {
+      margin-left: 0;
+      margin-right: 0;
+      padding-left: 0;
+      padding-right: 0;
+    }
   }
 
   .kanban-column {
-    @apply w-[min(85vw,18rem)] sm:w-72 shrink-0 snap-start lg:w-auto lg:min-w-0 lg:shrink;
+    @apply shrink-0 snap-center box-border overflow-hidden;
+    /* ~full phone width so cards aren't clipped; peek of next column for swipe hint */
+    width: calc(100vw - 2.25rem);
+    max-width: 22rem;
+    min-width: 0;
+  }
+
+  @media (min-width: 640px) {
+    .kanban-column {
+      width: 18rem;
+      max-width: none;
+      scroll-snap-align: start;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .kanban-column {
+      width: auto;
+      max-width: none;
+      min-width: 0;
+      flex-shrink: 1;
+      scroll-snap-align: none;
+      overflow: visible;
+    }
   }
 
   .table-scroll {

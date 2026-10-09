@@ -290,7 +290,7 @@ export default function TasksPage() {
       </div>
 
       {view === 'board' ? (
-        <div className="kanban-scroll lg:grid lg:grid-cols-3 xl:grid-cols-5 lg:overflow-visible lg:snap-none lg:gap-3 lg:pb-0 lg:mx-0 lg:px-0">
+        <div className="kanban-scroll lg:!mx-0 lg:!px-0 lg:grid lg:grid-cols-3 xl:grid-cols-5 lg:overflow-visible lg:snap-none lg:gap-3 lg:pb-0">
           {COLUMNS.map((col) => {
             const items = boardCards.filter((t) => t.status === col.status)
             const isOver = dropTarget === col.status
@@ -300,7 +300,7 @@ export default function TasksPage() {
                 onDragOver={(e) => onColumnDragOver(col.status, e)}
                 onDragLeave={(e) => onColumnDragLeave(col.status, e)}
                 onDrop={(e) => onColumnDrop(col.status, e)}
-                className={`kanban-column card p-3 flex flex-col gap-3 min-h-[200px] max-h-[70vh] lg:max-h-none lg:w-auto lg:shrink transition-colors ${
+                className={`kanban-column card p-3 flex flex-col gap-3 min-h-[200px] max-h-[min(70vh,32rem)] lg:max-h-none transition-colors ${
                   isOver
                     ? 'bg-primary-50 ring-2 ring-primary-400 ring-inset'
                     : 'bg-gray-50/80'
@@ -349,7 +349,7 @@ export default function TasksPage() {
                             navigate(`/tasks/${t.id}`)
                           }
                         }}
-                        className={`bg-white border border-gray-200 rounded-lg p-3 shadow-sm flex flex-col gap-1.5 hover:border-primary-300 hover:shadow transition-all text-left ${
+                        className={`bg-white border border-gray-200 rounded-lg p-3 shadow-sm flex flex-col gap-1.5 hover:border-primary-300 hover:shadow transition-all text-left min-w-0 w-full overflow-hidden ${
                           writable ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'
                         } ${isDragging ? 'opacity-40 ring-2 ring-primary-300' : ''}`}
                       >
@@ -398,7 +398,7 @@ export default function TasksPage() {
                         </div>
                         {writable && t.issueType === 'task' && (
                           <select
-                            className="input mt-1 text-xs py-1 w-full"
+                            className="mt-1 w-full max-w-full min-h-10 text-sm sm:text-xs rounded-md border border-gray-300 bg-white px-2 py-1.5 shadow-sm focus:outline-none focus:ring-1 focus:ring-primary-500"
                             value={t.status}
                             onClick={stopCardNav}
                             onMouseDown={stopCardNav}
