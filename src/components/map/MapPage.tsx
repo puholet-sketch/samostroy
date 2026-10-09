@@ -16,25 +16,24 @@ import type { ObjectStatus } from '../../services/types'
 
 type Suggest = { display_name: string; lat: string; lon: string }
 
-type BasemapId = 'voyager' | 'light' | 'satellite'
+type BasemapId = 'street' | 'light' | 'satellite'
 
+/** Бесплатные тайлы без API key (CARTO больше требует ключ). */
 const BASEMAPS: Record<
   BasemapId,
   { label: string; url: string; attribution: string; maxZoom: number }
 > = {
-  voyager: {
-    label: 'Чистая',
-    url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
-    attribution:
-      '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
-    maxZoom: 20,
+  street: {
+    label: 'Улицы',
+    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
+    attribution: 'Tiles &copy; Esri &mdash; Source: Esri, HERE, Garmin, USGS, EPA',
+    maxZoom: 19,
   },
   light: {
     label: 'Светлая',
-    url: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
-    attribution:
-      '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
-    maxZoom: 20,
+    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}',
+    attribution: 'Tiles &copy; Esri &mdash; Esri, HERE, Garmin, FAO, NOAA, USGS',
+    maxZoom: 16,
   },
   satellite: {
     label: 'Спутник',
@@ -63,7 +62,7 @@ export default function MapPage() {
   const [focus, setFocus] = useState<{ lat: number; lng: number } | null>(null)
   const [selectedId, setSelectedId] = useState<string>('')
   const [msg, setMsg] = useState('')
-  const [basemap, setBasemap] = useState<BasemapId>('voyager')
+  const [basemap, setBasemap] = useState<BasemapId>('street')
   const tiles = BASEMAPS[basemap]
 
   const financeMap = useMemo(() => financeByObjectId(objects), [objects])
@@ -134,7 +133,7 @@ export default function MapPage() {
         <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
           <div>
             <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Карта</h1>
-            <p className="text-sm text-gray-500 mt-1">Москва и МО · подложка CARTO / Esri</p>
+            <p className="text-sm text-gray-500 mt-1">Москва и МО · подложка Esri (без API key)</p>
           </div>
           <div className="flex rounded-lg border border-gray-200 bg-white p-0.5 self-stretch sm:self-auto">
             {(Object.keys(BASEMAPS) as BasemapId[]).map((id) => (
@@ -219,7 +218,6 @@ export default function MapPage() {
             attribution={tiles.attribution}
             url={tiles.url}
             maxZoom={tiles.maxZoom}
-            subdomains={basemap === 'satellite' ? undefined : 'abcd'}
           />
           {focus && <FlyTo lat={focus.lat} lng={focus.lng} />}
           {objects.map((o) => {
