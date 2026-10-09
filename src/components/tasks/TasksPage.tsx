@@ -14,6 +14,7 @@ import type { IssueType, Task, TaskPriority, TaskStatus, User } from '../../serv
 import { useObjects } from '../../hooks/useObjects'
 import { formatDateRu, initialsFromName } from '../../lib/userDisplay'
 import { ISSUE_TYPE_LABEL, childrenOf, isKanbanCard } from '../../lib/issues'
+import { deleteMediaBlobs } from '../../lib/mediaStore'
 import IssueTypeBadge from './IssueTypeBadge'
 import TaskCreateModal, { type TaskCreatePayload } from './TaskCreateModal'
 
@@ -189,6 +190,16 @@ export default function TasksPage() {
           ? 'историю и все дочерние элементы'
           : 'эпик и всю структуру'
     if (!window.confirm(`Удалить ${label} «${task.title}»?`)) return
+    const treeIds: string[] = []
+    const walk = (id: string) => {
+      treeIds.push(id)
+      for (const c of issues.filter((x) => x.parentId === id)) walk(c.id)
+    }
+    walk(task.id)
+    const mediaIds = issues
+      .filter((i) => treeIds.includes(i.id))
+      .flatMap((i) => i.attachments.map((a) => a.id))
+    await deleteMediaBlobs(mediaIds)
     await api.tasks.remove(task.id)
     await reload()
   }
@@ -378,7 +389,12 @@ export default function TasksPage() {
                           >
                             {initialsFromName(name === '—' ? '?' : name)}
                           </span>
-                          <span className="text-xs text-gray-400">до {formatDateRu(t.dueDate)}</span>
+                          <div className="flex items-center gap-2 text-xs text-gray-400">
+                            {(t.attachments?.length ?? 0) > 0 && (
+                              <span title="Вложения">📎 {t.attachments.length}</span>
+                            )}
+                            <span>до {formatDateRu(t.dueDate)}</span>
+                          </div>
                         </div>
                         {writable && t.issueType === 'task' && (
                           <select

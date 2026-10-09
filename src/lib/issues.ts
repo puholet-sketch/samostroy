@@ -35,6 +35,7 @@ export function normalizeIssue(raw: Partial<Task> & Pick<Task, 'id' | 'objectId'
     createdAt: raw.createdAt ?? new Date().toISOString(),
     updatedAt: raw.updatedAt ?? raw.createdAt ?? new Date().toISOString(),
     comments: raw.comments ?? [],
+    attachments: raw.attachments ?? [],
   }
 }
 

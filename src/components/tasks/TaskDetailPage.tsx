@@ -4,7 +4,7 @@ import { api } from '../../services/api'
 import { useAuth } from '../../contexts/AuthContext'
 import { useNotifications } from '../../contexts/NotificationsContext'
 import { useObjects } from '../../hooks/useObjects'
-import type { Task, TaskPriority, TaskStatus, User } from '../../services/types'
+import type { Task, TaskAttachment, TaskPriority, TaskStatus, User } from '../../services/types'
 import {
   formatDateRu,
   formatDateTimeRu,
@@ -12,8 +12,10 @@ import {
   isAssignableUser,
 } from '../../lib/userDisplay'
 import { breadcrumbChain, canHaveChildren } from '../../lib/issues'
+import { deleteMediaBlobs } from '../../lib/mediaStore'
 import IssueTypeBadge from './IssueTypeBadge'
 import TaskCreateModal, { type TaskCreatePayload } from './TaskCreateModal'
+import TaskAttachmentsPanel from './TaskAttachmentsPanel'
 
 const STATUS_LABEL: Record<TaskStatus, string> = {
   todo: 'К выполнению',
@@ -160,8 +162,35 @@ export default function TaskDetailPage() {
           : 'эпик и всю структуру'
     if (!window.confirm(`Удалить ${label} «${task.title}»?`)) return
     setDeleting(true)
+    const mediaIds = [
+      ...task.attachments.map((a) => a.id),
+      ...allIssues
+        .filter((i) => {
+          // collect attachments from this issue only; cascade delete of children
+          // cleans their meta but blobs for other issues remain — wipe this tree's known ids
+          const chain: string[] = []
+          const walk = (id: string) => {
+            chain.push(id)
+            for (const c of allIssues.filter((x) => x.parentId === id)) walk(c.id)
+          }
+          walk(task.id)
+          return chain.includes(i.id)
+        })
+        .flatMap((i) => i.attachments.map((a) => a.id)),
+    ]
+    await deleteMediaBlobs([...new Set(mediaIds)])
     await api.tasks.remove(task.id)
     navigate('/tasks')
+  }
+
+  async function onAttachmentsChange(next: TaskAttachment[]) {
+    if (!task || !writable) return
+    const updated: Task = {
+      ...task,
+      attachments: next,
+      updatedAt: new Date().toISOString(),
+    }
+    await persist(updated)
   }
 
   async function handleCreateChild(payload: TaskCreatePayload) {
@@ -399,6 +428,14 @@ export default function TaskDetailPage() {
               )}
             </div>
           </div>
+
+          <TaskAttachmentsPanel
+            attachments={task.attachments}
+            writable={writable}
+            authorId={user?.id ?? ''}
+            busy={saving}
+            onChange={onAttachmentsChange}
+          />
 
           {/* Meta as sections on mobile; desktop uses sidebar */}
           <div className="card p-4 sm:p-6 lg:hidden">

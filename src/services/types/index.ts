@@ -116,6 +116,17 @@ export type TaskComment = {
   createdAt: string
 }
 
+/** Metadata only — binary blobs live in IndexedDB (not in JSON). */
+export type TaskAttachment = {
+  id: string
+  name: string
+  mimeType: string
+  size: number
+  kind: 'image' | 'video' | 'file'
+  authorId: string
+  createdAt: string
+}
+
 /**
  * Work item (issue). Kept as `Task` for repository compatibility.
  * Hierarchy: epic (parentId null) → story → task.
@@ -140,6 +151,7 @@ export type Task = {
   createdAt: string
   updatedAt: string
   comments: TaskComment[]
+  attachments: TaskAttachment[]
 }
 
 export type NotificationKind = 'task_assigned'
