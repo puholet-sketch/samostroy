@@ -16,7 +16,7 @@ import type { ObjectStatus } from '../../services/types'
 
 type Suggest = { display_name: string; lat: string; lon: string }
 
-type BasemapId = 'hot' | 'light' | 'satellite'
+type BasemapId = 'hot' | 'light' | 'topo' | 'dark' | 'satellite'
 
 /** Бесплатные тайлы без API key. */
 const BASEMAPS: Record<
@@ -34,6 +34,18 @@ const BASEMAPS: Record<
   light: {
     label: 'Светлая',
     url: 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}',
+    attribution: 'Tiles &copy; Esri &mdash; Esri, HERE, Garmin, FAO, NOAA, USGS',
+    maxZoom: 16,
+  },
+  topo: {
+    label: 'Топо',
+    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}',
+    attribution: 'Tiles &copy; Esri &mdash; Esri, HERE, Garmin, FAO, NOAA, USGS',
+    maxZoom: 19,
+  },
+  dark: {
+    label: 'Тёмная',
+    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',
     attribution: 'Tiles &copy; Esri &mdash; Esri, HERE, Garmin, FAO, NOAA, USGS',
     maxZoom: 16,
   },
