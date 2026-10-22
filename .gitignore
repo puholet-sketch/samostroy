@@ -16,6 +16,7 @@ secrets/
 
 # Импорт клиентов из prod CRM (ПДн — не в публичный репозиторий)
 data/clients_from_crm.json
+# публичный анонимный сид — в git: data/clients_public.json
 
 # Editor / OS
 .DS_Store

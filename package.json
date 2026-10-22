@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "anonymize:clients": "node docs/scripts/anonymize_clients.mjs"
   },
   "dependencies": {
     "@headlessui/react": "^2.2.9",

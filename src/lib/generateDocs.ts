@@ -24,6 +24,13 @@ const PAGE_W = 11906
 const MARGIN = 850
 const CONTENT_W = PAGE_W - MARGIN * 2
 
+/** Как было: красные блоки сторон + чёрный текст; только шапки сметных таблиц — пастельный зелёный */
+const BRAND = 'C00000'
+const TABLE_HEAD = 'B7D4B0' // пастельный зелёный (шапка наименования работ)
+const TABLE_HEAD_TEXT = '1A1A1A'
+const ZEBRA = 'F5F5F5'
+const LABEL_BG = 'F5F5F5'
+
 const thin = { style: BorderStyle.SINGLE, size: 4, color: '999999' }
 const thick = { style: BorderStyle.SINGLE, size: 8, color: '1A1A1A' }
 const noBorder = { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' }
@@ -79,7 +86,7 @@ function sectionHead(text: string): Paragraph {
     alignment: AlignmentType.CENTER,
     spacing: { after: 160, before: 280, line: 276 },
     border: {
-      bottom: { style: BorderStyle.SINGLE, size: 6, color: 'C00000', space: 4 },
+      bottom: { style: BorderStyle.SINGLE, size: 6, color: BRAND, space: 4 },
     },
     children: [run(text, { bold: true, size: 24 })],
   })
@@ -112,7 +119,7 @@ function cell(
     size?: number
   },
 ): TableCell {
-  const fill = opts?.fill ?? (opts?.header ? '1A1A1A' : undefined)
+  const fill = opts?.fill ?? (opts?.header ? TABLE_HEAD : undefined)
   return new TableCell({
     width: { size: width, type: WidthType.DXA },
     shading: fill ? { type: ShadingType.CLEAR, fill } : undefined,
@@ -129,8 +136,8 @@ function cell(
         children: [
           run(text, {
             bold: opts?.bold || opts?.header,
-            size: opts?.size ?? (opts?.header ? 18 : 18),
-            color: opts?.header ? 'FFFFFF' : undefined,
+            size: opts?.size ?? 18,
+            color: opts?.header ? TABLE_HEAD_TEXT : undefined,
           }),
         ],
       }),
@@ -143,7 +150,7 @@ function kvRow(label: string, value: string, labelW = 2800, valueW = CONTENT_W -
     children: [
       new TableCell({
         width: { size: labelW, type: WidthType.DXA },
-        shading: { type: ShadingType.CLEAR, fill: 'F5F5F5' },
+        shading: { type: ShadingType.CLEAR, fill: LABEL_BG },
         borders: { top: thin, bottom: thin, left: thin, right: thin },
         margins: { top: 50, bottom: 50, left: 80, right: 80 },
         children: [
@@ -171,7 +178,7 @@ function partyTable(titleText: string, rows: [string, string][]): Table {
           new TableCell({
             columnSpan: 2,
             width: { size: CONTENT_W, type: WidthType.DXA },
-            shading: { type: ShadingType.CLEAR, fill: 'C00000' },
+            shading: { type: ShadingType.CLEAR, fill: BRAND },
             borders: { top: thick, bottom: thick, left: thick, right: thick },
             margins: { top: 70, bottom: 70, left: 100, right: 100 },
             children: [
@@ -283,7 +290,7 @@ function moneyTable(
     ),
   })
   const body = lines.map((l, i) => {
-    const zebra = i % 2 === 1 ? 'FFF5F5' : undefined
+    const zebra = i % 2 === 1 ? ZEBRA : undefined
     return new TableRow({
       children: [
         cell(String(i + 1), cols[0], { center: true, fill: zebra }),

@@ -4,6 +4,7 @@ import { RiMailFill, RiPhoneFill } from '@remixicon/react'
 import { usePageHeaderActions } from '../../contexts/PageHeaderContext'
 import {
   emptyClient,
+  hydrateLocalCrmIfEmpty,
   loadClients,
   mailHref,
   saveClients,
@@ -31,7 +32,24 @@ export default function ClientsListPage() {
     document.title = 'Клиенты — СамоСтрой'
   }, [])
 
+  // если список пуст — дотянуть локальный CRM / сид после монтирования
   useEffect(() => {
+    let cancelled = false
+    ;(async () => {
+      if (clients.length > 0) return
+      await hydrateLocalCrmIfEmpty()
+      const next = loadClients()
+      if (!cancelled && next.length > 0) setClients(next)
+    })()
+    return () => {
+      cancelled = true
+    }
+    // только при первом пустом экране
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  useEffect(() => {
+    if (clients.length === 0) return
     saveClients(clients)
   }, [clients])
 

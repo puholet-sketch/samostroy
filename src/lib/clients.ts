@@ -1,4 +1,4 @@
-import seedFromCrm from '../../data/clients_from_crm.json'
+import seedPublic from '../../data/clients_public.json'
 
 export type ClientPersonType = 'fiz' | 'ur'
 
@@ -96,30 +96,92 @@ export const emptyClient = (partial?: Partial<ClientCard>): ClientCard => ({
   ...partial,
 })
 
-/** v3 — без демо Иванов/Северстрой; CRM-сид только в dev (не в публичный prod-бандл) */
-const STORAGE_KEY = 'samostroy:client_cards_v3'
+/**
+ * v4: localStorage с вашей локальной базой не перезаписываем извне.
+ * В бандл/git идёт только анонимный clients_public.json.
+ * Реальный CRM (clients_from_crm.json) подмешивается в dev через /api/local-crm-seed.
+ */
+const STORAGE_KEY = 'samostroy:client_cards_v4'
 
-const SEED: ClientCard[] = import.meta.env.DEV
-  ? (Array.isArray(seedFromCrm) ? seedFromCrm : []).map((c) =>
-      emptyClient({ ...(c as Partial<ClientCard>), id: (c as ClientCard).id || `crm-tmp` }),
-    )
-  : []
+const publicRaw: unknown = Array.isArray(seedPublic)
+  ? seedPublic
+  : seedPublic && typeof seedPublic === 'object' && 'default' in (seedPublic as object)
+    ? (seedPublic as unknown as { default: unknown }).default
+    : seedPublic
 
-export function loadClients(): ClientCard[] {
+const SEED: ClientCard[] = (Array.isArray(publicRaw) ? publicRaw : []).map((c) =>
+  emptyClient({ ...(c as Partial<ClientCard>), id: (c as ClientCard).id || `demo-tmp` }),
+)
+
+function normalizeList(list: ClientCard[]): ClientCard[] {
+  return list.map((c) => ({ ...emptyClient({ id: c.id }), ...c }))
+}
+
+function readStoredClients(): ClientCard[] | null {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    if (raw) {
+    for (const key of [STORAGE_KEY, 'samostroy:client_cards_v3', 'samostroy:client_cards_v2']) {
+      const raw = localStorage.getItem(key)
+      if (!raw) continue
       const list = JSON.parse(raw) as ClientCard[]
-      return list.map((c) => ({ ...emptyClient({ id: c.id }), ...c }))
+      if (!Array.isArray(list)) continue
+      // залипший пустой массив — вычищаем
+      if (list.length === 0) {
+        localStorage.removeItem(key)
+        continue
+      }
+      const normalized = normalizeList(list)
+      if (key !== STORAGE_KEY) localStorage.setItem(STORAGE_KEY, JSON.stringify(normalized))
+      return normalized
     }
   } catch {
     /* ignore */
   }
-  return SEED
+  return null
+}
+
+export function loadClients(): ClientCard[] {
+  return readStoredClients() ?? SEED
 }
 
 export function saveClients(list: ClientCard[]) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(list))
+}
+
+/** Dev: подтянуть локальный CRM, если в браузере ещё нет клиентов. */
+export async function hydrateLocalCrmIfEmpty(): Promise<boolean> {
+  if (!import.meta.env.DEV) return false
+  try {
+    const existing = readStoredClients()
+    if (existing && existing.length > 0) return false
+
+    const base = import.meta.env.BASE_URL.replace(/\/$/, '')
+    const res = await fetch(`${base}/api/local-crm-seed`)
+    if (!res.ok) return false
+    const data = (await res.json()) as Partial<ClientCard>[]
+    if (!Array.isArray(data) || data.length === 0) {
+      // CRM недоступен — положим публичный сид, чтобы экран не был пустым
+      if (SEED.length > 0) {
+        saveClients(SEED)
+        return true
+      }
+      return false
+    }
+
+    const normalized = normalizeList(
+      data.map(
+        (c) =>
+          ({ ...c, id: c.id || `crm-${Math.random().toString(36).slice(2, 9)}` }) as ClientCard,
+      ),
+    )
+    saveClients(normalized)
+    return true
+  } catch {
+    if (SEED.length > 0) {
+      saveClients(SEED)
+      return true
+    }
+    return false
+  }
 }
 
 /** `tel:` для нативной звонилки (Android / iOS) */
