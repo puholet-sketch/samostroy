@@ -24,6 +24,10 @@ const MODULE_LABEL: Record<ModuleKey, string> = {
   reports_sales: 'Воронка',
   reports_finance: 'Финансы',
   security: 'Безопасность',
+  clients: 'Клиенты',
+  calculator: 'Калькулятор',
+  documents: 'Договоры и акты',
+  object_control: 'Контроль объекта',
 }
 
 export default function SecurityPage() {

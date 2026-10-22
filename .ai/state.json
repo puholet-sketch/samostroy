@@ -1,14 +1,13 @@
 {
-  "status": "issue_hierarchy_ok",
-  "goal": "СамоСтрой: Jira Epic→Story→Task hierarchy + brand + notifications",
-  "next": "Smoke: /tasks Структура tree; object «Создать структуру по шаблону»; task assign → bell",
+  "v": 4,
+  "updated": "2026-10-22",
+  "status": "active",
+  "goal": "MVP: КК + договоры/акты/калькулятор + контроль объекта",
+  "next": "Проверить реестр клиентов после импорта CRM; просмотр отчётов в контроле",
   "blockers": [],
   "hot_files": [
-    "data/tasks.json",
-    "src/lib/issues.ts",
-    "src/services/api/index.ts",
-    "src/components/tasks/TasksPage.tsx",
-    "src/components/tasks/TaskDetailPage.tsx"
-  ],
-  "updated": "2026-10-09"
+    "data/clients_from_crm.json",
+    "src/lib/clients.ts",
+    "src/components/clients/ClientsListPage.tsx"
+  ]
 }

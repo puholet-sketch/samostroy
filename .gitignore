@@ -14,6 +14,9 @@ dist-ssr/
 credentials.json
 secrets/
 
+# Импорт клиентов из prod CRM (ПДн — не в публичный репозиторий)
+data/clients_from_crm.json
+
 # Editor / OS
 .DS_Store
 Thumbs.db

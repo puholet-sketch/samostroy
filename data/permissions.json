@@ -10,7 +10,11 @@
     "reports_ops",
     "reports_sales",
     "reports_finance",
-    "security"
+    "security",
+    "clients",
+    "calculator",
+    "documents",
+    "object_control"
   ],
   "matrix": {
     "owner": {
@@ -24,7 +28,11 @@
       "reports_ops": { "read": true, "write": true },
       "reports_sales": { "read": true, "write": true },
       "reports_finance": { "read": true, "write": true },
-      "security": { "read": true, "write": true }
+      "security": { "read": true, "write": true },
+      "clients": { "read": true, "write": true },
+      "calculator": { "read": true, "write": true },
+      "documents": { "read": true, "write": true },
+      "object_control": { "read": true, "write": true }
     },
     "seller": {
       "dashboard": { "read": true, "write": false },
@@ -37,7 +45,11 @@
       "reports_ops": { "read": false, "write": false },
       "reports_sales": { "read": true, "write": false },
       "reports_finance": { "read": true, "write": false },
-      "security": { "read": false, "write": false }
+      "security": { "read": false, "write": false },
+      "clients": { "read": true, "write": true },
+      "calculator": { "read": true, "write": true },
+      "documents": { "read": true, "write": true },
+      "object_control": { "read": true, "write": false }
     },
     "foreman": {
       "dashboard": { "read": true, "write": false },
@@ -50,7 +62,11 @@
       "reports_ops": { "read": true, "write": false },
       "reports_sales": { "read": false, "write": false },
       "reports_finance": { "read": true, "write": false },
-      "security": { "read": false, "write": false }
+      "security": { "read": false, "write": false },
+      "clients": { "read": true, "write": false },
+      "calculator": { "read": true, "write": false },
+      "documents": { "read": true, "write": false },
+      "object_control": { "read": true, "write": true }
     },
     "builder": {
       "dashboard": { "read": true, "write": false },
@@ -63,7 +79,11 @@
       "reports_ops": { "read": false, "write": false },
       "reports_sales": { "read": false, "write": false },
       "reports_finance": { "read": false, "write": false },
-      "security": { "read": false, "write": false }
+      "security": { "read": false, "write": false },
+      "clients": { "read": false, "write": false },
+      "calculator": { "read": false, "write": false },
+      "documents": { "read": false, "write": false },
+      "object_control": { "read": true, "write": true }
     },
     "supervisor": {
       "dashboard": { "read": true, "write": false },
@@ -76,7 +96,11 @@
       "reports_ops": { "read": true, "write": false },
       "reports_sales": { "read": false, "write": false },
       "reports_finance": { "read": true, "write": false },
-      "security": { "read": false, "write": false }
+      "security": { "read": false, "write": false },
+      "clients": { "read": true, "write": false },
+      "calculator": { "read": true, "write": false },
+      "documents": { "read": true, "write": false },
+      "object_control": { "read": true, "write": true }
     },
     "client": {
       "dashboard": { "read": true, "write": false },
@@ -89,7 +113,11 @@
       "reports_ops": { "read": false, "write": false },
       "reports_sales": { "read": false, "write": false },
       "reports_finance": { "read": false, "write": false },
-      "security": { "read": false, "write": false }
+      "security": { "read": false, "write": false },
+      "clients": { "read": false, "write": false },
+      "calculator": { "read": false, "write": false },
+      "documents": { "read": true, "write": false },
+      "object_control": { "read": true, "write": false }
     }
   }
 }

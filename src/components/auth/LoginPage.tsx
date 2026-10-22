@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { BrandLogo } from '../common/BrandLogo'
+import { Panel } from '../ui/Kpi'
 
 export default function LoginPage() {
   const { user, loading, login } = useAuth()
@@ -12,12 +13,9 @@ export default function LoginPage() {
 
   useEffect(() => {
     document.title = 'Вход — СамоСтрой'
-    return () => {
-      document.title = 'СамоСтрой — CRM ремонта'
-    }
   }, [])
 
-  if (!loading && user) return <Navigate to="/" replace />
+  if (!loading && user) return <Navigate to="/clients" replace />
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault()
@@ -29,43 +27,42 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 via-white to-accent-50 px-4 py-8 overflow-x-hidden">
-      <div className="card w-full max-w-md p-6 sm:p-8">
-        <div className="mb-6">
-          <BrandLogo to={null} size="lg" />
-          <p className="mt-2 text-sm text-gray-500">CRM и операционка ремонтной компании</p>
-        </div>
-        <form onSubmit={onSubmit} className="space-y-4">
-          <div>
-            <label className="label" htmlFor="login">Логин</label>
+    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-10">
+      <Panel className="w-full max-w-md">
+        <BrandLogo to={null} size="lg" />
+        <h1 className="mt-4 text-xl font-semibold text-gray-900">Вход</h1>
+        <p className="text-sm text-gray-500">CRM ремонта · стиль Tremor Dashboard</p>
+        <form onSubmit={onSubmit} className="mt-6 space-y-4">
+          <label className="block">
+            <span className="mb-1 block text-xs font-medium text-gray-500">Логин</span>
             <input
-              id="login"
-              className="input"
+              className="block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
               value={loginName}
               onChange={(e) => setLoginName(e.target.value)}
               autoComplete="username"
             />
-          </div>
-          <div>
-            <label className="label" htmlFor="password">Пароль</label>
+          </label>
+          <label className="block">
+            <span className="mb-1 block text-xs font-medium text-gray-500">Пароль</span>
             <input
-              id="password"
               type="password"
-              className="input"
+              className="block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               autoComplete="current-password"
             />
-          </div>
+          </label>
           {error && <p className="text-sm text-red-600">{error}</p>}
-          <button type="submit" className="btn-primary w-full justify-center" disabled={busy}>
+          <button
+            type="submit"
+            disabled={busy || loading}
+            className="inline-flex w-full items-center justify-center rounded-md bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
+          >
             {busy ? 'Вход…' : 'Войти'}
           </button>
+          <p className="text-center text-xs text-gray-400">Демо: owner / owner123</p>
         </form>
-        <p className="mt-6 text-xs text-gray-400">
-          Демо: owner / owner123 · seller / seller123 · client / client123
-        </p>
-      </div>
+      </Panel>
     </div>
   )
 }

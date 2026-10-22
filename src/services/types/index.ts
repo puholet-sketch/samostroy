@@ -18,6 +18,10 @@ export type ModuleKey =
   | 'reports_sales'
   | 'reports_finance'
   | 'security'
+  | 'clients'
+  | 'calculator'
+  | 'documents'
+  | 'object_control'
 
 export type PermissionFlag = { read: boolean; write: boolean }
 

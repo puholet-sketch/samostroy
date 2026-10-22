@@ -4,15 +4,12 @@ import { NotificationsProvider } from './contexts/NotificationsContext'
 import { ProtectedRoute } from './components/common/ProtectedRoute'
 import { AppShell } from './components/layout/AppShell'
 import LoginPage from './components/auth/LoginPage'
-import Dashboard from './components/dashboard/Dashboard'
-import ObjectsPage from './components/objects/ObjectsPage'
-import ObjectDetailPage from './components/objects/ObjectDetailPage'
-import MapPage from './components/map/MapPage'
-import TasksPage from './components/tasks/TasksPage'
-import TaskDetailPage from './components/tasks/TaskDetailPage'
-import DailyReportsPage from './components/reports/DailyReportsPage'
-import ChecklistPage from './components/checklist/ChecklistPage'
-import ReportsPage from './components/reports/ReportsPage'
+import ClientsListPage from './components/clients/ClientsListPage'
+import ClientCardPage from './components/clients/ClientCardPage'
+import CalculatorPage from './components/calculator/CalculatorPage'
+import DocumentsPage from './components/documents/DocumentsPage'
+import ObjectControlPage from './components/control/ObjectControlPage'
+import PublicReportPage from './components/control/PublicReportPage'
 import SecurityPage from './components/security/SecurityPage'
 
 export default function App() {
@@ -22,6 +19,8 @@ export default function App() {
         <BrowserRouter basename={import.meta.env.BASE_URL.replace(/\/$/, '')}>
           <Routes>
             <Route path="/login" element={<LoginPage />} />
+            {/* Публичная форма отчёта — без авторизации */}
+            <Route path="/report/:token" element={<PublicReportPage />} />
             <Route
               element={
                 <ProtectedRoute>
@@ -29,75 +28,52 @@ export default function App() {
                 </ProtectedRoute>
               }
             >
+              <Route index element={<Navigate to="/clients" replace />} />
               <Route
-                path="/"
+                path="/clients"
                 element={
-                  <ProtectedRoute module="dashboard">
-                    <Dashboard />
+                  <ProtectedRoute module="clients">
+                    <ClientsListPage />
                   </ProtectedRoute>
                 }
               />
               <Route
-                path="/objects"
+                path="/clients/:id"
                 element={
-                  <ProtectedRoute module="objects">
-                    <ObjectsPage />
+                  <ProtectedRoute module="clients">
+                    <ClientCardPage />
                   </ProtectedRoute>
                 }
               />
               <Route
-                path="/objects/:id"
+                path="/clients/:id/:section"
                 element={
-                  <ProtectedRoute module="objects">
-                    <ObjectDetailPage />
+                  <ProtectedRoute module="clients">
+                    <ClientCardPage />
                   </ProtectedRoute>
                 }
               />
               <Route
-                path="/map"
+                path="/calculator"
                 element={
-                  <ProtectedRoute module="map">
-                    <MapPage />
+                  <ProtectedRoute module="calculator">
+                    <CalculatorPage />
                   </ProtectedRoute>
                 }
               />
               <Route
-                path="/tasks"
+                path="/documents"
                 element={
-                  <ProtectedRoute module="tasks">
-                    <TasksPage />
+                  <ProtectedRoute module="documents">
+                    <DocumentsPage />
                   </ProtectedRoute>
                 }
               />
               <Route
-                path="/tasks/:id"
+                path="/control"
                 element={
-                  <ProtectedRoute module="tasks">
-                    <TaskDetailPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/daily-reports"
-                element={
-                  <ProtectedRoute module="daily_reports">
-                    <DailyReportsPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/checklist"
-                element={
-                  <ProtectedRoute module="checklist">
-                    <ChecklistPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/reports"
-                element={
-                  <ProtectedRoute>
-                    <ReportsPage />
+                  <ProtectedRoute module="object_control">
+                    <ObjectControlPage />
                   </ProtectedRoute>
                 }
               />
@@ -110,7 +86,7 @@ export default function App() {
                 }
               />
             </Route>
-            <Route path="*" element={<Navigate to="/" replace />} />
+            <Route path="*" element={<Navigate to="/clients" replace />} />
           </Routes>
         </BrowserRouter>
       </NotificationsProvider>

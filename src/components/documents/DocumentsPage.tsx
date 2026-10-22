@@ -1,0 +1,659 @@
+import { useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
+import { loadCalcTransfer } from '../../lib/calcTransfer'
+import { loadClients, type ClientCard } from '../../lib/clients'
+import { CONTRACTOR, DESIGN_RATE_PER_M2 } from '../../lib/contractor'
+import {
+  generateAktDoc,
+  generateDesignDoc,
+  generateRemontDoc,
+  type AktLine,
+} from '../../lib/generateDocs'
+import { formatMoney, rublesInWords } from '../../lib/moneyRu'
+
+type DocKind = 'remont' | 'design' | 'akt'
+
+const inputCls =
+  'block w-full rounded-md border border-gray-300 bg-white px-2.5 py-1.5 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500'
+
+function Field({
+  label,
+  children,
+  className = '',
+  hint,
+}: {
+  label: string
+  children: React.ReactNode
+  className?: string
+  hint?: string
+}) {
+  return (
+    <label className={`block ${className}`}>
+      <span className="mb-0.5 block text-[11px] font-medium leading-tight text-gray-500">{label}</span>
+      {children}
+      {hint && <span className="mt-0.5 block text-[11px] leading-tight text-gray-400">{hint}</span>}
+    </label>
+  )
+}
+
+function clientHaystack(c: ClientCard): string {
+  return [
+    c.name,
+    c.email,
+    c.mobile,
+    c.mobile2,
+    c.city,
+    c.tag,
+    c.source,
+    c.manager,
+    c.designer,
+    c.picker,
+    c.prorab,
+    c.otk,
+    c.address,
+    c.passport_number,
+    c.inn,
+    c.objects_note,
+    c.dogovor_design,
+    c.dogovor_otdelka,
+    c.smeta,
+  ]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase()
+}
+
+function missingFromCard(c: ClientCard): string[] {
+  const miss: string[] = []
+  if (!c.name.trim()) miss.push('ФИО / название')
+  if (!c.mobile.trim()) miss.push('мобильный')
+  if (c.fizurlico === 'fiz') {
+    if (!c.passport_number.trim()) miss.push('номер паспорта')
+    if (!c.passport_issued.trim()) miss.push('кем выдан паспорт')
+    if (!c.passport_date_issued.trim()) miss.push('дата выдачи паспорта')
+    if (!c.address.trim()) miss.push('адрес регистрации')
+  } else {
+    if (!c.inn.trim()) miss.push('ИНН')
+    if (!c.address_ur.trim()) miss.push('юр. адрес')
+  }
+  return miss
+}
+
+const todayIso = () => new Date().toISOString().slice(0, 10)
+
+export default function DocumentsPage() {
+  const [clients, setClients] = useState<ClientCard[]>(() => loadClients())
+  const [q, setQ] = useState('')
+  const [clientId, setClientId] = useState('')
+  const [kind, setKind] = useState<DocKind>('remont')
+  const [busy, setBusy] = useState(false)
+  const [msg, setMsg] = useState('')
+
+  const [remont, setRemont] = useState({
+    number: '',
+    date: todayIso(),
+    city: 'Москва',
+    objectAddress: '',
+    totalSum: 0,
+    workDays: 80,
+  })
+  const [design, setDesign] = useState({
+    number: '',
+    date: todayIso(),
+    city: 'Москва',
+    objectAddress: '',
+    areaM2: 0,
+  })
+  const [akt, setAkt] = useState({
+    number: '',
+    date: todayIso(),
+    city: 'Москва',
+    objectAddress: '',
+    stageName: '',
+    paid: 0,
+    lines: [
+      { name: '', unit: 'ед.', qty: 1, price: 0 },
+      { name: '', unit: 'ед.', qty: 1, price: 0 },
+    ] as AktLine[],
+  })
+  const [executorName, setExecutorName] = useState<string>(CONTRACTOR.name)
+  const [calcTransfer, setCalcTransfer] = useState(() => loadCalcTransfer())
+
+  useEffect(() => {
+    document.title = 'Договоры и акты — СамоСтрой'
+    const list = loadClients()
+    setClients(list)
+    setCalcTransfer(loadCalcTransfer())
+    // один клиент в базе — выбираем сразу
+    if (list.length === 1) setClientId(list[0].id)
+  }, [])
+
+  useEffect(() => {
+    if (kind !== 'remont') return
+    const t = loadCalcTransfer()
+    setCalcTransfer(t)
+    if (t.transferToRemont && t.total > 0) {
+      setRemont((f) => ({ ...f, totalSum: t.total }))
+    }
+  }, [kind])
+
+  const filtered = useMemo(() => {
+    const s = q.trim().toLowerCase()
+    if (!s) return clients
+    return clients.filter((c) => clientHaystack(c).includes(s))
+  }, [clients, q])
+
+  const client = clients.find((c) => c.id === clientId) ?? null
+
+  useEffect(() => {
+    if (clientId && !filtered.some((c) => c.id === clientId)) {
+      setClientId('')
+    }
+  }, [filtered, clientId])
+
+  useEffect(() => {
+    if (!client) return
+    const addr = client.objects_note || client.address || ''
+    setRemont((f) => ({
+      ...f,
+      city: client.city || f.city,
+      objectAddress: f.objectAddress || addr,
+    }))
+    setDesign((f) => ({
+      ...f,
+      city: client.city || f.city,
+      objectAddress: f.objectAddress || addr,
+    }))
+    setAkt((f) => ({
+      ...f,
+      city: client.city || f.city,
+      objectAddress: f.objectAddress || addr,
+    }))
+  }, [client?.id])
+
+  const designTotal = (design.areaM2 || 0) * DESIGN_RATE_PER_M2
+  const aktTotal = akt.lines.reduce((s, l) => s + (Number(l.qty) || 0) * (Number(l.price) || 0), 0)
+  const aktRest = Math.max(0, aktTotal - (Number(akt.paid) || 0))
+  const cardGaps = client ? missingFromCard(client) : []
+
+  async function onGenerate() {
+    setMsg('')
+    if (!client) {
+      setMsg('Выберите клиента из поиска')
+      return
+    }
+    setBusy(true)
+    try {
+      if (kind === 'remont') {
+        if (!remont.objectAddress.trim()) throw new Error('Укажите адрес объекта')
+        if (!executorName.trim()) throw new Error('Укажите ФИО исполнителя')
+
+        const transfer = loadCalcTransfer()
+        setCalcTransfer(transfer)
+        let totalSum = remont.totalSum
+        let smetaLines = undefined as
+          | { name: string; unit: string; qty: number; price: number }[]
+          | undefined
+
+        if (transfer.transferToRemont) {
+          if (!transfer.total || transfer.lines.length === 0) {
+            throw new Error(
+              'В калькуляторе включён перенос в договор, но смета пуста — заполните объёмы или снимите галочку',
+            )
+          }
+          totalSum = transfer.total
+          if (transfer.withDetails) {
+            smetaLines = transfer.lines
+          }
+        } else if (!totalSum) {
+          throw new Error('Укажите сумму договора или включите перенос из калькулятора')
+        }
+
+        await generateRemontDoc(client, {
+          ...remont,
+          totalSum,
+          executorName,
+          smetaLines,
+        })
+      } else if (kind === 'design') {
+        if (!design.objectAddress.trim()) throw new Error('Укажите адрес объекта')
+        if (!design.areaM2) throw new Error('Укажите площадь, м²')
+        if (!executorName.trim()) throw new Error('Укажите ФИО исполнителя')
+        await generateDesignDoc(client, { ...design, executorName })
+      } else {
+        if (!akt.objectAddress.trim()) throw new Error('Укажите адрес объекта')
+        if (!akt.stageName.trim()) throw new Error('Укажите название этапа')
+        if (!akt.lines.some((l) => l.name.trim() && l.price > 0)) {
+          throw new Error('Добавьте хотя бы одну строку работ')
+        }
+        if (!executorName.trim()) throw new Error('Укажите ФИО исполнителя')
+        await generateAktDoc(client, { ...akt, executorName })
+      }
+      setMsg('Документ скачан (.docx)')
+    } catch (e) {
+      setMsg(e instanceof Error ? e.message : 'Ошибка генерации')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const tabs: { id: DocKind; label: string }[] = [
+    { id: 'remont', label: 'Договор ремонт' },
+    { id: 'design', label: 'Договор дизайн' },
+    { id: 'akt', label: 'Акт работ' },
+  ]
+
+  const showClientList = q.trim().length > 0 || !client
+
+  return (
+    <div className="-mx-1 space-y-2 pb-20 sm:space-y-3">
+      <div className="rounded-lg border border-gray-200 bg-white p-3 shadow-sm">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-start">
+          <div className="min-w-0 flex-1 space-y-1.5">
+            <input
+              className={inputCls}
+              placeholder="Поиск по базе клиентов…"
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+            />
+            {showClientList && (
+              <div>
+                {!client && (
+                  <p className="mb-1 text-[11px] font-medium text-amber-700">
+                    Нажмите на клиента в списке — без этого договор не сформировать
+                  </p>
+                )}
+                <div className="max-h-28 overflow-y-auto rounded-md border border-gray-200">
+                  {filtered.length === 0 ? (
+                    <p className="px-2 py-2 text-xs text-gray-500">Никого не найдено</p>
+                  ) : (
+                    <ul className="divide-y divide-gray-100">
+                      {filtered.slice(0, 8).map((c) => (
+                        <li key={c.id}>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setClientId(c.id)
+                              setQ('')
+                              setMsg('')
+                            }}
+                            className={`flex w-full items-center justify-between gap-2 px-2 py-1.5 text-left text-sm ${
+                              clientId === c.id ? 'bg-blue-50' : 'hover:bg-blue-50/60'
+                            }`}
+                          >
+                            <span className="truncate font-medium text-gray-900">
+                              {c.name || 'Без имени'}
+                            </span>
+                            <span className="shrink-0 whitespace-nowrap text-xs tabular-nums text-gray-500">
+                              {c.mobile || '—'}
+                            </span>
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+          {client && (
+            <div className="flex shrink-0 flex-wrap items-center gap-2 rounded-md border border-emerald-200 bg-emerald-50 px-2 py-1.5 text-xs sm:max-w-xs sm:justify-end">
+              <span className="truncate font-medium text-emerald-900">{client.name}</span>
+              <span className="rounded-md bg-white/80 px-1.5 py-0.5 font-medium text-emerald-800">
+                {client.fizurlico === 'ur' ? 'Юр' : 'Физ'}
+              </span>
+              <Link
+                to={`/clients/${client.id}/main`}
+                className="ml-auto font-medium text-blue-700 hover:underline sm:ml-0"
+              >
+                Карточка →
+              </Link>
+              <button
+                type="button"
+                className="text-emerald-800/70 hover:text-emerald-950"
+                title="Сменить клиента"
+                onClick={() => setClientId('')}
+              >
+                ×
+              </button>
+            </div>
+          )}
+        </div>
+        {client && cardGaps.length > 0 && (
+          <p className="mt-1.5 truncate text-[11px] text-amber-700" title={cardGaps.join(', ')}>
+            В КК не хватает: {cardGaps.join(', ')}
+          </p>
+        )}
+      </div>
+
+      <div className="flex flex-wrap gap-0.5 border-b border-gray-200">
+        {tabs.map((t) => (
+          <button
+            key={t.id}
+            type="button"
+            onClick={() => setKind(t.id)}
+            className={`-mb-px border-b-2 px-2.5 py-1.5 text-sm font-medium ${
+              kind === t.id
+                ? 'border-blue-600 text-blue-700'
+                : 'border-transparent text-gray-500 hover:text-gray-800'
+            }`}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {kind === 'remont' && (
+        <div className="rounded-lg border border-gray-200 bg-white p-3 shadow-sm">
+          <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
+            <Field label="Номер договора">
+              <input
+                className={inputCls}
+                value={remont.number}
+                onChange={(e) => setRemont({ ...remont, number: e.target.value })}
+                placeholder="13"
+              />
+            </Field>
+            <Field label="Дата договора">
+              <input
+                type="date"
+                className={inputCls}
+                value={remont.date}
+                onChange={(e) => setRemont({ ...remont, date: e.target.value })}
+              />
+            </Field>
+            <Field label="Город">
+              <input
+                className={inputCls}
+                value={remont.city}
+                onChange={(e) => setRemont({ ...remont, city: e.target.value })}
+              />
+            </Field>
+            <Field label="Срок работ, раб. дней">
+              <input
+                type="number"
+                min={1}
+                className={inputCls}
+                value={remont.workDays || ''}
+                onChange={(e) => setRemont({ ...remont, workDays: Number(e.target.value) || 0 })}
+              />
+            </Field>
+            <Field label="Адрес объекта" className="col-span-2 lg:col-span-2">
+              <input
+                className={inputCls}
+                value={remont.objectAddress}
+                onChange={(e) => setRemont({ ...remont, objectAddress: e.target.value })}
+              />
+            </Field>
+            <Field
+              label="Сумма, ₽"
+              className="col-span-2 lg:col-span-2"
+              hint={
+                calcTransfer.transferToRemont
+                  ? `Калькулятор${calcTransfer.withDetails ? ' + детализация' : ''}`
+                  : remont.totalSum
+                    ? rublesInWords(remont.totalSum)
+                    : undefined
+              }
+            >
+              <input
+                type="number"
+                min={0}
+                step="0.01"
+                className={inputCls}
+                value={
+                  calcTransfer.transferToRemont ? calcTransfer.total || '' : remont.totalSum || ''
+                }
+                readOnly={calcTransfer.transferToRemont}
+                onChange={(e) => setRemont({ ...remont, totalSum: Number(e.target.value) || 0 })}
+              />
+            </Field>
+          </div>
+        </div>
+      )}
+
+      {kind === 'design' && (
+        <div className="rounded-lg border border-gray-200 bg-white p-3 shadow-sm">
+          <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
+            <Field label="Номер договора">
+              <input
+                className={inputCls}
+                value={design.number}
+                onChange={(e) => setDesign({ ...design, number: e.target.value })}
+              />
+            </Field>
+            <Field label="Дата договора">
+              <input
+                type="date"
+                className={inputCls}
+                value={design.date}
+                onChange={(e) => setDesign({ ...design, date: e.target.value })}
+              />
+            </Field>
+            <Field label="Город">
+              <input
+                className={inputCls}
+                value={design.city}
+                onChange={(e) => setDesign({ ...design, city: e.target.value })}
+              />
+            </Field>
+            <Field label="Площадь, м²">
+              <input
+                type="number"
+                min={0}
+                step="0.1"
+                className={inputCls}
+                value={design.areaM2 || ''}
+                onChange={(e) => setDesign({ ...design, areaM2: Number(e.target.value) || 0 })}
+              />
+            </Field>
+            <Field label="Адрес объекта" className="col-span-2">
+              <input
+                className={inputCls}
+                value={design.objectAddress}
+                onChange={(e) => setDesign({ ...design, objectAddress: e.target.value })}
+              />
+            </Field>
+            <Field label="Итого" className="col-span-2">
+              <div
+                className={`${inputCls} flex items-center gap-1 bg-gray-50 text-gray-700`}
+              >
+                <span className="font-semibold tabular-nums">{formatMoney(designTotal)} ₽</span>
+                <span className="text-xs text-gray-400">
+                  · 4× {formatMoney(designTotal / 4)}
+                </span>
+              </div>
+            </Field>
+          </div>
+        </div>
+      )}
+
+      {kind === 'akt' && (
+        <div className="rounded-lg border border-gray-200 bg-white p-3 shadow-sm">
+          <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
+            <Field label="Номер акта">
+              <input
+                className={inputCls}
+                value={akt.number}
+                onChange={(e) => setAkt({ ...akt, number: e.target.value })}
+              />
+            </Field>
+            <Field label="Дата акта">
+              <input
+                type="date"
+                className={inputCls}
+                value={akt.date}
+                onChange={(e) => setAkt({ ...akt, date: e.target.value })}
+              />
+            </Field>
+            <Field label="Город">
+              <input
+                className={inputCls}
+                value={akt.city}
+                onChange={(e) => setAkt({ ...akt, city: e.target.value })}
+              />
+            </Field>
+            <Field label="Этап">
+              <input
+                className={inputCls}
+                value={akt.stageName}
+                onChange={(e) => setAkt({ ...akt, stageName: e.target.value })}
+                placeholder="Монтаж…"
+              />
+            </Field>
+            <Field label="Адрес объекта" className="col-span-2 lg:col-span-4">
+              <input
+                className={inputCls}
+                value={akt.objectAddress}
+                onChange={(e) => setAkt({ ...akt, objectAddress: e.target.value })}
+              />
+            </Field>
+          </div>
+
+          <div className="mt-2 max-h-36 overflow-auto rounded-md border border-gray-200">
+            <table className="min-w-full divide-y divide-gray-200 text-sm">
+              <thead className="sticky top-0 bg-gray-50 text-left text-xs uppercase text-gray-500">
+                <tr>
+                  <th className="px-2 py-1">Работа</th>
+                  <th className="px-2 py-1">Ед.</th>
+                  <th className="px-2 py-1">Кол.</th>
+                  <th className="px-2 py-1">Цена</th>
+                  <th className="px-2 py-1">Σ</th>
+                  <th className="px-2 py-1" />
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {akt.lines.map((l, i) => (
+                  <tr key={i}>
+                    <td className="min-w-[140px] px-1 py-1">
+                      <input
+                        className={inputCls}
+                        value={l.name}
+                        onChange={(e) => {
+                          const lines = [...akt.lines]
+                          lines[i] = { ...l, name: e.target.value }
+                          setAkt({ ...akt, lines })
+                        }}
+                      />
+                    </td>
+                    <td className="w-16 px-1 py-1">
+                      <input
+                        className={inputCls}
+                        value={l.unit}
+                        onChange={(e) => {
+                          const lines = [...akt.lines]
+                          lines[i] = { ...l, unit: e.target.value }
+                          setAkt({ ...akt, lines })
+                        }}
+                      />
+                    </td>
+                    <td className="w-16 px-1 py-1">
+                      <input
+                        type="number"
+                        className={inputCls}
+                        value={l.qty || ''}
+                        onChange={(e) => {
+                          const lines = [...akt.lines]
+                          lines[i] = { ...l, qty: Number(e.target.value) || 0 }
+                          setAkt({ ...akt, lines })
+                        }}
+                      />
+                    </td>
+                    <td className="w-20 px-1 py-1">
+                      <input
+                        type="number"
+                        className={inputCls}
+                        value={l.price || ''}
+                        onChange={(e) => {
+                          const lines = [...akt.lines]
+                          lines[i] = { ...l, price: Number(e.target.value) || 0 }
+                          setAkt({ ...akt, lines })
+                        }}
+                      />
+                    </td>
+                    <td className="whitespace-nowrap px-1 py-1 text-xs tabular-nums text-gray-800">
+                      {formatMoney(l.qty * l.price)}
+                    </td>
+                    <td className="px-1 py-1">
+                      <button
+                        type="button"
+                        className="text-xs text-red-600"
+                        onClick={() =>
+                          setAkt({ ...akt, lines: akt.lines.filter((_, j) => j !== i) })
+                        }
+                      >
+                        ×
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div className="mt-1.5 flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              className="text-xs font-medium text-blue-700 hover:underline"
+              onClick={() =>
+                setAkt({
+                  ...akt,
+                  lines: [...akt.lines, { name: '', unit: 'ед.', qty: 1, price: 0 }],
+                })
+              }
+            >
+              + Строка
+            </button>
+            <Field label="Оплачено" className="w-28">
+              <input
+                type="number"
+                className={inputCls}
+                value={akt.paid || ''}
+                onChange={(e) => setAkt({ ...akt, paid: Number(e.target.value) || 0 })}
+              />
+            </Field>
+            <span className="text-xs text-gray-600">
+              Итого <b>{formatMoney(aktTotal)}</b> · остаток <b>{formatMoney(aktRest)}</b>
+            </span>
+          </div>
+        </div>
+      )}
+
+      {/* Липкая панель: исполнитель + сформировать — всегда на экране */}
+      <div className="fixed bottom-0 left-0 right-0 z-30 border-t border-gray-200 bg-white/95 backdrop-blur lg:left-64">
+        <div className="mx-auto flex max-w-7xl flex-col gap-2 px-4 py-2.5 sm:flex-row sm:items-end sm:gap-4 sm:px-6 lg:px-8">
+          <Field label="ФИО Исполнителя" className="min-w-0 flex-1">
+            <input
+              className={inputCls}
+              value={executorName}
+              onChange={(e) => setExecutorName(e.target.value)}
+              placeholder="Ротарь Даниил Сергеевич"
+            />
+          </Field>
+          <div className="flex shrink-0 flex-col items-stretch gap-1 sm:items-end">
+            {(msg || !client) && (
+              <p
+                className={`text-xs ${
+                  msg.includes('скачан')
+                    ? 'text-emerald-700'
+                    : !client
+                      ? 'text-amber-700'
+                      : 'text-red-600'
+                }`}
+              >
+                {msg || 'Выберите клиента в списке выше'}
+              </p>
+            )}
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => void onGenerate()}
+              className="inline-flex items-center justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {busy ? 'Формируем…' : 'Сформировать и скачать'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}

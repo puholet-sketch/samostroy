@@ -1,31 +1,34 @@
 ---
 project: samostroy
-v: 4
+v: 5
 ---
 
-# Самострой
+# СамоСтрой
 
-CRM/ops для ремонтной компании: продажи (дизайн → ремонт) и производство.
+MVP сужен под заказчика: клиентская карточка (КК) → персональные документы + контроль объекта.
+UI: Tremor Dashboard (`@tremor/react` + Tailwind) — светлый сайдбар, карточки KPI, без наложений.
 
-## Стек
+## Оставляем
 
-React 18 + Vite + TypeScript + Tailwind (primary-600 blue как iFrontIngos) + React Router + Leaflet + Recharts + Headless UI + Heroicons.
+- Карточка клиента (поля — эталон с prod CRM, только чтение)
+- Договор ремонта и договор дизайна из КК (рыбы docx)
+- Акты выполненных работ
+- Линейный калькулятор ремонта по прайсу → индивидуальные суммы
+- Контроль объекта: публичная ссылка для отчёта рабочего (текст+фото/видео); календарь дат (красный = нет отчёта)
 
-## Данные (фаза 1)
+## Убираем временно
 
-- `data/*.json` — источник истины (в репо).
-- `media/` — файлы фото/видео; в JSON только пути, не base64.
-- `IRepository` / `JsonRepository` — адаптер; позже Postgres/MariaDB/Supabase.
-- Мутации в браузере пишутся в `localStorage` поверх seed JSON.
+Kanban/эпики, карта, воронка продаж, security-матрица UI (упростить), daily reports как отдельный модуль → заменить контролем объекта.
 
-## Роли
+## Эталоны (локально Downloads / копировать в `docs/templates/`)
 
-owner (директор), seller, foreman, builder, supervisor, client.
-Права: `data/permissions.json` (role × module × read/write). Client видит только свои объекты; этапы/отчёты — при `clientVisible=true`.
+- Рыба договора.docx — ремонт
+- Рыба_Договора_о_создании_дизайн_проекта_.docx — дизайн
+- АКТ_ВЫПОЛНЕННЫХ_РАБОТ_№_5_Кузнецова.docx — акт
+- Прайс Лист на март .pdf — прайс калькулятора
 
-## Домен
+## Prod CRM (read-only)
 
-- 14 этапов из REMONT Светланова → `data/stage_template.json`; суммы per object.
-- Seller: много объектов (`sellerId`).
-- Daily report: write по permission; дедлайн 21:00.
-- Карта: Москва + МО, Nominatim autocomplete.
+- URL: http://crm.1-remont.com
+- Смотреть КК: Гончаров / ideally №13352; серые строки кликабельны
+- Ничего не писать/не удалять
