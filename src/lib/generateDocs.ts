@@ -24,15 +24,14 @@ const PAGE_W = 11906
 const MARGIN = 850
 const CONTENT_W = PAGE_W - MARGIN * 2
 
-/** Как было: красные блоки сторон + чёрный текст; только шапки сметных таблиц — пастельный зелёный */
-const BRAND = 'C00000'
-const TABLE_HEAD = 'B7D4B0' // пастельный зелёный (шапка наименования работ)
+/** Шапки всех таблиц — едва заметный пастельный зелёный (как штриховка) */
+const BRAND = 'C00000' // только подчёркивание разделов в тексте
+const TABLE_HEAD = 'F8FCF6'
 const TABLE_HEAD_TEXT = '1A1A1A'
-const ZEBRA = 'F5F5F5'
-const LABEL_BG = 'F5F5F5'
+const ZEBRA = 'FAFDF9'
+const LABEL_BG = 'F7F7F7'
 
-const thin = { style: BorderStyle.SINGLE, size: 4, color: '999999' }
-const thick = { style: BorderStyle.SINGLE, size: 8, color: '1A1A1A' }
+const thin = { style: BorderStyle.SINGLE, size: 4, color: 'AAAAAA' }
 const noBorder = { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' }
 
 function run(
@@ -178,12 +177,12 @@ function partyTable(titleText: string, rows: [string, string][]): Table {
           new TableCell({
             columnSpan: 2,
             width: { size: CONTENT_W, type: WidthType.DXA },
-            shading: { type: ShadingType.CLEAR, fill: BRAND },
-            borders: { top: thick, bottom: thick, left: thick, right: thick },
+            shading: { type: ShadingType.CLEAR, fill: TABLE_HEAD },
+            borders: { top: thin, bottom: thin, left: thin, right: thin },
             margins: { top: 70, bottom: 70, left: 100, right: 100 },
             children: [
               new Paragraph({
-                children: [run(titleText, { bold: true, size: 20, color: 'FFFFFF' })],
+                children: [run(titleText, { bold: true, size: 20, color: TABLE_HEAD_TEXT })],
               }),
             ],
           }),
@@ -758,10 +757,7 @@ export async function buildAktDocument(client: ClientCard, form: AktForm): Promi
         : [{ name: '—', unit: 'ед.', qty: 0, price: 0 }],
     ),
     para(''),
-    new Table({
-      width: { size: CONTENT_W, type: WidthType.DXA },
-      rows: summaryRows.map(([k, v]) => kvRow(k, v, 4200, CONTENT_W - 4200)),
-    }),
+    partyTable('ИТОГО ПО АКТУ', summaryRows),
 
     sectionHead('2. КАЧЕСТВО РАБОТ'),
     clause(

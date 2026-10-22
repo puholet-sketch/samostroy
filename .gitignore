@@ -38,3 +38,6 @@ media/**
 
 # Vite
 .vite/
+
+# Временные превью документов
+docs/preview_tmp/

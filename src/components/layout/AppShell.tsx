@@ -15,7 +15,11 @@ import {
   RiLogoutBoxRLine,
 } from '@remixicon/react'
 import { useAuth } from '../../contexts/AuthContext'
-import { PageHeaderProvider, usePageHeaderSlot } from '../../contexts/PageHeaderContext'
+import {
+  PageHeaderProvider,
+  usePageHeaderMetaSlot,
+  usePageHeaderSlot,
+} from '../../contexts/PageHeaderContext'
 import type { ModuleKey } from '../../services/types'
 import { loadClients } from '../../lib/clients'
 import { BrandLogo } from '../common/BrandLogo'
@@ -135,6 +139,7 @@ function AppShellInner() {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [clientName, setClientName] = useState('')
   const headerActions = usePageHeaderSlot()
+  const headerMeta = usePageHeaderMetaSlot()
 
   const card = parseClientCardPath(location.pathname)
 
@@ -161,9 +166,6 @@ function AppShellInner() {
   }, [card?.id, location.pathname])
 
   const title = routeTitle(location.pathname)
-  const sectionLabel = card
-    ? CLIENT_SECTIONS.find((s) => s.id === card.section)?.label
-    : null
 
   const sidebar = (
     <div className="flex h-full flex-col">
@@ -238,11 +240,9 @@ function AppShellInner() {
             >
               {mobileOpen ? <RiCloseLine className="h-5 w-5" /> : <RiMenuLine className="h-5 w-5" />}
             </button>
-            <div className="min-w-0 flex-1">
+            <div className="flex min-w-0 flex-1 items-center gap-3">
               <h1 className="truncate text-lg font-semibold leading-none text-gray-900">{title}</h1>
-              {sectionLabel && (
-                <p className="mt-0.5 truncate text-xs text-gray-400">{sectionLabel}</p>
-              )}
+              {headerMeta && <div className="min-w-0 shrink truncate">{headerMeta}</div>}
             </div>
             {headerActions && <div className="shrink-0">{headerActions}</div>}
           </div>

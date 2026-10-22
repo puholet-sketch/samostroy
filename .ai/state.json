@@ -3,11 +3,11 @@
   "updated": "2026-10-22",
   "status": "active",
   "goal": "MVP: КК + договоры/акты/калькулятор + контроль объекта",
-  "next": "Проверить реестр клиентов после импорта CRM; просмотр отчётов в контроле",
+  "next": "Проверить скачивание договоров на Pages после деплоя",
   "blockers": [],
   "hot_files": [
-    "data/clients_from_crm.json",
-    "src/lib/clients.ts",
-    "src/components/clients/ClientsListPage.tsx"
+    "src/lib/generateDocs.ts",
+    "src/components/documents/DocumentsPage.tsx",
+    "docs/preview/01_Dogovor_remont_preview.docx"
   ]
 }
