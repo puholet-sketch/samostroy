@@ -16,7 +16,7 @@ function formatAt(iso: string) {
   }
 }
 
-const BUILD_STAMP = '2026-10-22 · build 64b6130+'
+const BUILD_STAMP = '2026-10-23 · audit deploy'
 
 export default function UpdatesPage() {
   useEffect(() => {

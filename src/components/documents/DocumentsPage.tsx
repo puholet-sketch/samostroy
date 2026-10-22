@@ -10,6 +10,7 @@ import {
   type AktLine,
 } from '../../lib/generateDocs'
 import { formatMoney, rublesInWords } from '../../lib/moneyRu'
+import { PhoneActions } from '../ui/PhoneActions'
 
 type DocKind = 'remont' | 'design' | 'akt'
 
@@ -269,7 +270,12 @@ export default function DocumentsPage() {
                   ) : (
                     <ul className="divide-y divide-gray-100">
                       {filtered.slice(0, 8).map((c) => (
-                        <li key={c.id}>
+                        <li
+                          key={c.id}
+                          className={`flex items-center gap-2 px-2 py-1.5 text-sm ${
+                            clientId === c.id ? 'bg-blue-50' : 'hover:bg-blue-50/60'
+                          }`}
+                        >
                           <button
                             type="button"
                             onClick={() => {
@@ -277,17 +283,11 @@ export default function DocumentsPage() {
                               setQ('')
                               setMsg('')
                             }}
-                            className={`flex w-full items-center justify-between gap-2 px-2 py-1.5 text-left text-sm ${
-                              clientId === c.id ? 'bg-blue-50' : 'hover:bg-blue-50/60'
-                            }`}
+                            className="min-w-0 flex-1 truncate text-left font-medium text-gray-900"
                           >
-                            <span className="truncate font-medium text-gray-900">
-                              {c.name || 'Без имени'}
-                            </span>
-                            <span className="shrink-0 whitespace-nowrap text-xs tabular-nums text-gray-500">
-                              {c.mobile || '—'}
-                            </span>
+                            {c.name || 'Без имени'}
                           </button>
+                          <PhoneActions phone={c.mobile} showNumber size="sm" />
                         </li>
                       ))}
                     </ul>
