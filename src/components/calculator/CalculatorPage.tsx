@@ -18,6 +18,7 @@ type PriceItem = {
 type QtyMap = Record<string, number>
 
 const STORAGE_KEY = 'samostroy:calc_qty_v1'
+const SECTION_KEY = 'samostroy:calc_section_v1'
 
 const items: PriceItem[] = (priceList.items ?? []).map((it) => ({
   section: it.section || 'Прочее',
@@ -38,6 +39,16 @@ function loadQty(): QtyMap {
     /* ignore */
   }
   return {}
+}
+
+function loadSection(fallback: string): string {
+  try {
+    const raw = localStorage.getItem(SECTION_KEY)
+    if (raw) return raw
+  } catch {
+    /* ignore */
+  }
+  return fallback
 }
 
 function money(n: number) {
@@ -67,6 +78,12 @@ export default function CalculatorPage() {
     return [...map.entries()]
   }, [])
 
+  const sectionNames = useMemo(() => sections.map(([name]) => name), [sections])
+
+  const [activeSection, setActiveSection] = useState(() =>
+    loadSection(sectionNames[0] ?? 'Прочее'),
+  )
+
   useEffect(() => {
     document.title = 'Калькулятор — СамоСтрой'
   }, [])
@@ -74,6 +91,10 @@ export default function CalculatorPage() {
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(qty))
   }, [qty])
+
+  useEffect(() => {
+    localStorage.setItem(SECTION_KEY, activeSection)
+  }, [activeSection])
 
   const search = q.trim().toLowerCase()
 
@@ -106,7 +127,7 @@ export default function CalculatorPage() {
     })
   }, [transferToRemont, withDetails, total, lines])
 
-  const visibleSections = useMemo(() => {
+  const filteredSections = useMemo(() => {
     return sections
       .map(([section, rows]) => {
         const visible = rows.filter(({ it, idx }) => {
@@ -122,6 +143,21 @@ export default function CalculatorPage() {
       })
       .filter(([, visible]) => visible.length > 0)
   }, [sections, qty, onlyFilled, search])
+
+  const filteredNames = useMemo(
+    () => filteredSections.map(([name]) => name),
+    [filteredSections],
+  )
+
+  useEffect(() => {
+    if (filteredNames.length === 0) return
+    if (!filteredNames.includes(activeSection)) {
+      setActiveSection(filteredNames[0])
+    }
+  }, [filteredNames, activeSection])
+
+  const activeRows =
+    filteredSections.find(([name]) => name === activeSection)?.[1] ?? []
 
   function setItemQty(key: string, value: string) {
     const n = value === '' ? 0 : Number(value.replace(',', '.'))
@@ -167,72 +203,85 @@ export default function CalculatorPage() {
         </div>
       </Panel>
 
-      {visibleSections.length === 0 ? (
+      {filteredSections.length === 0 ? (
         <p className="rounded-lg border border-gray-200 bg-white px-4 py-10 text-center text-sm text-gray-500 shadow-sm">
           Ничего не найдено
         </p>
       ) : (
-        <div className="space-y-4">
-          {visibleSections.map(([section, rows]) => (
-            <div
-              key={section}
-              className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm"
-            >
-              <div className="border-b border-gray-100 bg-gray-50 px-4 py-2.5">
-                <p className="text-sm font-semibold text-gray-900">{section}</p>
-                <p className="text-xs text-gray-500">{rows.length} поз.</p>
-              </div>
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200 text-sm">
-                  <thead className="bg-white text-left text-xs uppercase text-gray-500">
-                    <tr>
-                      <th className="px-4 py-2 font-medium">Работа</th>
-                      <th className="whitespace-nowrap px-3 py-2 font-medium">Ед.</th>
-                      <th className="whitespace-nowrap px-3 py-2 text-right font-medium">Цена</th>
-                      <th className="w-40 whitespace-nowrap px-3 py-2 font-medium">Объём</th>
-                      <th className="whitespace-nowrap px-4 py-2 text-right font-medium">Сумма</th>
+        <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+          {/* Одна строка категорий — вместо отдельного заголовка секции */}
+          <div className="flex items-center gap-1 overflow-x-auto border-b border-gray-100 bg-gray-50 px-2 py-2">
+            {filteredNames.map((name) => {
+              const count =
+                filteredSections.find(([s]) => s === name)?.[1].length ?? 0
+              const active = name === activeSection
+              return (
+                <button
+                  key={name}
+                  type="button"
+                  onClick={() => setActiveSection(name)}
+                  className={`shrink-0 rounded-md px-3 py-1.5 text-sm font-medium whitespace-nowrap transition-colors ${
+                    active
+                      ? 'bg-blue-600 text-white shadow-sm'
+                      : 'text-gray-600 hover:bg-white hover:text-gray-900'
+                  }`}
+                  title={`${count} поз.`}
+                >
+                  {name}
+                </button>
+              )
+            })}
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200 text-sm">
+              <thead className="bg-white text-left text-xs uppercase text-gray-500">
+                <tr>
+                  <th className="px-4 py-2 font-medium">Работа</th>
+                  <th className="whitespace-nowrap px-3 py-2 font-medium">Ед.</th>
+                  <th className="whitespace-nowrap px-3 py-2 text-right font-medium">Цена</th>
+                  <th className="w-40 whitespace-nowrap px-3 py-2 font-medium">Объём</th>
+                  <th className="whitespace-nowrap px-4 py-2 text-right font-medium">Сумма</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {activeRows.map(({ it, idx }) => {
+                  const key = itemKey(it, idx)
+                  const n = Number(qty[key]) || 0
+                  const line = n * it.price
+                  return (
+                    <tr key={key} className={n > 0 ? 'bg-emerald-50/60' : 'bg-white'}>
+                      <td className="max-w-xl px-4 py-2.5 text-gray-800">{it.name}</td>
+                      <td className="whitespace-nowrap px-3 py-2.5 text-gray-500">{it.unit}</td>
+                      <td className="whitespace-nowrap px-3 py-2.5 text-right tabular-nums text-gray-700">
+                        {money(it.price)} ₽
+                      </td>
+                      <td className="px-3 py-2">
+                        <div className="flex items-center gap-1.5">
+                          <input
+                            type="number"
+                            min={0}
+                            step="any"
+                            inputMode="decimal"
+                            className={inputCls}
+                            value={n || ''}
+                            placeholder="0"
+                            onChange={(e) => setItemQty(key, e.target.value)}
+                          />
+                          <span className="whitespace-nowrap text-xs text-gray-400">
+                            {it.unit}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="whitespace-nowrap px-4 py-2.5 text-right font-semibold tabular-nums text-gray-900">
+                        {n > 0 ? `${money(line)} ₽` : '—'}
+                      </td>
                     </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100">
-                    {rows.map(({ it, idx }) => {
-                      const key = itemKey(it, idx)
-                      const n = Number(qty[key]) || 0
-                      const line = n * it.price
-                      return (
-                        <tr key={key} className={n > 0 ? 'bg-emerald-50/60' : 'bg-white'}>
-                          <td className="max-w-xl px-4 py-2.5 text-gray-800">{it.name}</td>
-                          <td className="whitespace-nowrap px-3 py-2.5 text-gray-500">{it.unit}</td>
-                          <td className="whitespace-nowrap px-3 py-2.5 text-right tabular-nums text-gray-700">
-                            {money(it.price)} ₽
-                          </td>
-                          <td className="px-3 py-2">
-                            <div className="flex items-center gap-1.5">
-                              <input
-                                type="number"
-                                min={0}
-                                step="any"
-                                inputMode="decimal"
-                                className={inputCls}
-                                value={n || ''}
-                                placeholder="0"
-                                onChange={(e) => setItemQty(key, e.target.value)}
-                              />
-                              <span className="whitespace-nowrap text-xs text-gray-400">
-                                {it.unit}
-                              </span>
-                            </div>
-                          </td>
-                          <td className="whitespace-nowrap px-4 py-2.5 text-right font-semibold tabular-nums text-gray-900">
-                            {n > 0 ? `${money(line)} ₽` : '—'}
-                          </td>
-                        </tr>
-                      )
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          ))}
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
