@@ -16,7 +16,7 @@ function formatAt(iso: string) {
   }
 }
 
-const BUILD_STAMP = '2026-10-23 · compact report'
+const BUILD_STAMP = '2026-10-23 · report limits'
 
 export default function UpdatesPage() {
   useEffect(() => {

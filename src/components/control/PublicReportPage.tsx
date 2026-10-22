@@ -5,7 +5,6 @@ import {
   attachmentKind,
   formatBytes,
   getMediaBlob,
-  MAX_ATTACHMENT_BYTES,
   putMediaBlob,
 } from '../../lib/mediaStore'
 import {
@@ -17,11 +16,19 @@ import {
 } from '../../lib/objectReports'
 import { BrandLogo } from '../common/BrandLogo'
 
+/** Суммарный лимит вложений на один отчёт */
+const MAX_REPORT_MEDIA_BYTES = 5 * 1024 * 1024
+
 const inputCls =
   'block w-full rounded border border-gray-300 bg-white px-2 py-1.5 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500'
 
+function clampDateToToday(iso: string): string {
+  const today = todayIso()
+  return iso > today ? today : iso
+}
+
 function parseReportDate(raw: string | null): string {
-  if (raw && /^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw
+  if (raw && /^\d{4}-\d{2}-\d{2}$/.test(raw)) return clampDateToToday(raw)
   return todayIso()
 }
 
@@ -46,9 +53,20 @@ export default function PublicReportPage() {
     link?.objectTitle?.trim() ||
     'Адрес уточняется'
 
+  const today = todayIso()
+  const mediaTotalBytes = media.reduce((s, m) => s + (m.size || 0), 0)
+
   useEffect(() => {
     document.title = 'Отчёт по объекту — СамоСтрой'
   }, [])
+
+  // если в URL дата в будущем — откатить на сегодня
+  useEffect(() => {
+    const raw = searchParams.get('date')
+    if (raw && /^\d{4}-\d{2}-\d{2}$/.test(raw) && raw > today) {
+      setSearchParams({ date: today }, { replace: true })
+    }
+  }, [searchParams, today, setSearchParams])
 
   useEffect(() => {
     if (!token) return
@@ -91,15 +109,18 @@ export default function PublicReportPage() {
     const files = Array.from(e.target.files ?? [])
     e.target.value = ''
     setMsg('')
+    let used = media.reduce((s, m) => s + (m.size || 0), 0)
     for (const file of files) {
-      if (file.size > MAX_ATTACHMENT_BYTES) {
-        setMsg(`«${file.name}» слишком большой (макс. ${formatBytes(MAX_ATTACHMENT_BYTES)})`)
-        continue
-      }
       const kind = attachmentKind(file.type)
       if (kind === 'file') {
         setMsg(`«${file.name}» — нужны фото или видео`)
         continue
+      }
+      if (used + file.size > MAX_REPORT_MEDIA_BYTES) {
+        setMsg(
+          `Лимит вложений ${formatBytes(MAX_REPORT_MEDIA_BYTES)} на отчёт. Сейчас ${formatBytes(used)}, «${file.name}» не помещается.`,
+        )
+        break
       }
       const id = `ormedia-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
       await putMediaBlob(id, file)
@@ -110,6 +131,7 @@ export default function PublicReportPage() {
         size: file.size,
         kind,
       }
+      used += file.size
       setMedia((prev) => [...prev, meta])
       setPreviews((prev) => ({ ...prev, [id]: URL.createObjectURL(file) }))
     }
@@ -134,6 +156,15 @@ export default function PublicReportPage() {
     }
     if (!workDone.trim()) {
       setMsg('Опишите проделанные работы')
+      return
+    }
+    if (date > todayIso()) {
+      setMsg('Дата не может быть позже сегодняшней')
+      return
+    }
+    const total = media.reduce((s, m) => s + (m.size || 0), 0)
+    if (total > MAX_REPORT_MEDIA_BYTES) {
+      setMsg(`Вложения больше ${formatBytes(MAX_REPORT_MEDIA_BYTES)}`)
       return
     }
     setBusy(true)
@@ -201,12 +232,13 @@ export default function PublicReportPage() {
           <div className="flex items-center gap-2">
             <input
               type="date"
+              max={today}
               className="w-[9.5rem] shrink-0 rounded border border-gray-300 bg-white px-1.5 py-1 text-xs tabular-nums text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
               value={date}
               onChange={(e) => {
                 const v = e.target.value
                 if (!v) return
-                setSearchParams({ date: v }, { replace: true })
+                setSearchParams({ date: clampDateToToday(v) }, { replace: true })
               }}
               aria-label="Дата отчёта"
             />
@@ -222,7 +254,11 @@ export default function PublicReportPage() {
             />
             <button
               type="button"
-              title={hasMedia ? `Вложений: ${media.length}` : 'Прикрепить фото / видео'}
+              title={
+                hasMedia
+                  ? `Вложений: ${media.length} · ${formatBytes(mediaTotalBytes)} / ${formatBytes(MAX_REPORT_MEDIA_BYTES)}`
+                  : `Прикрепить фото / видео (до ${formatBytes(MAX_REPORT_MEDIA_BYTES)} суммарно)`
+              }
               aria-label={hasMedia ? `Вложений: ${media.length}` : 'Прикрепить фото или видео'}
               onClick={() => fileRef.current?.click()}
               className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border ${
@@ -234,7 +270,9 @@ export default function PublicReportPage() {
               <RiAttachment2 className="h-5 w-5" />
             </button>
             {hasMedia && (
-              <span className="text-xs tabular-nums text-emerald-700">{media.length}</span>
+              <span className="text-xs tabular-nums text-emerald-700">
+                {media.length} · {formatBytes(mediaTotalBytes)}
+              </span>
             )}
           </div>
 
