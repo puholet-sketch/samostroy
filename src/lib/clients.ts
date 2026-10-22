@@ -1,6 +1,16 @@
 import seedPublic from '../../data/clients_public.json'
+import { phoneDigitsMatch } from './phoneActions'
 
 export type ClientPersonType = 'fiz' | 'ur'
+
+export type ClientObject = {
+  id: string
+  address: string
+  title: string
+  contractNumber: string
+}
+
+export const CHANNEL_OPTIONS = ['Соцсети', 'Маркетолог', 'Рекомендация', 'Сайт', 'Другое'] as const
 
 export type ClientCard = {
   id: string
@@ -17,10 +27,14 @@ export type ClientCard = {
   city: string
   tag: string
   source: string
+  /** Канал привлечения: соцсети, маркетолог и т.д. */
+  channel: string
   amo_link: string
   client_access_remont: boolean
   client_access_design: boolean
   objects_note: string
+  /** Объекты клиента (адреса / договоры) */
+  objects: ClientObject[]
   // passport
   dob: string
   pob: string
@@ -65,10 +79,12 @@ export const emptyClient = (partial?: Partial<ClientCard>): ClientCard => ({
   city: 'Москва',
   tag: 'лид',
   source: '',
+  channel: '',
   amo_link: '',
   client_access_remont: false,
   client_access_design: false,
   objects_note: '',
+  objects: [],
   dob: '',
   pob: '',
   type_passport: 'РФ',
@@ -113,8 +129,78 @@ const SEED: ClientCard[] = (Array.isArray(publicRaw) ? publicRaw : []).map((c) =
   emptyClient({ ...(c as Partial<ClientCard>), id: (c as ClientCard).id || `demo-tmp` }),
 )
 
+function ensureObjects(c: ClientCard): ClientObject[] {
+  if (Array.isArray(c.objects) && c.objects.length > 0) {
+    return c.objects.map((o) => ({
+      id: o.id || `obj-${Math.random().toString(36).slice(2, 8)}`,
+      address: o.address || '',
+      title: o.title || o.address || 'Объект',
+      contractNumber: o.contractNumber || '',
+    }))
+  }
+  // миграция: objects_note / address → один объект
+  const addr = (c.objects_note || c.address || '').trim()
+  if (!addr) return []
+  return [
+    {
+      id: `obj-${c.id}-1`,
+      address: addr,
+      title: addr.length > 40 ? `${addr.slice(0, 40)}…` : addr,
+      contractNumber: c.dogovor_otdelka || c.dogovor_design || '',
+    },
+  ]
+}
+
 function normalizeList(list: ClientCard[]): ClientCard[] {
-  return list.map((c) => ({ ...emptyClient({ id: c.id }), ...c }))
+  return list.map((c) => {
+    const base = { ...emptyClient({ id: c.id }), ...c }
+    return { ...base, objects: ensureObjects(base), channel: base.channel || base.source || '' }
+  })
+}
+
+/** Поиск: ФИО / канал / адрес + любая непрерывная последовательность цифр телефона */
+export function matchClientSearch(c: ClientCard, query: string): boolean {
+  const s = query.trim().toLowerCase()
+  if (!s) return true
+  const digits = s.replace(/\D/g, '')
+  const onlyDigits = digits.length > 0 && !/[a-zа-яё]/i.test(s)
+
+  if (onlyDigits) {
+    return phoneDigitsMatch(c.mobile, digits) || phoneDigitsMatch(c.mobile2, digits)
+  }
+
+  const textOk =
+    c.name.toLowerCase().includes(s) ||
+    c.city.toLowerCase().includes(s) ||
+    c.channel.toLowerCase().includes(s) ||
+    c.tag.toLowerCase().includes(s) ||
+    c.manager.toLowerCase().includes(s) ||
+    c.email.toLowerCase().includes(s) ||
+    c.objects.some(
+      (o) =>
+        o.address.toLowerCase().includes(s) ||
+        o.title.toLowerCase().includes(s) ||
+        o.contractNumber.toLowerCase().includes(s),
+    )
+
+  if (digits.length >= 3) {
+    const phoneOk =
+      phoneDigitsMatch(c.mobile, digits) || phoneDigitsMatch(c.mobile2, digits)
+    // «иванов 903» — имя и кусок телефона
+    const namePart = s.replace(/[\d\s\-()+]+/g, ' ').trim()
+    if (namePart) {
+      return c.name.toLowerCase().includes(namePart) && phoneOk
+    }
+    return phoneOk
+  }
+
+  return textOk
+}
+
+export function deleteClient(id: string): ClientCard[] {
+  const next = loadClients().filter((c) => c.id !== id)
+  saveClients(next)
+  return next
 }
 
 function readStoredClients(): ClientCard[] | null {
@@ -184,16 +270,7 @@ export async function hydrateLocalCrmIfEmpty(): Promise<boolean> {
   }
 }
 
-/** `tel:` для нативной звонилки (Android / iOS) */
-export function telHref(raw: string): string | null {
-  const trimmed = raw.trim()
-  if (!trimmed) return null
-  const digits = trimmed.replace(/[^\d+]/g, '')
-  const normalized = digits.startsWith('+')
-    ? `+${digits.slice(1).replace(/\D/g, '')}`
-    : digits.replace(/\D/g, '')
-  return normalized.length >= 5 ? `tel:${normalized}` : null
-}
+export { telHref } from './phoneActions'
 
 /** `mailto:` для почтового клиента */
 export function mailHref(raw: string): string | null {

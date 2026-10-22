@@ -1,17 +1,16 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { RiMailFill, RiPhoneFill } from '@remixicon/react'
 import { usePageHeaderActions } from '../../contexts/PageHeaderContext'
 import {
   emptyClient,
   hydrateLocalCrmIfEmpty,
   loadClients,
-  mailHref,
+  matchClientSearch,
   saveClients,
-  telHref,
   type ClientCard,
 } from '../../lib/clients'
 import { Kpi } from '../ui/Kpi'
+import { PhoneActions } from '../ui/PhoneActions'
 
 function isLead(c: ClientCard) {
   const t = c.tag.toLowerCase()
@@ -32,7 +31,6 @@ export default function ClientsListPage() {
     document.title = 'Клиенты — СамоСтрой'
   }, [])
 
-  // если список пуст — дотянуть локальный CRM / сид после монтирования
   useEffect(() => {
     let cancelled = false
     ;(async () => {
@@ -44,7 +42,6 @@ export default function ClientsListPage() {
     return () => {
       cancelled = true
     }
-    // только при первом пустом экране
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -71,24 +68,15 @@ export default function ClientsListPage() {
         + Новый клиент
       </button>
     ),
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- recreate when clients change so add sees latest
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [clients],
   )
   usePageHeaderActions(headerBtn)
 
-  const filtered = useMemo(() => {
-    const s = q.trim().toLowerCase()
-    if (!s) return clients
-    return clients.filter(
-      (c) =>
-        c.name.toLowerCase().includes(s) ||
-        c.mobile.toLowerCase().includes(s) ||
-        c.mobile2.toLowerCase().includes(s) ||
-        c.email.toLowerCase().includes(s) ||
-        c.city.toLowerCase().includes(s) ||
-        c.tag.toLowerCase().includes(s),
-    )
-  }, [clients, q])
+  const filtered = useMemo(
+    () => clients.filter((c) => matchClientSearch(c, q)),
+    [clients, q],
+  )
 
   const leads = clients.filter(isLead).length
   const contracts = clients.filter(isContract).length
@@ -104,7 +92,7 @@ export default function ClientsListPage() {
       <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm sm:p-5">
         <input
           className="mb-4 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-          placeholder="Поиск…"
+          placeholder="Поиск: ФИО, телефон, канал…"
           value={q}
           onChange={(e) => setQ(e.target.value)}
         />
@@ -114,7 +102,7 @@ export default function ClientsListPage() {
               <tr>
                 <th className="px-4 py-3 font-medium">ФИО / Организация</th>
                 <th className="whitespace-nowrap px-4 py-3 font-medium">Телефон</th>
-                <th className="whitespace-nowrap px-4 py-3 font-medium">Email</th>
+                <th className="whitespace-nowrap px-4 py-3 font-medium">Канал</th>
                 <th className="whitespace-nowrap px-4 py-3 font-medium">Город</th>
                 <th className="whitespace-nowrap px-4 py-3 font-medium">Менеджер</th>
                 <th className="whitespace-nowrap px-4 py-3 font-medium">Тег</th>
@@ -144,45 +132,11 @@ export default function ClientsListPage() {
                       {c.name || 'Без имени'}
                     </Link>
                   </td>
-                  <td className="whitespace-nowrap px-4 py-3 tabular-nums text-gray-700">
-                    {c.mobile ? (
-                      <span className="inline-flex items-center gap-1.5">
-                        {telHref(c.mobile) && (
-                          <a
-                            href={telHref(c.mobile)!}
-                            title="Позвонить"
-                            aria-label={`Позвонить ${c.mobile}`}
-                            className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-blue-600 hover:bg-blue-50"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <RiPhoneFill className="h-4 w-4" />
-                          </a>
-                        )}
-                        <span>{c.mobile}</span>
-                      </span>
-                    ) : (
-                      '—'
-                    )}
+                  <td className="whitespace-nowrap px-4 py-3">
+                    <PhoneActions phone={c.mobile} stopPropagation />
                   </td>
-                  <td className="max-w-[260px] px-4 py-3 text-gray-600">
-                    {c.email ? (
-                      <span className="inline-flex max-w-full items-center gap-1.5">
-                        {mailHref(c.email) && (
-                          <a
-                            href={mailHref(c.email)!}
-                            title="Написать письмо"
-                            aria-label={`Написать ${c.email}`}
-                            className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-blue-600 hover:bg-blue-50"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <RiMailFill className="h-4 w-4" />
-                          </a>
-                        )}
-                        <span className="truncate">{c.email}</span>
-                      </span>
-                    ) : (
-                      '—'
-                    )}
+                  <td className="whitespace-nowrap px-4 py-3 text-gray-600">
+                    {c.channel || '—'}
                   </td>
                   <td className="whitespace-nowrap px-4 py-3 text-gray-600">{c.city || '—'}</td>
                   <td className="whitespace-nowrap px-4 py-3 text-gray-600">{c.manager || '—'}</td>

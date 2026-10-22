@@ -58,9 +58,22 @@ async function notifyAssignee(
 export const api = {
   users: {
     list: () => repository.getUsers(),
+    saveAll: (users: User[]) => repository.saveUsers(users),
     findByLogin: async (login: string) => {
       const users = await repository.getUsers()
       return users.find((u) => u.login === login && u.active) ?? null
+    },
+    upsert: async (user: User) => {
+      const users = await repository.getUsers()
+      const idx = users.findIndex((u) => u.id === user.id)
+      if (idx >= 0) users[idx] = user
+      else users.push(user)
+      await repository.saveUsers(users)
+      return user
+    },
+    remove: async (id: string) => {
+      const users = await repository.getUsers()
+      await repository.saveUsers(users.filter((u) => u.id !== id))
     },
   },
   permissions: {

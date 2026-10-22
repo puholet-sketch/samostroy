@@ -13,6 +13,7 @@ import {
   RiShieldKeyholeLine,
   RiUserLine,
   RiLogoutBoxRLine,
+  RiHistoryLine,
 } from '@remixicon/react'
 import { useAuth } from '../../contexts/AuthContext'
 import {
@@ -31,6 +32,7 @@ const ICONS = {
   calculator: RiCalculatorLine,
   documents: RiFileTextLine,
   object_control: RiBuilding2Line,
+  updates: RiHistoryLine,
   security: RiShieldKeyholeLine,
 } as const
 
@@ -42,7 +44,7 @@ const SECTION_ICONS = {
 } as const
 
 const ROLE_LABEL: Record<string, string> = {
-  owner: 'Директор',
+  owner: 'Владелец',
   seller: 'Продавец',
   foreman: 'Прораб',
   builder: 'Строитель',

@@ -13,6 +13,7 @@ import type {
 /** Абстрактный адаптер хранилища. JsonRepository — фаза 1; позже Postgres/MariaDB/Supabase. */
 export interface IRepository {
   getUsers(): Promise<User[]>
+  saveUsers(users: User[]): Promise<void>
   getPermissions(): Promise<PermissionsData>
   savePermissions(data: PermissionsData): Promise<void>
   getObjects(): Promise<RenovationObject[]>

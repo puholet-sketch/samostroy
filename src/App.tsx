@@ -11,6 +11,15 @@ import DocumentsPage from './components/documents/DocumentsPage'
 import ObjectControlPage from './components/control/ObjectControlPage'
 import PublicReportPage from './components/control/PublicReportPage'
 import SecurityPage from './components/security/SecurityPage'
+import UpdatesPage from './components/updates/UpdatesPage'
+import { useAuth } from './contexts/AuthContext'
+import { homePathForUser } from './components/layout/routes'
+
+function HomeRedirect() {
+  const { user } = useAuth()
+  const to = user ? homePathForUser(user) : '/clients'
+  return <Navigate to={to} replace />
+}
 
 export default function App() {
   return (
@@ -28,7 +37,7 @@ export default function App() {
                 </ProtectedRoute>
               }
             >
-              <Route index element={<Navigate to="/clients" replace />} />
+              <Route index element={<HomeRedirect />} />
               <Route
                 path="/clients"
                 element={
@@ -78,6 +87,14 @@ export default function App() {
                 }
               />
               <Route
+                path="/updates"
+                element={
+                  <ProtectedRoute module="updates">
+                    <UpdatesPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
                 path="/security"
                 element={
                   <ProtectedRoute module="security">
@@ -86,7 +103,7 @@ export default function App() {
                 }
               />
             </Route>
-            <Route path="*" element={<Navigate to="/clients" replace />} />
+            <Route path="*" element={<HomeRedirect />} />
           </Routes>
         </BrowserRouter>
       </NotificationsProvider>

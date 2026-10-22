@@ -93,7 +93,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const can = useCallback(
     (module: ModuleKey, action: 'read' | 'write' = 'read') => {
       if (!user || !permMatrix) return false
-      if (user.role === 'owner' && module === 'security') return true
+      if (user.role === 'owner' && (module === 'security' || module === 'updates')) return true
+      // персональный список разделов учётной записи
+      if (user.allowedModules && user.allowedModules.length > 0) {
+        if (!user.allowedModules.includes(module)) return false
+        // owner — полный доступ к разрешённым; остальные — write только если в матрице
+        if (user.role === 'owner') return true
+        return Boolean(permMatrix[user.role]?.[module]?.[action])
+      }
       return Boolean(permMatrix[user.role]?.[module]?.[action])
     },
     [user, permMatrix],

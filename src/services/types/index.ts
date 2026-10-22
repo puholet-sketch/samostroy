@@ -22,6 +22,28 @@ export type ModuleKey =
   | 'calculator'
   | 'documents'
   | 'object_control'
+  | 'updates'
+
+/** Модули MVP, которыми управляем в «Безопасности» */
+export const MVP_MODULES = [
+  'clients',
+  'calculator',
+  'documents',
+  'object_control',
+  'security',
+  'updates',
+] as const satisfies readonly ModuleKey[]
+
+export type MvpModule = (typeof MVP_MODULES)[number]
+
+export const MVP_MODULE_LABEL: Record<MvpModule, string> = {
+  clients: 'Клиенты',
+  calculator: 'Калькулятор',
+  documents: 'Договоры и акты',
+  object_control: 'Контроль объекта',
+  security: 'Безопасность',
+  updates: 'Обновления',
+}
 
 export type PermissionFlag = { read: boolean; write: boolean }
 
@@ -38,6 +60,8 @@ export type User = {
   role: Role
   active: boolean
   linkedObjectIds?: string[]
+  /** Какие разделы видны этой учётке (если задано — перекрывает матрицу роли) */
+  allowedModules?: ModuleKey[]
 }
 
 export type Contact = {

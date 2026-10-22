@@ -40,6 +40,7 @@ export default function PublicReportPage() {
   const link = useMemo(() => (token ? resolveControlLink(token) : null), [token])
   const date = parseReportDate(searchParams.get('date'))
 
+  const [workerName, setWorkerName] = useState('')
   const [workDone, setWorkDone] = useState('')
   const [problems, setProblems] = useState('')
   const [media, setMedia] = useState<ReportMediaMeta[]>([])
@@ -55,6 +56,7 @@ export default function PublicReportPage() {
   useEffect(() => {
     if (!token) return
     const existing = getReportForDate(token, date)
+    setWorkerName(existing?.workerName ?? '')
     setWorkDone(existing?.workDone ?? '')
     setProblems(existing?.problems ?? '')
     setMedia(existing?.media ?? [])
@@ -129,6 +131,10 @@ export default function PublicReportPage() {
   async function onSubmit(e: FormEvent) {
     e.preventDefault()
     if (!token || !link) return
+    if (!workerName.trim()) {
+      setMsg('Укажите ваше имя')
+      return
+    }
     if (!workDone.trim()) {
       setMsg('Опишите проделанные работы')
       return
@@ -139,6 +145,7 @@ export default function PublicReportPage() {
       saveDailyReport({
         token,
         date,
+        workerName: workerName.trim(),
         workDone: workDone.trim(),
         problems: problems.trim(),
         media,
@@ -239,6 +246,21 @@ export default function PublicReportPage() {
                 ))}
               </ul>
             )}
+          </div>
+
+          <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+            <label className="block">
+              <span className="mb-1 block text-xs font-medium text-gray-500">
+                Имя специалиста / строителя
+              </span>
+              <input
+                className={inputCls}
+                required
+                value={workerName}
+                onChange={(e) => setWorkerName(e.target.value)}
+                placeholder="Укажите ваше имя"
+              />
+            </label>
           </div>
 
           <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">

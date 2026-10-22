@@ -1,9 +1,17 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
-import { RiPhoneFill } from '@remixicon/react'
+import { useAuth } from '../../contexts/AuthContext'
 import { usePageHeaderActions, usePageHeaderMeta } from '../../contexts/PageHeaderContext'
-import { loadClients, saveClients, telHref, type ClientCard } from '../../lib/clients'
+import {
+  CHANNEL_OPTIONS,
+  deleteClient,
+  loadClients,
+  saveClients,
+  type ClientCard,
+  type ClientObject,
+} from '../../lib/clients'
 import { Panel } from '../ui/Kpi'
+import { PhoneActions } from '../ui/PhoneActions'
 
 export type ClientSection = 'main' | 'passport' | 'legal' | 'docs'
 
@@ -37,7 +45,10 @@ const inputCls =
 export default function ClientCardPage() {
   const { id, section } = useParams<{ id: string; section?: string }>()
   const navigate = useNavigate()
+  const { user } = useAuth()
+  const isOwner = user?.role === 'owner'
   const [clients, setClients] = useState<ClientCard[]>(() => loadClients())
+  const [saveMsg, setSaveMsg] = useState('')
 
   const active = (CLIENT_SECTIONS.some((s) => s.id === section) ? section : 'main') as ClientSection
 
@@ -45,23 +56,10 @@ export default function ClientCardPage() {
 
   const headerMeta = useMemo(() => {
     if (!client) return null
-    const tel = telHref(client.mobile)
     return (
-      <p className="inline-flex max-w-full items-center gap-1.5 text-sm tabular-nums text-gray-500">
+      <p className="inline-flex max-w-full items-center gap-1.5 text-sm text-gray-500">
         {client.mobile ? (
-          <>
-            {tel && (
-              <a
-                href={tel}
-                title="Позвонить"
-                aria-label={`Позвонить ${client.mobile}`}
-                className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-blue-600 hover:bg-blue-50"
-              >
-                <RiPhoneFill className="h-3.5 w-3.5" />
-              </a>
-            )}
-            <span className="truncate">{client.mobile}</span>
-          </>
+          <PhoneActions phone={client.mobile} size="sm" />
         ) : (
           <span className="text-gray-400">нет телефона</span>
         )}
@@ -73,15 +71,41 @@ export default function ClientCardPage() {
   const headerActions = useMemo(() => {
     if (!client) return null
     return (
-      <span
-        className={`inline-flex shrink-0 rounded-md px-2.5 py-1 text-xs font-semibold ${
-          client.fizurlico === 'ur' ? 'bg-amber-100 text-amber-800' : 'bg-blue-100 text-blue-800'
-        }`}
-      >
-        {client.fizurlico === 'ur' ? 'Юрлицо' : 'Физлицо'}
-      </span>
+      <div className="flex flex-wrap items-center gap-2">
+        <span
+          className={`inline-flex shrink-0 rounded-md px-2.5 py-1 text-xs font-semibold ${
+            client.fizurlico === 'ur' ? 'bg-amber-100 text-amber-800' : 'bg-blue-100 text-blue-800'
+          }`}
+        >
+          {client.fizurlico === 'ur' ? 'Юрлицо' : 'Физлицо'}
+        </span>
+        <button
+          type="button"
+          onClick={() => {
+            saveClients(clients)
+            setSaveMsg('Сохранено')
+            window.setTimeout(() => setSaveMsg(''), 2000)
+          }}
+          className="rounded-md bg-blue-600 px-2.5 py-1 text-xs font-semibold text-white hover:bg-blue-700"
+        >
+          Сохранить
+        </button>
+        {isOwner && (
+          <button
+            type="button"
+            onClick={() => {
+              if (!confirm(`Удалить клиента «${client.name || 'без имени'}» безвозвратно?`)) return
+              deleteClient(client.id)
+              navigate('/clients')
+            }}
+            className="rounded-md border border-red-200 px-2.5 py-1 text-xs font-semibold text-red-600 hover:bg-red-50"
+          >
+            Удалить
+          </button>
+        )}
+      </div>
     )
-  }, [client])
+  }, [client, clients, isOwner, navigate])
 
   usePageHeaderMeta(headerMeta)
   usePageHeaderActions(headerActions)
@@ -118,8 +142,31 @@ export default function ClientCardPage() {
     )
   }
 
+  function patchObject(objId: string, p: Partial<ClientObject>) {
+    if (!client) return
+    const objects = client.objects.map((o) => (o.id === objId ? { ...o, ...p } : o))
+    patch({ objects })
+  }
+
+  function addObject() {
+    if (!client) return
+    const o: ClientObject = {
+      id: `obj-${Date.now()}`,
+      address: '',
+      title: 'Новый объект',
+      contractNumber: '',
+    }
+    patch({ objects: [...client.objects, o] })
+  }
+
+  function removeObject(objId: string) {
+    if (!client) return
+    patch({ objects: client.objects.filter((o) => o.id !== objId) })
+  }
+
   return (
     <div className="space-y-3">
+      {saveMsg && <p className="text-sm text-emerald-700">{saveMsg}</p>}
       <div className="flex flex-wrap gap-1 border-b border-gray-200 lg:hidden">
         {CLIENT_SECTIONS.map((s) => (
           <button
@@ -168,7 +215,21 @@ export default function ClientCardPage() {
             <Field label="Город">
               <input className={inputCls} value={client.city} onChange={(e) => patch({ city: e.target.value })} />
             </Field>
-            <Field label="Источник">
+            <Field label="Канал привлечения">
+              <select
+                className={inputCls}
+                value={client.channel}
+                onChange={(e) => patch({ channel: e.target.value, source: e.target.value })}
+              >
+                <option value="">— не указан —</option>
+                {CHANNEL_OPTIONS.map((ch) => (
+                  <option key={ch} value={ch}>
+                    {ch}
+                  </option>
+                ))}
+              </select>
+            </Field>
+            <Field label="Источник (доп.)">
               <input className={inputCls} value={client.source} onChange={(e) => patch({ source: e.target.value })} />
             </Field>
             <Field label="Ссылка Amo" className="col-span-2">
@@ -189,13 +250,60 @@ export default function ClientCardPage() {
             <Field label="ОТК">
               <input className={inputCls} value={client.otk} onChange={(e) => patch({ otk: e.target.value })} />
             </Field>
-            <Field label="Объекты клиента" className="col-span-2 xl:col-span-3">
-              <input
-                className={inputCls}
-                value={client.objects_note}
-                onChange={(e) => patch({ objects_note: e.target.value })}
-              />
-            </Field>
+            <div className="col-span-2 space-y-2 xl:col-span-4">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-[11px] font-medium text-gray-500">Объекты (адреса / договоры)</p>
+                <button
+                  type="button"
+                  onClick={addObject}
+                  className="rounded-md border border-gray-200 px-2 py-0.5 text-xs font-medium text-blue-700 hover:bg-blue-50"
+                >
+                  + Объект
+                </button>
+              </div>
+              {client.objects.length === 0 && (
+                <p className="text-xs text-gray-400">Нет объектов — добавьте адрес для контроля.</p>
+              )}
+              {client.objects.map((o) => (
+                <div
+                  key={o.id}
+                  className="grid grid-cols-1 gap-2 rounded-md border border-gray-200 bg-gray-50 p-2 sm:grid-cols-3"
+                >
+                  <input
+                    className={inputCls}
+                    placeholder="Адрес"
+                    value={o.address}
+                    onChange={(e) =>
+                      patchObject(o.id, {
+                        address: e.target.value,
+                        title: e.target.value || o.title,
+                      })
+                    }
+                  />
+                  <input
+                    className={inputCls}
+                    placeholder="Договор №"
+                    value={o.contractNumber}
+                    onChange={(e) => patchObject(o.id, { contractNumber: e.target.value })}
+                  />
+                  <div className="flex gap-2">
+                    <input
+                      className={inputCls}
+                      placeholder="Название"
+                      value={o.title}
+                      onChange={(e) => patchObject(o.id, { title: e.target.value })}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeObject(o.id)}
+                      className="shrink-0 rounded-md border border-red-200 px-2 text-xs text-red-600 hover:bg-red-50"
+                    >
+                      ×
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
             <label className="flex items-center gap-2 text-xs text-gray-700">
               <input
                 type="checkbox"

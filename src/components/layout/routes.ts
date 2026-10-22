@@ -1,4 +1,4 @@
-import type { ModuleKey } from '../../services/types'
+import type { ModuleKey, User } from '../../services/types'
 import { loadClients } from '../../lib/clients'
 
 export type NavRoute = {
@@ -12,6 +12,7 @@ export const MVP_ROUTES: NavRoute[] = [
   { path: '/calculator', name: 'Калькулятор', module: 'calculator' },
   { path: '/documents', name: 'Договоры и акты', module: 'documents' },
   { path: '/control', name: 'Контроль объекта', module: 'object_control' },
+  { path: '/updates', name: 'Обновления', module: 'updates' },
   { path: '/security', name: 'Безопасность', module: 'security' },
 ]
 
@@ -20,7 +21,6 @@ const CLIENT_CARD_RE = /^\/clients\/([^/]+)(?:\/([^/]+))?$/
 export function parseClientCardPath(pathname: string): { id: string; section: string } | null {
   const m = pathname.match(CLIENT_CARD_RE)
   if (!m) return null
-  // exclude bare /clients
   if (pathname === '/clients') return null
   return { id: m[1], section: m[2] || 'main' }
 }
@@ -37,4 +37,19 @@ export function routeTitle(pathname: string): string {
     (r) => pathname === r.path || (r.path !== '/' && pathname.startsWith(`${r.path}/`)),
   )
   return hit?.name ?? 'СамоСтрой'
+}
+
+/** Стартовый раздел после входа */
+export function homePathForUser(user: User): string {
+  if (user.role === 'foreman') return '/control'
+  const mods = user.allowedModules
+  if (mods && mods.length === 1) {
+    const hit = MVP_ROUTES.find((r) => r.module === mods[0])
+    if (hit) return hit.path
+  }
+  if (mods && !mods.includes('clients')) {
+    const hit = MVP_ROUTES.find((r) => mods.includes(r.module))
+    if (hit) return hit.path
+  }
+  return '/clients'
 }

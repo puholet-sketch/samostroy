@@ -39,7 +39,11 @@ function save<T>(key: string, value: T): void {
 
 export class JsonRepository implements IRepository {
   async getUsers(): Promise<User[]> {
-    return load('users', usersSeed as User[])
+    return load('users_v2', usersSeed as User[])
+  }
+
+  async saveUsers(users: User[]): Promise<void> {
+    save('users_v2', users)
   }
 
   async getPermissions(): Promise<PermissionsData> {

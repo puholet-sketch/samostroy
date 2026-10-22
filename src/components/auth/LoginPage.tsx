@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { BrandLogo } from '../common/BrandLogo'
+import { homePathForUser } from '../layout/routes'
 import { Panel } from '../ui/Kpi'
 
 export default function LoginPage() {
@@ -15,7 +16,7 @@ export default function LoginPage() {
     document.title = 'Вход — СамоСтрой'
   }, [])
 
-  if (!loading && user) return <Navigate to="/clients" replace />
+  if (!loading && user) return <Navigate to={homePathForUser(user)} replace />
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault()
@@ -60,7 +61,9 @@ export default function LoginPage() {
           >
             {busy ? 'Вход…' : 'Войти'}
           </button>
-          <p className="text-center text-xs text-gray-400">Демо: owner / owner123</p>
+          <p className="text-center text-xs text-gray-400">
+            Демо: owner / owner123 · foreman / foreman123
+          </p>
         </form>
       </Panel>
     </div>

@@ -3,11 +3,12 @@
   "updated": "2026-10-22",
   "status": "active",
   "goal": "MVP: КК + договоры/акты/калькулятор + контроль объекта",
-  "next": "Проверить скачивание договоров на Pages после деплоя",
+  "next": "Проверить роли owner/foreman и контроль клиент→объект на Pages",
   "blockers": [],
   "hot_files": [
-    "src/lib/generateDocs.ts",
-    "src/components/documents/DocumentsPage.tsx",
-    "docs/preview/01_Dogovor_remont_preview.docx"
+    "src/components/security/SecurityPage.tsx",
+    "src/components/control/ObjectControlPage.tsx",
+    "src/lib/clients.ts",
+    "src/components/updates/UpdatesPage.tsx"
   ]
 }
