@@ -2,18 +2,19 @@ import { useEffect, useMemo, useState } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import {
   RiArrowLeftLine,
-  RiBuilding2Line,
-  RiCalculatorLine,
+  RiBuilding2Fill,
+  RiCalculatorFill,
   RiCloseLine,
-  RiFileTextLine,
-  RiIdCardLine,
+  RiFileTextFill,
+  RiIdCardFill,
   RiMenuLine,
-  RiBankCardLine,
-  RiFolderLine,
-  RiShieldKeyholeLine,
-  RiUserLine,
+  RiBankCardFill,
+  RiFolderFill,
+  RiShieldKeyholeFill,
+  RiUserFill,
   RiLogoutBoxRLine,
-  RiHistoryLine,
+  RiHistoryFill,
+  type RemixiconComponentType,
 } from '@remixicon/react'
 import { useAuth } from '../../contexts/AuthContext'
 import {
@@ -27,21 +28,38 @@ import { BrandLogo } from '../common/BrandLogo'
 import { CLIENT_SECTIONS } from '../clients/ClientCardPage'
 import { MVP_ROUTES, parseClientCardPath, routeTitle } from './routes'
 
-const ICONS = {
-  clients: RiUserLine,
-  calculator: RiCalculatorLine,
-  documents: RiFileTextLine,
-  object_control: RiBuilding2Line,
-  updates: RiHistoryLine,
-  security: RiShieldKeyholeLine,
-} as const
+type NavIcon = {
+  Icon: RemixiconComponentType
+  wrap: string
+  ink: string
+}
 
-const SECTION_ICONS = {
-  main: RiUserLine,
-  passport: RiIdCardLine,
-  legal: RiBankCardLine,
-  docs: RiFolderLine,
-} as const
+const NAV_ICONS: Record<string, NavIcon> = {
+  clients: { Icon: RiUserFill, wrap: 'bg-blue-100', ink: 'text-blue-600' },
+  calculator: { Icon: RiCalculatorFill, wrap: 'bg-violet-100', ink: 'text-violet-600' },
+  documents: { Icon: RiFileTextFill, wrap: 'bg-amber-100', ink: 'text-amber-600' },
+  object_control: { Icon: RiBuilding2Fill, wrap: 'bg-emerald-100', ink: 'text-emerald-600' },
+  updates: { Icon: RiHistoryFill, wrap: 'bg-sky-100', ink: 'text-sky-600' },
+  security: { Icon: RiShieldKeyholeFill, wrap: 'bg-rose-100', ink: 'text-rose-600' },
+}
+
+const SECTION_ICONS: Record<string, NavIcon> = {
+  main: { Icon: RiUserFill, wrap: 'bg-blue-100', ink: 'text-blue-600' },
+  passport: { Icon: RiIdCardFill, wrap: 'bg-indigo-100', ink: 'text-indigo-600' },
+  legal: { Icon: RiBankCardFill, wrap: 'bg-amber-100', ink: 'text-amber-600' },
+  docs: { Icon: RiFolderFill, wrap: 'bg-teal-100', ink: 'text-teal-600' },
+}
+
+function ColoredIcon({ wrap, ink, Icon }: NavIcon) {
+  return (
+    <span
+      className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md ${wrap}`}
+      aria-hidden
+    >
+      <Icon className={`h-3.5 w-3.5 ${ink}`} />
+    </span>
+  )
+}
 
 const ROLE_LABEL: Record<string, string> = {
   owner: 'Владелец',
@@ -68,7 +86,7 @@ function GlobalNav({
   return (
     <nav className="flex flex-1 flex-col gap-1 px-3">
       {items.map((r) => {
-        const Icon = ICONS[r.module as keyof typeof ICONS] ?? RiFileTextLine
+        const conf = NAV_ICONS[r.module] ?? NAV_ICONS.documents
         return (
           <NavLink
             key={r.path}
@@ -77,7 +95,7 @@ function GlobalNav({
             onClick={onNavigate}
             className={linkCls}
           >
-            <Icon className="h-4 w-4 shrink-0" aria-hidden />
+            <ColoredIcon {...conf} />
             {r.name}
           </NavLink>
         )
@@ -98,14 +116,16 @@ function ClientContextNav({
   return (
     <nav className="flex flex-1 flex-col gap-1 px-3">
       <NavLink to="/clients" end onClick={onNavigate} className={linkCls}>
-        <RiArrowLeftLine className="h-4 w-4 shrink-0" aria-hidden />
+        <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-gray-100">
+          <RiArrowLeftLine className="h-3.5 w-3.5 text-gray-600" aria-hidden />
+        </span>
         К реестру
       </NavLink>
       <p className="mb-1 mt-4 truncate px-3 text-xs font-semibold uppercase tracking-wide text-gray-400">
         {clientName || 'Клиент'}
       </p>
       {CLIENT_SECTIONS.map((s) => {
-        const Icon = SECTION_ICONS[s.id]
+        const conf = SECTION_ICONS[s.id]
         return (
           <NavLink
             key={s.id}
@@ -113,7 +133,7 @@ function ClientContextNav({
             onClick={onNavigate}
             className={linkCls}
           >
-            <Icon className="h-4 w-4 shrink-0" aria-hidden />
+            <ColoredIcon {...conf} />
             {s.label}
           </NavLink>
         )
@@ -122,11 +142,11 @@ function ClientContextNav({
         Модули
       </p>
       <NavLink to="/documents" onClick={onNavigate} className={linkCls}>
-        <RiFileTextLine className="h-4 w-4 shrink-0" aria-hidden />
+        <ColoredIcon {...NAV_ICONS.documents} />
         Договоры и акты
       </NavLink>
       <NavLink to="/calculator" onClick={onNavigate} className={linkCls}>
-        <RiCalculatorLine className="h-4 w-4 shrink-0" aria-hidden />
+        <ColoredIcon {...NAV_ICONS.calculator} />
         Калькулятор
       </NavLink>
     </nav>

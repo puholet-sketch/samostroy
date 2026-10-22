@@ -1,8 +1,10 @@
 import { RiPhoneFill } from '@remixicon/react'
 import { maxHref, telegramHref, telHref, whatsappHref } from '../../lib/phoneActions'
 
-const btn =
+const btnMd =
   'inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md hover:bg-gray-100'
+const btnSm =
+  'inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md hover:bg-gray-100'
 
 function WaIcon({ className }: { className?: string }) {
   return (
@@ -47,6 +49,7 @@ export function PhoneActions({
   if (!phone.trim()) return showNumber ? <span className="text-gray-400">—</span> : null
 
   const icon = size === 'sm' ? 'h-3.5 w-3.5' : 'h-4 w-4'
+  const btn = size === 'sm' ? btnSm : btnMd
   const tel = telHref(phone)
   const wa = whatsappHref(phone)
   const tg = telegramHref(phone)
@@ -57,7 +60,7 @@ export function PhoneActions({
   }
 
   return (
-    <span className={`inline-flex max-w-full items-center gap-0.5 ${className}`}>
+    <span className={`inline-flex shrink-0 items-center gap-0.5 ${className}`}>
       {tel && (
         <a
           href={tel}
@@ -108,7 +111,11 @@ export function PhoneActions({
           <TgIcon className={icon} />
         </a>
       )}
-      {showNumber && <span className="ml-0.5 truncate tabular-nums text-gray-700">{phone}</span>}
+      {showNumber && (
+        <span className="ml-0.5 max-w-[7.5rem] truncate tabular-nums text-gray-700 sm:max-w-none">
+          {phone}
+        </span>
+      )}
     </span>
   )
 }

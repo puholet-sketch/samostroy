@@ -304,7 +304,10 @@ export default function ClientCardPage() {
                 </div>
               ))}
             </div>
-            <label className="flex items-center gap-2 text-xs text-gray-700">
+            <label
+              className="flex cursor-help items-center gap-2 text-xs text-gray-700"
+              title="Клиентский доступ к разделу ремонта: смета, договоры на ремонт, отчёты по объекту. Если галочка снята — клиент этот блок в личном кабинете не видит."
+            >
               <input
                 type="checkbox"
                 checked={client.client_access_remont}
@@ -312,7 +315,10 @@ export default function ClientCardPage() {
               />
               Доступ: Ремонт
             </label>
-            <label className="flex items-center gap-2 text-xs text-gray-700">
+            <label
+              className="flex cursor-help items-center gap-2 text-xs text-gray-700"
+              title="Клиентский доступ к разделу дизайна: договор на дизайн-проект и связанные материалы. Если галочка снята — клиент дизайн в кабинете не видит."
+            >
               <input
                 type="checkbox"
                 checked={client.client_access_design}

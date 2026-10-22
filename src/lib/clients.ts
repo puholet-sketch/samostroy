@@ -186,7 +186,6 @@ export function matchClientSearch(c: ClientCard, query: string): boolean {
   if (digits.length >= 3) {
     const phoneOk =
       phoneDigitsMatch(c.mobile, digits) || phoneDigitsMatch(c.mobile2, digits)
-    // «иванов 903» — имя и кусок телефона
     const namePart = s.replace(/[\d\s\-()+]+/g, ' ').trim()
     if (namePart) {
       return c.name.toLowerCase().includes(namePart) && phoneOk
@@ -195,6 +194,28 @@ export function matchClientSearch(c: ClientCard, query: string): boolean {
   }
 
   return textOk
+}
+
+/** Раздельный фильтр: ФИО + телефон (непрерывные цифры) + канал — все условия через И */
+export function matchClientFilters(
+  c: ClientCard,
+  filters: { name?: string; phone?: string; channel?: string },
+): boolean {
+  const nameQ = (filters.name ?? '').trim().toLowerCase()
+  const phoneQ = (filters.phone ?? '').replace(/\D/g, '')
+  const channelQ = (filters.channel ?? '').trim().toLowerCase()
+
+  if (nameQ && !c.name.toLowerCase().includes(nameQ)) return false
+
+  if (phoneQ) {
+    const ok =
+      phoneDigitsMatch(c.mobile, phoneQ) || phoneDigitsMatch(c.mobile2, phoneQ)
+    if (!ok) return false
+  }
+
+  if (channelQ && !c.channel.toLowerCase().includes(channelQ)) return false
+
+  return true
 }
 
 export function deleteClient(id: string): ClientCard[] {

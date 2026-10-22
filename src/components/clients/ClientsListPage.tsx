@@ -2,15 +2,19 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { usePageHeaderActions } from '../../contexts/PageHeaderContext'
 import {
+  CHANNEL_OPTIONS,
   emptyClient,
   hydrateLocalCrmIfEmpty,
   loadClients,
-  matchClientSearch,
+  matchClientFilters,
   saveClients,
   type ClientCard,
 } from '../../lib/clients'
 import { Kpi } from '../ui/Kpi'
 import { PhoneActions } from '../ui/PhoneActions'
+
+const filterCls =
+  'rounded-md border border-gray-300 bg-white px-2.5 py-1.5 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500'
 
 function isLead(c: ClientCard) {
   const t = c.tag.toLowerCase()
@@ -25,7 +29,9 @@ function isContract(c: ClientCard) {
 export default function ClientsListPage() {
   const navigate = useNavigate()
   const [clients, setClients] = useState<ClientCard[]>(() => loadClients())
-  const [q, setQ] = useState('')
+  const [qName, setQName] = useState('')
+  const [qPhone, setQPhone] = useState('')
+  const [qChannel, setQChannel] = useState('')
 
   useEffect(() => {
     document.title = 'Клиенты — СамоСтрой'
@@ -74,8 +80,11 @@ export default function ClientsListPage() {
   usePageHeaderActions(headerBtn)
 
   const filtered = useMemo(
-    () => clients.filter((c) => matchClientSearch(c, q)),
-    [clients, q],
+    () =>
+      clients.filter((c) =>
+        matchClientFilters(c, { name: qName, phone: qPhone, channel: qChannel }),
+      ),
+    [clients, qName, qPhone, qChannel],
   )
 
   const leads = clients.filter(isLead).length
@@ -90,12 +99,33 @@ export default function ClientsListPage() {
       </div>
 
       <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm sm:p-5">
-        <input
-          className="mb-4 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-          placeholder="Поиск: ФИО, телефон, канал…"
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-        />
+        <div className="mb-3 flex flex-wrap items-center gap-2">
+          <input
+            className={`${filterCls} w-36 min-w-0 shrink sm:w-44`}
+            placeholder="ФИО"
+            value={qName}
+            onChange={(e) => setQName(e.target.value)}
+          />
+          <input
+            className={`${filterCls} w-32 min-w-0 shrink tabular-nums sm:w-40`}
+            placeholder="Телефон"
+            inputMode="tel"
+            value={qPhone}
+            onChange={(e) => setQPhone(e.target.value)}
+          />
+          <select
+            className={`${filterCls} min-w-0 flex-1 sm:max-w-xs`}
+            value={qChannel}
+            onChange={(e) => setQChannel(e.target.value)}
+          >
+            <option value="">Канал продаж — все</option>
+            {CHANNEL_OPTIONS.map((ch) => (
+              <option key={ch} value={ch}>
+                {ch}
+              </option>
+            ))}
+          </select>
+        </div>
         <div className="overflow-x-auto rounded-md border border-gray-200">
           <table className="min-w-full divide-y divide-gray-200 text-sm">
             <thead className="bg-gray-50 text-left text-xs uppercase text-gray-500">

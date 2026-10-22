@@ -2,8 +2,9 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { RiArrowLeftSLine, RiArrowRightSLine } from '@remixicon/react'
 import {
+  CHANNEL_OPTIONS,
   loadClients,
-  matchClientSearch,
+  matchClientFilters,
   type ClientCard,
   type ClientObject,
 } from '../../lib/clients'
@@ -16,7 +17,6 @@ import {
   type ControlLink,
 } from '../../lib/objectReports'
 import { PhoneActions } from '../ui/PhoneActions'
-import { Kpi } from '../ui/Kpi'
 
 type DayCell = { date: string; hasReport: boolean; future: boolean; today: boolean }
 
@@ -37,16 +37,83 @@ function buildMonth(year: number, month: number, reported: Set<string>): DayCell
   })
 }
 
-function shiftMonth(year: number, month: number, delta: number) {
-  const d = new Date(year, month + delta, 1)
-  return { year: d.getFullYear(), month: d.getMonth() }
+function monthShort(month: number) {
+  return new Date(2000, month, 1).toLocaleString('ru-RU', { month: 'short' })
 }
 
-function monthTitle(year: number, month: number) {
-  return new Date(year, month, 1).toLocaleString('ru-RU', {
-    month: 'long',
-    year: 'numeric',
-  })
+function countMissInYear(year: number, reported: Set<string>): number {
+  const today = new Date()
+  const today0 = new Date(today.getFullYear(), today.getMonth(), today.getDate())
+  let miss = 0
+  for (let m = 0; m < 12; m++) {
+    const days = new Date(year, m + 1, 0).getDate()
+    for (let d = 1; d <= days; d++) {
+      const dayDate = new Date(year, m, d)
+      if (dayDate > today0) continue
+      const date = `${year}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`
+      if (!reported.has(date)) miss += 1
+    }
+  }
+  return miss
+}
+
+const WEEKDAYS = ['п', 'в', 'с', 'ч', 'п', 'с', 'в']
+
+function MiniMonth({
+  year,
+  month,
+  reported,
+  reportDate,
+  onPick,
+}: {
+  year: number
+  month: number
+  reported: Set<string>
+  reportDate: string
+  onPick: (date: string, future: boolean) => void
+}) {
+  const days = useMemo(() => buildMonth(year, month, reported), [year, month, reported])
+  const pad = (new Date(year, month, 1).getDay() + 6) % 7
+
+  return (
+    <div className="min-w-0">
+      <p className="mb-0.5 text-center text-[10px] font-semibold capitalize leading-none text-gray-700">
+        {monthShort(month)}
+      </p>
+      <div className="grid grid-cols-7 gap-px">
+        {WEEKDAYS.map((d, i) => (
+          <div key={`${d}-${i}`} className="text-center text-[8px] leading-none text-gray-400">
+            {d}
+          </div>
+        ))}
+        {Array.from({ length: pad }).map((_, i) => (
+          <div key={`pad-${i}`} />
+        ))}
+        {days.map((d) => {
+          const dayNum = Number(d.date.slice(-2))
+          let cls = 'bg-gray-100 text-gray-400'
+          if (!d.future) {
+            cls = d.hasReport
+              ? 'bg-emerald-500 text-white'
+              : 'bg-rose-500 text-white'
+          }
+          if (d.today) cls += ' ring-1 ring-blue-500'
+          if (d.date === reportDate) cls += ' outline outline-1 outline-indigo-500'
+          return (
+            <button
+              key={d.date}
+              type="button"
+              title={d.date}
+              onClick={() => onPick(d.date, d.future)}
+              className={`flex h-4 w-full items-center justify-center rounded-[2px] text-[9px] font-semibold tabular-nums leading-none ${cls}`}
+            >
+              {dayNum}
+            </button>
+          )
+        })}
+      </div>
+    </div>
+  )
 }
 
 const inputCls =
@@ -54,20 +121,25 @@ const inputCls =
 
 export default function ObjectControlPage() {
   const navigate = useNavigate()
-  const now = new Date()
+  const currentYear = new Date().getFullYear()
   const [clients] = useState<ClientCard[]>(() => loadClients())
-  const [q, setQ] = useState('')
+  const [qName, setQName] = useState('')
+  const [qPhone, setQPhone] = useState('')
+  const [qChannel, setQChannel] = useState('')
   const saved = loadControlSelection()
   const [clientId, setClientId] = useState(saved?.clientId ?? '')
   const [objectId, setObjectId] = useState(saved?.objectId ?? '')
-  const [viewYear, setViewYear] = useState(now.getFullYear())
-  const [viewMonth, setViewMonth] = useState(now.getMonth())
+  const [viewYear, setViewYear] = useState(currentYear)
   const [reportDate, setReportDate] = useState(todayIso())
   const [tick, setTick] = useState(0)
+  const [copied, setCopied] = useState(false)
 
   const filteredClients = useMemo(
-    () => clients.filter((c) => matchClientSearch(c, q)),
-    [clients, q],
+    () =>
+      clients.filter((c) =>
+        matchClientFilters(c, { name: qName, phone: qPhone, channel: qChannel }),
+      ),
+    [clients, qName, qPhone, qChannel],
   )
 
   const client = clients.find((c) => c.id === clientId) ?? null
@@ -93,22 +165,22 @@ export default function ObjectControlPage() {
     return link ? datesWithReports(link.token) : new Set<string>()
   }, [link?.token, tick])
 
-  const days = useMemo(
-    () => buildMonth(viewYear, viewMonth, reported),
-    [viewYear, viewMonth, reported],
+  const miss = useMemo(
+    () => countMissInYear(viewYear, reported),
+    [viewYear, reported],
   )
-  const miss = days.filter((d) => !d.future && !d.hasReport).length
-  const pad = (new Date(viewYear, viewMonth, 1).getDay() + 6) % 7
 
   const shareUrl =
     link && typeof window !== 'undefined'
       ? `${window.location.origin}${import.meta.env.BASE_URL.replace(/\/$/, '')}/report/${link.token}`
       : ''
 
-  function goMonth(delta: number) {
-    const next = shiftMonth(viewYear, viewMonth, delta)
-    setViewYear(next.year)
-    setViewMonth(next.month)
+  function goYear(delta: number) {
+    setViewYear((y) => {
+      const next = y + delta
+      if (next > currentYear) return currentYear
+      return next
+    })
   }
 
   function openReport(date: string) {
@@ -116,21 +188,20 @@ export default function ObjectControlPage() {
     navigate(`/report/${link.token}?date=${encodeURIComponent(date)}`)
   }
 
-  function onPickDate(value: string) {
-    if (!value) return
-    setReportDate(value)
-    const [y, m] = value.split('-').map(Number)
-    if (y && m) {
-      setViewYear(y)
-      setViewMonth(m - 1)
-    }
-  }
-
   function pickClient(c: ClientCard) {
     setClientId(c.id)
-    setQ('')
+    setQName('')
+    setQPhone('')
+    setQChannel('')
     const first = c.objects[0]
     setObjectId(first?.id ?? '')
+  }
+
+  async function copyLink() {
+    if (!shareUrl) return
+    await navigator.clipboard.writeText(shareUrl)
+    setCopied(true)
+    window.setTimeout(() => setCopied(false), 1500)
   }
 
   useEffect(() => {
@@ -143,7 +214,6 @@ export default function ObjectControlPage() {
     return () => window.removeEventListener('focus', onFocus)
   }, [])
 
-  // если у выбранного клиента один объект — автовыбор
   useEffect(() => {
     if (!client) return
     if (objects.length === 1 && objectId !== objects[0].id) {
@@ -151,18 +221,41 @@ export default function ObjectControlPage() {
     }
   }, [client?.id, objects.length])
 
-  const showClientList = q.trim().length > 0 || !client
+  const showClientList =
+    qName.trim().length > 0 || qPhone.trim().length > 0 || qChannel.trim().length > 0 || !client
+  const canGoForward = viewYear < currentYear
 
   return (
     <div className="space-y-3">
       <div className="rounded-lg border border-gray-200 bg-white p-3 shadow-sm">
         <p className="mb-2 text-xs font-medium text-gray-500">1. Клиент</p>
-        <input
-          className={inputCls}
-          placeholder="Поиск: ФИО или цифры телефона…"
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-        />
+        <div className="flex flex-wrap items-center gap-2">
+          <input
+            className={`${inputCls} w-36 min-w-0 shrink sm:w-44`}
+            placeholder="ФИО"
+            value={qName}
+            onChange={(e) => setQName(e.target.value)}
+          />
+          <input
+            className={`${inputCls} w-32 min-w-0 shrink tabular-nums sm:w-40`}
+            placeholder="Телефон"
+            inputMode="tel"
+            value={qPhone}
+            onChange={(e) => setQPhone(e.target.value)}
+          />
+          <select
+            className={`${inputCls} min-w-0 flex-1 sm:max-w-xs`}
+            value={qChannel}
+            onChange={(e) => setQChannel(e.target.value)}
+          >
+            <option value="">Канал — все</option>
+            {CHANNEL_OPTIONS.map((ch) => (
+              <option key={ch} value={ch}>
+                {ch}
+              </option>
+            ))}
+          </select>
+        </div>
         {showClientList && (
           <div className="mt-2 max-h-36 overflow-y-auto rounded-md border border-gray-200">
             {filteredClients.length === 0 ? (
@@ -170,19 +263,20 @@ export default function ObjectControlPage() {
             ) : (
               <ul className="divide-y divide-gray-100">
                 {filteredClients.slice(0, 12).map((c) => (
-                  <li key={c.id}>
+                  <li
+                    key={c.id}
+                    className={`flex items-center gap-2 px-2 py-1.5 text-sm ${
+                      clientId === c.id ? 'bg-blue-50' : 'hover:bg-blue-50/60'
+                    }`}
+                  >
                     <button
                       type="button"
                       onClick={() => pickClient(c)}
-                      className={`flex w-full items-center justify-between gap-2 px-2 py-1.5 text-left text-sm ${
-                        clientId === c.id ? 'bg-blue-50' : 'hover:bg-blue-50/60'
-                      }`}
+                      className="min-w-0 flex-1 truncate text-left font-medium text-gray-900"
                     >
-                      <span className="truncate font-medium text-gray-900">
-                        {c.name || 'Без имени'}
-                      </span>
-                      <PhoneActions phone={c.mobile} showNumber size="sm" stopPropagation />
+                      {c.name || 'Без имени'}
                     </button>
+                    <PhoneActions phone={c.mobile} showNumber size="sm" />
                   </li>
                 ))}
               </ul>
@@ -213,7 +307,10 @@ export default function ObjectControlPage() {
           {objects.length === 0 ? (
             <p className="text-sm text-amber-700">
               У клиента нет объектов. Добавьте адрес во вкладке «Контакты» карточки клиента.
-              <Link to={`/clients/${client.id}/main`} className="ml-1 font-medium text-blue-700 hover:underline">
+              <Link
+                to={`/clients/${client.id}/main`}
+                className="ml-1 font-medium text-blue-700 hover:underline"
+              >
                 Открыть карточку →
               </Link>
             </p>
@@ -237,50 +334,51 @@ export default function ObjectControlPage() {
 
       {link && object && (
         <>
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-            <Kpi label="Объект" value={object.address || object.title} accent="blue" />
-            <Kpi label="Без отчёта" value={miss} accent="rose" />
-            <div className="flex items-center gap-1.5 rounded-md border border-gray-200 border-l-4 border-l-indigo-500 bg-white px-2.5 py-1.5 shadow-sm">
-              <input
-                readOnly
-                value={shareUrl}
-                className="min-w-0 flex-1 truncate rounded border border-gray-200 bg-gray-50 px-1.5 py-1 text-[11px] text-gray-600"
-              />
-              <button
-                type="button"
-                className="shrink-0 rounded bg-blue-600 px-2 py-1 text-[11px] font-semibold text-white hover:bg-blue-700"
-                onClick={() => void navigator.clipboard.writeText(shareUrl)}
-              >
-                Copy
-              </button>
-              <Link
-                to={`/report/${link.token}?date=${encodeURIComponent(reportDate)}`}
-                className="shrink-0 text-[11px] font-medium text-blue-700 hover:underline"
-              >
-                Форма →
-              </Link>
-            </div>
+          {/* Одна строка: без отчёта + ссылка без карточки */}
+          <div className="flex h-8 flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+            <span className="shrink-0 text-xs text-gray-500">
+              Без отчёта:{' '}
+              <strong className="tabular-nums text-rose-600">{miss}</strong>
+            </span>
+            <span className="hidden text-gray-300 sm:inline">·</span>
+            <span className="min-w-0 flex-1 truncate text-xs text-gray-500" title={shareUrl}>
+              {shareUrl}
+            </span>
+            <button
+              type="button"
+              onClick={() => void copyLink()}
+              className="shrink-0 text-xs font-semibold text-blue-700 hover:underline"
+            >
+              {copied ? 'Скопировано' : 'Копировать'}
+            </button>
+            <Link
+              to={`/report/${link.token}?date=${encodeURIComponent(reportDate)}`}
+              className="shrink-0 text-xs font-medium text-blue-700 hover:underline"
+            >
+              Форма →
+            </Link>
           </div>
 
-          <div className="rounded-lg border border-gray-200 bg-white p-2.5 shadow-sm sm:p-3">
+          <div className="rounded-lg border border-gray-200 bg-white p-2 shadow-sm sm:p-2.5">
             <div className="mb-2 flex flex-wrap items-center gap-2">
               <div className="flex items-center gap-0.5">
                 <button
                   type="button"
-                  aria-label="Предыдущий месяц"
-                  onClick={() => goMonth(-1)}
+                  aria-label="Предыдущий год"
+                  onClick={() => goYear(-1)}
                   className="inline-flex h-7 w-7 items-center justify-center rounded border border-gray-200 text-gray-700 hover:bg-gray-50"
                 >
                   <RiArrowLeftSLine className="h-4 w-4" />
                 </button>
-                <h2 className="min-w-[9.5rem] text-center text-sm font-semibold capitalize text-gray-900">
-                  {monthTitle(viewYear, viewMonth)}
+                <h2 className="min-w-[4.5rem] text-center text-sm font-semibold tabular-nums text-gray-900">
+                  {viewYear}
                 </h2>
                 <button
                   type="button"
-                  aria-label="Следующий месяц"
-                  onClick={() => goMonth(1)}
-                  className="inline-flex h-7 w-7 items-center justify-center rounded border border-gray-200 text-gray-700 hover:bg-gray-50"
+                  aria-label="Следующий год"
+                  disabled={!canGoForward}
+                  onClick={() => goYear(1)}
+                  className="inline-flex h-7 w-7 items-center justify-center rounded border border-gray-200 text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   <RiArrowRightSLine className="h-4 w-4" />
                 </button>
@@ -295,64 +393,22 @@ export default function ObjectControlPage() {
                   будущее
                 </span>
               </div>
-
-              <div className="ml-auto flex min-w-0 flex-1 items-center gap-1.5 sm:max-w-xs sm:flex-initial">
-                <input
-                  type="date"
-                  value={reportDate}
-                  onChange={(e) => onPickDate(e.target.value)}
-                  className="min-w-0 flex-1 rounded border border-gray-300 bg-white px-2 py-1 text-xs text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                />
-                <button
-                  type="button"
-                  onClick={() => openReport(reportDate)}
-                  className="shrink-0 rounded bg-blue-600 px-2.5 py-1 text-xs font-semibold text-white hover:bg-blue-700"
-                >
-                  Записать
-                </button>
-              </div>
             </div>
 
-            <div className="grid grid-cols-7 gap-1">
-              {['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'].map((d) => (
-                <div key={d} className="text-center text-[10px] font-semibold text-gray-400">
-                  {d}
-                </div>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
+              {Array.from({ length: 12 }, (_, m) => (
+                <MiniMonth
+                  key={m}
+                  year={viewYear}
+                  month={m}
+                  reported={reported}
+                  reportDate={reportDate}
+                  onPick={(date, future) => {
+                    setReportDate(date)
+                    if (!future) openReport(date)
+                  }}
+                />
               ))}
-              {Array.from({ length: pad }).map((_, i) => (
-                <div key={`pad-${i}`} />
-              ))}
-              {days.map((d) => {
-                const dayNum = Number(d.date.slice(-2))
-                let cls = 'bg-gray-100 text-gray-500 hover:bg-gray-200'
-                if (!d.future) {
-                  cls = d.hasReport
-                    ? 'bg-emerald-500 text-white hover:bg-emerald-600'
-                    : 'bg-rose-500 text-white hover:bg-rose-600'
-                }
-                if (d.today) cls += ' ring-1 ring-offset-1 ring-blue-500'
-                if (d.date === reportDate) cls += ' outline outline-1 outline-offset-0 outline-indigo-500'
-                return (
-                  <button
-                    key={d.date}
-                    type="button"
-                    title={
-                      d.hasReport
-                        ? `${d.date}: отчёт есть`
-                        : d.future
-                          ? `${d.date}: будущее`
-                          : `${d.date}: нет отчёта`
-                    }
-                    onClick={() => {
-                      setReportDate(d.date)
-                      if (!d.future) openReport(d.date)
-                    }}
-                    className={`flex aspect-square items-center justify-center rounded text-xs font-semibold tabular-nums ${cls}`}
-                  >
-                    {dayNum}
-                  </button>
-                )
-              })}
             </div>
           </div>
         </>
