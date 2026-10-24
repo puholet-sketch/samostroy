@@ -1,0 +1,32 @@
+# СамоСтрой — локальное durable-хранилище (фаза B foundation).
+# Postgres для feedback; REST остаётся в bots/feedback-bot (DATABASE_URL).
+#
+#   docker compose up -d
+#   # затем в bots/feedback-bot/.env:
+#   DATABASE_URL=postgres://samostroy:samostroy@127.0.0.1:5432/samostroy
+#   npm start
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: samostroy-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: samostroy
+      POSTGRES_PASSWORD: samostroy
+      POSTGRES_DB: samostroy
+    ports:
+      - '5432:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
+      - feedback_images:/var/lib/samostroy/feedback-images
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U samostroy -d samostroy']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  pgdata:
+  feedback_images:

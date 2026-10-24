@@ -1,5 +1,88 @@
 [
   {
+    "id": "2026-10-24-c",
+    "at": "2026-10-24T22:45:00+03:00",
+    "title": "Роль разработчика и Docker для замечаний",
+    "items": [
+      {
+        "section": "Безопасность",
+        "text": "Роль «Разработчик»: замечания и обновления без доступа к клиентам"
+      },
+      {
+        "section": "Замечания",
+        "text": "«Скопировать постановку» доступна владельцу и разработчику"
+      },
+      {
+        "section": "Инфраструктура",
+        "text": "Docker Compose + Postgres для очереди замечаний; бот пишет в БД или JSON"
+      },
+      {
+        "section": "Обновления",
+        "text": "Страницы релизов и инбокс Ревизора в том же CRM (без отдельного UI)"
+      }
+    ],
+    "docs": [
+      { "label": "Модуль Замечания", "href": "docs/modules/feedback.md", "kind": "repo" },
+      { "label": "Безопасность / роли", "href": "docs/modules/security.md", "kind": "repo" },
+      { "label": "Архитектура", "href": "docs/architecture.md", "kind": "repo" },
+      { "label": "Feedback-бот", "href": "bots/feedback-bot/README.md", "kind": "repo" },
+      { "label": "Инбокс замечаний", "href": "/feedback", "kind": "app" },
+      { "label": "Безопасность", "href": "/security", "kind": "app" }
+    ]
+  },
+  {
+    "id": "2026-10-24-b",
+    "at": "2026-10-24T22:20:00+03:00",
+    "title": "Страницы релизов в Обновлениях",
+    "items": [
+      {
+        "section": "Обновления",
+        "text": "У каждого релиза — страница с бизнес-описанием и ссылками на системную документацию"
+      },
+      {
+        "section": "Документация",
+        "text": "Паттерн data/releases/<id>.md + docs/modules/updates.md"
+      }
+    ],
+    "docs": [
+      { "label": "Модуль Обновления", "href": "docs/modules/updates.md", "kind": "repo" },
+      { "label": "Архитектура", "href": "docs/architecture.md", "kind": "repo" },
+      { "label": "Индекс модулей", "href": "docs/modules/README.md", "kind": "repo" },
+      { "label": "Список обновлений", "href": "/updates", "kind": "app" }
+    ]
+  },
+  {
+    "id": "2026-10-24-a",
+    "at": "2026-10-24T22:15:00+03:00",
+    "title": "Замечания (Ревизор)",
+    "items": [
+      {
+        "section": "Замечания",
+        "text": "FAB и пункт в сайдбаре: скрин, метки, тема → очередь"
+      },
+      {
+        "section": "Замечания",
+        "text": "Инбокс со статусами; владелец может скопировать постановку"
+      },
+      {
+        "section": "Безопасность",
+        "text": "Модуль «Замечания» + настройка Feedback API (Termux)"
+      },
+      {
+        "section": "Документация",
+        "text": "docs/architecture.md и docs/modules/feedback.md"
+      }
+    ],
+    "docs": [
+      { "label": "Модуль Замечания", "href": "docs/modules/feedback.md", "kind": "repo" },
+      { "label": "Процесс Ревизора", "href": "docs/processes/feedback.md", "kind": "repo" },
+      { "label": "Архитектура", "href": "docs/architecture.md", "kind": "repo" },
+      { "label": "Feedback-бот (Termux)", "href": "bots/feedback-bot/README.md", "kind": "repo" },
+      { "label": "Инбокс замечаний", "href": "/feedback", "kind": "app" },
+      { "label": "Настройка API", "href": "/security", "kind": "app" }
+    ]
+  },
+  {
     "id": "2026-10-23-c",
     "at": "2026-10-23T00:30:00+03:00",
     "title": "Лимиты даты и вложений в отчёте",
@@ -12,6 +95,10 @@
         "section": "Отчёт по объекту",
         "text": "Вложения суммарно не более 5 МБ на отчёт"
       }
+    ],
+    "docs": [
+      { "label": "Контроль объекта", "href": "docs/modules/object_control.md", "kind": "repo" },
+      { "label": "Контроль объекта (UI)", "href": "/control", "kind": "app" }
     ]
   },
   {
@@ -31,6 +118,11 @@
         "section": "Обновления",
         "text": "Правило: при каждом деплое обязательно писать, что изменилось"
       }
+    ],
+    "docs": [
+      { "label": "Контроль объекта", "href": "docs/modules/object_control.md", "kind": "repo" },
+      { "label": "Модуль Обновления", "href": "docs/modules/updates.md", "kind": "repo" },
+      { "label": "Контроль объекта (UI)", "href": "/control", "kind": "app" }
     ]
   },
   {
@@ -46,6 +138,10 @@
         "section": "Договоры и акты",
         "text": "В списке клиентов — звонок, MAX, WhatsApp, Telegram"
       }
+    ],
+    "docs": [
+      { "label": "Договоры и акты (UI)", "href": "/documents", "kind": "app" },
+      { "label": "Поля карточки клиента", "href": "docs/crm_client_card_fields.md", "kind": "repo" }
     ]
   },
   {
@@ -77,6 +173,12 @@
         "section": "Меню",
         "text": "Цветные иконки разделов в сайдбаре"
       }
+    ],
+    "docs": [
+      { "label": "Контроль объекта", "href": "docs/modules/object_control.md", "kind": "repo" },
+      { "label": "Поля карточки клиента", "href": "docs/crm_client_card_fields.md", "kind": "repo" },
+      { "label": "Контроль объекта (UI)", "href": "/control", "kind": "app" },
+      { "label": "Клиенты (UI)", "href": "/clients", "kind": "app" }
     ]
   },
   {
@@ -108,6 +210,13 @@
         "section": "Контакты",
         "text": "Иконки MAX, WhatsApp, Telegram рядом с телефоном"
       }
+    ],
+    "docs": [
+      { "label": "Безопасность / роли", "href": "docs/modules/security.md", "kind": "repo" },
+      { "label": "Контроль объекта", "href": "docs/modules/object_control.md", "kind": "repo" },
+      { "label": "Модуль Обновления", "href": "docs/modules/updates.md", "kind": "repo" },
+      { "label": "Безопасность (UI)", "href": "/security", "kind": "app" },
+      { "label": "Обновления (UI)", "href": "/updates", "kind": "app" }
     ]
   },
   {
@@ -123,6 +232,11 @@
         "section": "Договоры и акты",
         "text": "Светлые зелёные шапки таблиц, автоподстановка из КК"
       }
+    ],
+    "docs": [
+      { "label": "Поля карточки клиента", "href": "docs/crm_client_card_fields.md", "kind": "repo" },
+      { "label": "Калькулятор (UI)", "href": "/calculator", "kind": "app" },
+      { "label": "Договоры и акты (UI)", "href": "/documents", "kind": "app" }
     ]
   },
   {
@@ -146,6 +260,12 @@
         "section": "Контроль объекта",
         "text": "Календарь отчётов и публичная ссылка для рабочих"
       }
+    ],
+    "docs": [
+      { "label": "Архитектура", "href": "docs/architecture.md", "kind": "repo" },
+      { "label": "Индекс модулей", "href": "docs/modules/README.md", "kind": "repo" },
+      { "label": "Поля карточки клиента", "href": "docs/crm_client_card_fields.md", "kind": "repo" },
+      { "label": "Клиенты (UI)", "href": "/clients", "kind": "app" }
     ]
   }
 ]

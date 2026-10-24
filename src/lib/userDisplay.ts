@@ -3,6 +3,7 @@ import type { Role, User } from '../services/types'
 /** Роли, которым можно назначать задачи (не клиент). */
 export const ASSIGNABLE_ROLES: Role[] = [
   'owner',
+  'developer',
   'seller',
   'foreman',
   'builder',

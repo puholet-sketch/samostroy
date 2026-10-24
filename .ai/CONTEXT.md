@@ -1,32 +1,26 @@
 ---
 project: samostroy
-v: 5
+v: 6
 ---
 
 # СамоСтрой
 
-MVP сужен под заказчика: клиентская карточка (КК) → персональные документы + контроль объекта.
-UI: Tremor Dashboard (`@tremor/react` + Tailwind) — светлый сайдбар, карточки KPI, без наложений.
+MVP: КК → документы/калькулятор → контроль объекта → **Замечания (Ревизор)**.
+Один CRM; роль `developer` для внутренних инструментов (не отдельный SPA).
 
-## Оставляем
+## Факты
 
-- Карточка клиента (поля — эталон с prod CRM, только чтение)
-- Договоры/акты: автоподстановка из КК через `src/lib/generateDocs.ts` (светлые зелёные шапки таблиц)
-- Линейный калькулятор ремонта по прайсу → индивидуальные суммы
-- Контроль объекта: публичная ссылка для отчёта рабочего (текст+фото/видео); календарь дат (красный = нет отчёта)
-
-## Убираем временно
-
-Kanban/эпики, карта, воронка продаж, security-матрица UI (упростить), daily reports как отдельный модуль → заменить контролем объекта.
+- Права: `allowedModules`; роли owner / developer / foreman
+- Ревизор: localStorage/IDB + Feedback API (`bots/feedback-bot`, JSON или Docker Postgres)
+- Документы: `docs/architecture.md`, `docs/modules/*`
+- Деплой Pages: changelog + `BUILD_STAMP`
 
 ## Документы (SSOT)
 
-- Генерация в приложении: `src/lib/generateDocs.ts` → раздел «Договоры и акты»
-- Образцы: `docs/preview/*.docx`, эталоны: `docs/templates/ryba_*.docx`, `akt_*.docx`
-- Прайс калькулятора: `docs/templates/price_list_march.pdf`
+- Генерация: `src/lib/generateDocs.ts`
+- Образцы: `docs/preview/*.docx`, эталоны `docs/templates/`
+- Прайс: `docs/templates/price_list_march.pdf`
 
 ## Prod CRM (read-only)
 
-- URL: http://crm.1-remont.com
-- Смотреть КК: Гончаров / ideally №13352; серые строки кликабельны
-- Ничего не писать/не удалять
+- URL: http://crm.1-remont.com — только смотреть, не писать

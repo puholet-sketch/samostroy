@@ -34,6 +34,12 @@ npm run preview
 
 Пользователи: `data/users.json`. Права: `data/permissions.json`.
 
+## Документация
+
+- [docs/architecture.md](docs/architecture.md) — слои, деплой, модули
+- [docs/modules/](docs/modules/) — помодульные описания (в т.ч. [Замечания / Ревизор](docs/modules/feedback.md))
+- Feedback API (Termux): [bots/feedback-bot/README.md](bots/feedback-bot/README.md)
+
 ## Архитектура данных (фаза 1)
 
 - `data/*.json` — источник истины (коммитится).

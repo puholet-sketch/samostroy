@@ -9,12 +9,14 @@ alwaysApply: true
 
 1. **Перед** commit/build/deploy добавить новый релиз в `data/changelog.json` (в начало массива).
 2. Поля релиза:
-   - `id` — уникальный (`YYYY-MM-DD-буква` или timestamp)
+   - `id` — уникальный (`YYYY-MM-DD-буква` или timestamp); = slug `/updates/:id`
    - `at` — ISO с таймзоной `+03:00` (момент деплоя)
    - `title` — короткое название пакета изменений
    - `items[]` — по пункту: `{ "section": "Раздел UI", "text": "что изменилось" }`
-3. Писать только то, что реально ушло в этот деплой (не дублировать старые релизы).
-4. Обновить `BUILD_STAMP` в `src/components/updates/UpdatesPage.tsx` (дата · краткий маркер).
-5. Затем commit → push `master` → `GITHUB_PAGES=1` build → push `gh-pages` → дождаться CDN при необходимости.
+   - `docs[]` (желательно) — ссылки на системные docs / in-app: `{ "label", "href", "kind": "repo"|"app" }`
+3. Добавить бизнес-нарратив `data/releases/<id>.md` (страница «Подробнее»).
+4. Писать только то, что реально ушло в этот деплой (не дублировать старые релизы).
+5. Обновить `BUILD_STAMP` в `src/lib/buildStamp.ts` (дата · краткий маркер).
+6. Затем commit → push `master` → `GITHUB_PAGES=1` build → push `gh-pages` → дождаться CDN при необходимости.
 
-Без пункта в changelog **не деплоить**.
+Паттерн: `docs/modules/updates.md`. Без пункта в changelog **не деплоить**.

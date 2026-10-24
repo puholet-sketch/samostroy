@@ -1,5 +1,6 @@
 export type Role =
   | 'owner'
+  | 'developer'
   | 'seller'
   | 'foreman'
   | 'builder'
@@ -23,6 +24,7 @@ export type ModuleKey =
   | 'documents'
   | 'object_control'
   | 'updates'
+  | 'feedback'
 
 /** Модули MVP, которыми управляем в «Безопасности» */
 export const MVP_MODULES = [
@@ -32,6 +34,7 @@ export const MVP_MODULES = [
   'object_control',
   'security',
   'updates',
+  'feedback',
 ] as const satisfies readonly ModuleKey[]
 
 export type MvpModule = (typeof MVP_MODULES)[number]
@@ -43,6 +46,7 @@ export const MVP_MODULE_LABEL: Record<MvpModule, string> = {
   object_control: 'Контроль объекта',
   security: 'Безопасность',
   updates: 'Обновления',
+  feedback: 'Замечания',
 }
 
 export type PermissionFlag = { read: boolean; write: boolean }

@@ -12,8 +12,18 @@
       "documents",
       "object_control",
       "security",
-      "updates"
+      "updates",
+      "feedback"
     ]
+  },
+  {
+    "id": "u-developer-1",
+    "login": "developer",
+    "password": "developer123",
+    "name": "Разработчик",
+    "role": "developer",
+    "active": true,
+    "allowedModules": ["feedback", "updates", "object_control"]
   },
   {
     "id": "u-foreman-1",

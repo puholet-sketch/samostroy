@@ -62,7 +62,7 @@ export default function LoginPage() {
             {busy ? 'Вход…' : 'Войти'}
           </button>
           <p className="text-center text-xs text-gray-400">
-            Демо: owner / owner123 · foreman / foreman123
+            Демо: owner / owner123 · developer / developer123 · foreman / foreman123
           </p>
         </form>
       </Panel>

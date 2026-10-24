@@ -14,6 +14,7 @@ import {
   RiUserFill,
   RiLogoutBoxRLine,
   RiHistoryFill,
+  RiFeedbackFill,
   type RemixiconComponentType,
 } from '@remixicon/react'
 import { useAuth } from '../../contexts/AuthContext'
@@ -26,6 +27,7 @@ import type { ModuleKey } from '../../services/types'
 import { loadClients } from '../../lib/clients'
 import { BrandLogo } from '../common/BrandLogo'
 import { CLIENT_SECTIONS } from '../clients/ClientCardPage'
+import { FeedbackHost, useFeedbackOpenCount } from '../feedback/FeedbackHost'
 import { MVP_ROUTES, parseClientCardPath, routeTitle } from './routes'
 
 type NavIcon = {
@@ -40,6 +42,7 @@ const NAV_ICONS: Record<string, NavIcon> = {
   object_control: { Icon: RiBuilding2Fill, ink: 'text-emerald-600' },
   updates: { Icon: RiHistoryFill, ink: 'text-sky-600' },
   security: { Icon: RiShieldKeyholeFill, ink: 'text-rose-600' },
+  feedback: { Icon: RiFeedbackFill, ink: 'text-rose-600' },
 }
 
 const SECTION_ICONS: Record<string, NavIcon> = {
@@ -55,6 +58,7 @@ function ColoredIcon({ ink, Icon }: NavIcon) {
 
 const ROLE_LABEL: Record<string, string> = {
   owner: 'Владелец',
+  developer: 'Разработчик',
   seller: 'Продавец',
   foreman: 'Прораб',
   builder: 'Строитель',
@@ -71,14 +75,17 @@ const linkCls = ({ isActive }: { isActive: boolean }) =>
 function GlobalNav({
   items,
   onNavigate,
+  feedbackBadge,
 }: {
   items: typeof MVP_ROUTES
   onNavigate?: () => void
+  feedbackBadge?: number
 }) {
   return (
     <nav className="flex flex-1 flex-col gap-1 px-3">
       {items.map((r) => {
         const conf = NAV_ICONS[r.module] ?? NAV_ICONS.documents
+        const badge = r.module === 'feedback' && feedbackBadge && feedbackBadge > 0 ? feedbackBadge : 0
         return (
           <NavLink
             key={r.path}
@@ -88,7 +95,12 @@ function GlobalNav({
             className={linkCls}
           >
             <ColoredIcon {...conf} />
-            {r.name}
+            <span className="min-w-0 flex-1 truncate">{r.name}</span>
+            {badge > 0 && (
+              <span className="rounded-full bg-rose-600 px-1.5 py-0.5 text-[10px] font-bold leading-none text-white">
+                {badge > 99 ? '99+' : badge}
+              </span>
+            )}
           </NavLink>
         )
       })}
@@ -150,8 +162,11 @@ function AppShellInner() {
   const location = useLocation()
   const [mobileOpen, setMobileOpen] = useState(false)
   const [clientName, setClientName] = useState('')
+  const [captureOpen, setCaptureOpen] = useState(false)
   const headerActions = usePageHeaderSlot()
   const headerMeta = usePageHeaderMetaSlot()
+  const canFeedback = can('feedback')
+  const feedbackBadge = useFeedbackOpenCount(canFeedback)
 
   const card = parseClientCardPath(location.pathname)
 
@@ -201,11 +216,29 @@ function AppShellInner() {
             <p className="mb-2 px-5 text-xs font-semibold uppercase tracking-wide text-gray-400">
               Меню
             </p>
-            <GlobalNav items={routes} onNavigate={() => setMobileOpen(false)} />
+            <GlobalNav
+              items={routes}
+              onNavigate={() => setMobileOpen(false)}
+              feedbackBadge={feedbackBadge}
+            />
           </>
         )}
       </div>
       <div className="border-t border-gray-200 p-4">
+        {canFeedback && (
+          <button
+            type="button"
+            data-feedback-ui
+            onClick={() => {
+              setCaptureOpen(true)
+              setMobileOpen(false)
+            }}
+            className="mb-3 inline-flex w-full items-center justify-center gap-2 rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-medium text-rose-700 hover:bg-rose-100"
+          >
+            <RiFeedbackFill className="h-4 w-4" />
+            Замечание
+          </button>
+        )}
         <div className="mb-3">
           <p className="truncate text-sm font-semibold text-gray-900">{user?.name}</p>
           <p className="text-xs text-gray-500">{user ? ROLE_LABEL[user.role] ?? user.role : ''}</p>
@@ -264,6 +297,9 @@ function AppShellInner() {
           <Outlet />
         </main>
       </div>
+      {canFeedback && (
+        <FeedbackHost open={captureOpen} onOpenChange={setCaptureOpen} />
+      )}
     </div>
   )
 }

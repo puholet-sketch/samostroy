@@ -20,6 +20,7 @@ const PRIORITY_LABEL: Record<TaskPriority, string> = {
 
 const ROLE_LABEL: Record<string, string> = {
   owner: 'Директор',
+  developer: 'Разработчик',
   seller: 'Продавец',
   foreman: 'Прораб',
   builder: 'Строитель',

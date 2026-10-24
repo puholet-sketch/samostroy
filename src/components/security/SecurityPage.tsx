@@ -2,6 +2,10 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { api } from '../../services/api'
 import { useAuth } from '../../contexts/AuthContext'
 import {
+  loadFeedbackApiConfig,
+  saveFeedbackApiConfig,
+} from '../../lib/feedbackConfig'
+import {
   MVP_MODULE_LABEL,
   MVP_MODULES,
   type ModuleKey,
@@ -17,11 +21,27 @@ const ROLE_OPTS: { id: Role; label: string; defaultModules: ModuleKey[] }[] = [
     defaultModules: [...MVP_MODULES],
   },
   {
+    id: 'developer',
+    label: 'Разработчик',
+    defaultModules: ['feedback', 'updates', 'object_control'],
+  },
+  {
     id: 'foreman',
     label: 'Прораб',
     defaultModules: ['object_control', 'updates'],
   },
 ]
+
+const SECURITY_ROLES = new Set<Role>(ROLE_OPTS.map((r) => r.id))
+
+function normalizeSecurityRole(role: Role): Role {
+  if (SECURITY_ROLES.has(role)) return role
+  return 'foreman'
+}
+
+function roleLabel(role: Role): string {
+  return ROLE_OPTS.find((r) => r.id === role)?.label ?? role
+}
 
 const emptyForm = (): Omit<User, 'id'> & { id?: string } => ({
   login: '',
@@ -58,18 +78,18 @@ export default function SecurityPage() {
   }
 
   function startEdit(u: User) {
+    const role = normalizeSecurityRole(u.role)
     setEditingId(u.id)
     setForm({
       id: u.id,
       login: u.login,
       password: u.password,
       name: u.name,
-      role: u.role === 'owner' ? 'owner' : 'foreman',
+      role,
       active: u.active,
       allowedModules: u.allowedModules?.length
         ? [...u.allowedModules]
-        : ROLE_OPTS.find((r) => r.id === (u.role === 'owner' ? 'owner' : 'foreman'))
-            ?.defaultModules ?? ['object_control'],
+        : [...(ROLE_OPTS.find((r) => r.id === role)?.defaultModules ?? ['object_control'])],
     })
     setMsg('')
   }
@@ -103,14 +123,19 @@ export default function SecurityPage() {
     setBusy(true)
     setMsg('')
     try {
+      const role = normalizeSecurityRole(form.role)
       const mods = [...(form.allowedModules ?? [])]
-      if (form.role === 'owner' && !mods.includes('security')) mods.push('security')
+      if (role === 'owner' && !mods.includes('security')) mods.push('security')
+      if (role !== 'owner') {
+        const i = mods.indexOf('security')
+        if (i >= 0) mods.splice(i, 1)
+      }
       const row: User = {
         id: editingId || `u-${Date.now()}`,
         login: form.login.trim(),
         password: form.password,
         name: form.name.trim(),
-        role: form.role === 'owner' ? 'owner' : 'foreman',
+        role,
         active: form.active,
         allowedModules: mods,
       }
@@ -148,8 +173,11 @@ export default function SecurityPage() {
   return (
     <div className="space-y-4">
       <p className="text-sm text-gray-500">
-        Две роли: владелец и прораб. Прораб по умолчанию видит только контроль объекта (отчёты).
+        Роли: владелец (полный контур), разработчик (замечания / обновления, без PII клиентов),
+        прораб (контроль объекта). Модуль «Замечания» включает FAB и инбокс Ревизора.
       </p>
+
+      <FeedbackApiSettings />
 
       <div className="grid gap-4 lg:grid-cols-2">
         <Panel title={editingId ? 'Изменить учётку' : 'Новая учётная запись'}>
@@ -186,7 +214,7 @@ export default function SecurityPage() {
               <span className="mb-0.5 block text-xs text-gray-500">Роль</span>
               <select
                 className={inputCls}
-                value={form.role === 'owner' ? 'owner' : 'foreman'}
+                value={normalizeSecurityRole(form.role)}
                 onChange={(e) => onRoleChange(e.target.value as Role)}
               >
                 {ROLE_OPTS.map((r) => (
@@ -266,11 +294,12 @@ export default function SecurityPage() {
                     <span className="font-normal text-gray-400">@{u.login}</span>
                   </p>
                   <p className="text-xs text-gray-500">
-                    {u.role === 'owner' ? 'Владелец' : 'Прораб'}
+                    {roleLabel(normalizeSecurityRole(u.role))}
                     {!u.active ? ' · отключена' : ''}
                     {' · '}
-                    {(u.allowedModules ?? []).map((m) => MVP_MODULE_LABEL[m as keyof typeof MVP_MODULE_LABEL] || m).join(', ') ||
-                      'по роли'}
+                    {(u.allowedModules ?? [])
+                      .map((m) => MVP_MODULE_LABEL[m as keyof typeof MVP_MODULE_LABEL] || m)
+                      .join(', ') || 'по роли'}
                   </p>
                 </div>
                 <button
@@ -293,5 +322,67 @@ export default function SecurityPage() {
         </Panel>
       </div>
     </div>
+  )
+}
+
+function FeedbackApiSettings() {
+  const [baseUrl, setBaseUrl] = useState('')
+  const [token, setToken] = useState('')
+  const [saved, setSaved] = useState('')
+
+  useEffect(() => {
+    const cfg = loadFeedbackApiConfig()
+    setBaseUrl(cfg.baseUrl)
+    setToken(cfg.token)
+  }, [])
+
+  function onSave(e: FormEvent) {
+    e.preventDefault()
+    saveFeedbackApiConfig({ baseUrl: baseUrl.trim(), token: token.trim() })
+    setSaved('Сохранено в этом браузере')
+  }
+
+  const inputCls =
+    'block w-full rounded-md border border-gray-300 bg-white px-2.5 py-1.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500'
+
+  return (
+    <Panel title="Feedback API (Docker / Termux)">
+      <form onSubmit={onSave} className="grid gap-3 sm:grid-cols-2">
+        <label className="block sm:col-span-2">
+          <span className="mb-0.5 block text-xs text-gray-500">
+            Base URL (localhost при Docker на ПК, cloudflared / ngrok с телефона)
+          </span>
+          <input
+            className={inputCls}
+            value={baseUrl}
+            onChange={(e) => setBaseUrl(e.target.value)}
+            placeholder="http://127.0.0.1:8787"
+          />
+        </label>
+        <label className="block sm:col-span-2">
+          <span className="mb-0.5 block text-xs text-gray-500">X-Feedback-Token</span>
+          <input
+            className={inputCls}
+            value={token}
+            onChange={(e) => setToken(e.target.value)}
+            placeholder="секрет из bots/feedback-bot/.env"
+            autoComplete="off"
+          />
+        </label>
+        <div className="flex items-center gap-2 sm:col-span-2">
+          <button
+            type="submit"
+            className="rounded-md bg-gray-900 px-3 py-2 text-sm font-semibold text-white hover:bg-gray-800"
+          >
+            Сохранить API
+          </button>
+          {saved && <span className="text-xs text-emerald-700">{saved}</span>}
+        </div>
+        <p className="text-[11px] text-gray-400 sm:col-span-2">
+          См. docs/modules/feedback.md и bots/feedback-bot/README.md. Без API замечания
+          остаются локально в браузере.
+        </p>
+      </form>
+    </Panel>
   )
 }

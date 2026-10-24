@@ -12,6 +12,8 @@ import ObjectControlPage from './components/control/ObjectControlPage'
 import PublicReportPage from './components/control/PublicReportPage'
 import SecurityPage from './components/security/SecurityPage'
 import UpdatesPage from './components/updates/UpdatesPage'
+import ReleaseDetailPage from './components/updates/ReleaseDetailPage'
+import FeedbackInboxPage from './components/feedback/FeedbackInboxPage'
 import { useAuth } from './contexts/AuthContext'
 import { homePathForUser } from './components/layout/routes'
 
@@ -87,10 +89,26 @@ export default function App() {
                 }
               />
               <Route
+                path="/feedback"
+                element={
+                  <ProtectedRoute module="feedback">
+                    <FeedbackInboxPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
                 path="/updates"
                 element={
                   <ProtectedRoute module="updates">
                     <UpdatesPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/updates/:releaseId"
+                element={
+                  <ProtectedRoute module="updates">
+                    <ReleaseDetailPage />
                   </ProtectedRoute>
                 }
               />

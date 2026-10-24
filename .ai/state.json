@@ -1,14 +1,15 @@
 {
   "v": 4,
-  "updated": "2026-10-22",
+  "updated": "2026-10-24",
   "status": "active",
-  "goal": "MVP: КК + договоры/акты/калькулятор + контроль объекта",
-  "next": "Проверить роли owner/foreman и контроль клиент→объект на Pages",
-  "blockers": [],
+  "goal": "CRM + developer + Docker feedback foundation",
+  "next": "Поднять Docker Desktop → compose up; FEEDBACK_TOKEN/TG в .env; указать API URL в Безопасности",
+  "blockers": ["Docker Desktop daemon was stopped during deploy session"],
   "hot_files": [
+    "docker-compose.yml",
+    "bots/feedback-bot/server.mjs",
+    "data/permissions.json",
     "src/components/security/SecurityPage.tsx",
-    "src/components/control/ObjectControlPage.tsx",
-    "src/lib/clients.ts",
-    "src/components/updates/UpdatesPage.tsx"
+    "docs/modules/feedback.md"
   ]
 }
