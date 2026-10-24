@@ -3,12 +3,12 @@
   "updated": "2026-10-24",
   "status": "active",
   "goal": "CRM + developer + Docker feedback foundation",
-  "next": "Поднять Docker Desktop → compose up; FEEDBACK_TOKEN/TG в .env; указать API URL в Безопасности",
-  "blockers": ["Docker Desktop daemon was stopped during deploy session"],
+  "next": "Скопировать bots/feedback-bot/.env.example → .env, npm start, указать API URL в Безопасности",
+  "blockers": [],
   "hot_files": [
     "docker-compose.yml",
     "bots/feedback-bot/server.mjs",
-    "data/permissions.json",
+    "bots/feedback-bot/README.md",
     "src/components/security/SecurityPage.tsx",
     "docs/modules/feedback.md"
   ]
