@@ -54,7 +54,7 @@
 
 ```bash
 docker compose up -d
-# bots/feedback-bot/.env → DATABASE_URL=postgres://samostroy:samostroy@127.0.0.1:5432/samostroy
+# bots/feedback-bot/.env → DATABASE_URL=postgres://samostroy:samostroy@127.0.0.1:5433/samostroy
 ```
 
 Схема: `docker/postgres/init/001_feedback.sql`. CRM по-прежнему бьёт в тот же REST (`http://127.0.0.1:8787` локально или cloudflared).

@@ -12,7 +12,8 @@ REST API + уведомления в Telegram. Тот же контракт дл
 docker compose up -d
 cd bots/feedback-bot
 cp .env.example .env
-# FEEDBACK_TOKEN, опционально TELEGRAM_*, DATABASE_URL уже в example
+# FEEDBACK_TOKEN, опционально TELEGRAM_*;
+# DATABASE_URL → порт 5433 (см. docker-compose.yml)
 npm install
 npm start
 ```
