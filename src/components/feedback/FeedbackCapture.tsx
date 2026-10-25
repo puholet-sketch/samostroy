@@ -18,7 +18,7 @@ import {
 import { useAuth } from '../../contexts/AuthContext'
 import { BUILD_STAMP } from '../../lib/buildStamp'
 import { composeAnnotatedPng } from '../../lib/feedbackAnnotate'
-import { submitFeedbackWithSync } from '../../lib/feedbackApi'
+import { feedbackSubmitUserMessage, submitFeedbackWithSync } from '../../lib/feedbackApi'
 import {
   saveFeedbackImage,
   type FeedbackKind,
@@ -358,15 +358,7 @@ export function FeedbackCapture({ open, onClose, onSubmitted }: Props) {
         annotated,
       )
       onSubmitted?.(item.id)
-      const syncNote =
-        item.syncStatus === 'synced'
-          ? ' · отправлено в API'
-          : item.syncStatus === 'local'
-            ? ' · только локально (API не настроен)'
-            : item.syncStatus === 'error'
-              ? ' · локально, sync ошибка'
-              : ''
-      setMsg(`Отправлено · ${item.id}${syncNote}`)
+      setMsg(feedbackSubmitUserMessage(item))
       setTimeout(() => {
         onClose()
         reset()

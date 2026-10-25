@@ -2,8 +2,11 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { api } from '../../services/api'
 import { useAuth } from '../../contexts/AuthContext'
 import {
+  DEFAULT_FEEDBACK_EMAIL_TO,
   loadFeedbackApiConfig,
+  loadFeedbackEmailConfig,
   saveFeedbackApiConfig,
+  saveFeedbackEmailConfig,
 } from '../../lib/feedbackConfig'
 import {
   MVP_MODULE_LABEL,
@@ -178,6 +181,7 @@ export default function SecurityPage() {
       </p>
 
       <FeedbackApiSettings />
+      <FeedbackEmailSettings />
 
       <div className="grid gap-4 lg:grid-cols-2">
         <Panel title={editingId ? 'Изменить учётку' : 'Новая учётная запись'}>
@@ -380,7 +384,76 @@ function FeedbackApiSettings() {
         </div>
         <p className="text-[11px] text-gray-400 sm:col-span-2">
           См. docs/modules/feedback.md и bots/feedback-bot/README.md. Без API замечания
-          остаются локально в браузере.
+          остаются локально в браузере заказчика — для GitHub Pages настройте email ниже.
+        </p>
+      </form>
+    </Panel>
+  )
+}
+
+function FeedbackEmailSettings() {
+  const [accessKey, setAccessKey] = useState('')
+  const [emailTo, setEmailTo] = useState(DEFAULT_FEEDBACK_EMAIL_TO)
+  const [saved, setSaved] = useState('')
+
+  useEffect(() => {
+    const cfg = loadFeedbackEmailConfig()
+    setAccessKey(cfg.accessKey)
+    setEmailTo(cfg.emailTo)
+  }, [])
+
+  function onSave(e: FormEvent) {
+    e.preventDefault()
+    saveFeedbackEmailConfig({
+      accessKey: accessKey.trim(),
+      emailTo: emailTo.trim() || DEFAULT_FEEDBACK_EMAIL_TO,
+    })
+    setSaved('Сохранено в этом браузере')
+  }
+
+  const inputCls =
+    'block w-full rounded-md border border-gray-300 bg-white px-2.5 py-1.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500'
+
+  return (
+    <Panel title="Feedback email (Web3Forms → GitHub Pages)">
+      <form onSubmit={onSave} className="grid gap-3 sm:grid-cols-2">
+        <label className="block sm:col-span-2">
+          <span className="mb-0.5 block text-xs text-gray-500">
+            Кому (ящик разработчика; access key создаётся на этот адрес)
+          </span>
+          <input
+            className={inputCls}
+            type="email"
+            value={emailTo}
+            onChange={(e) => setEmailTo(e.target.value)}
+            placeholder={DEFAULT_FEEDBACK_EMAIL_TO}
+          />
+        </label>
+        <label className="block sm:col-span-2">
+          <span className="mb-0.5 block text-xs text-gray-500">
+            Web3Forms Access Key (публичный, из кабинета web3forms.com)
+          </span>
+          <input
+            className={inputCls}
+            value={accessKey}
+            onChange={(e) => setAccessKey(e.target.value)}
+            placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+            autoComplete="off"
+          />
+        </label>
+        <div className="flex items-center gap-2 sm:col-span-2">
+          <button
+            type="submit"
+            className="rounded-md bg-gray-900 px-3 py-2 text-sm font-semibold text-white hover:bg-gray-800"
+          >
+            Сохранить email
+          </button>
+          {saved && <span className="text-xs text-emerald-700">{saved}</span>}
+        </div>
+        <p className="text-[11px] text-gray-400 sm:col-span-2">
+          Без ключа на Pages замечания не доходят до разработчика. Шаги:{' '}
+          docs/modules/feedback.md · .env.example (`VITE_WEB3FORMS_ACCESS_KEY`,
+          `VITE_FEEDBACK_EMAIL_TO`).
         </p>
       </form>
     </Panel>

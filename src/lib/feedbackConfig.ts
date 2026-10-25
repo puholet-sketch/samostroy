@@ -1,17 +1,27 @@
-/** Настройки Feedback API (фаза A: Termux). */
+/** Настройки Feedback API и email-канала (Web3Forms). */
 
-const KEY = 'samostroy:feedback_api'
+const API_KEY = 'samostroy:feedback_api'
+const EMAIL_KEY = 'samostroy:feedback_email'
+
+export const DEFAULT_FEEDBACK_EMAIL_TO = 'sorvanvon@yandex.ru'
 
 export type FeedbackApiConfig = {
   baseUrl: string
   token: string
 }
 
+export type FeedbackEmailConfig = {
+  /** Web3Forms access key (публичный, VITE_ / Безопасность) */
+  accessKey: string
+  /** Куда должны приходить письма (ключ Web3Forms создаётся на этот адрес) */
+  emailTo: string
+}
+
 export function loadFeedbackApiConfig(): FeedbackApiConfig {
   const fromEnvUrl = (import.meta.env.VITE_FEEDBACK_API_URL as string | undefined)?.trim() ?? ''
   const fromEnvToken = (import.meta.env.VITE_FEEDBACK_API_TOKEN as string | undefined)?.trim() ?? ''
   try {
-    const raw = localStorage.getItem(KEY)
+    const raw = localStorage.getItem(API_KEY)
     if (raw) {
       const parsed = JSON.parse(raw) as Partial<FeedbackApiConfig>
       return {
@@ -27,7 +37,7 @@ export function loadFeedbackApiConfig(): FeedbackApiConfig {
 
 export function saveFeedbackApiConfig(cfg: FeedbackApiConfig): void {
   localStorage.setItem(
-    KEY,
+    API_KEY,
     JSON.stringify({
       baseUrl: cfg.baseUrl.replace(/\/$/, ''),
       token: cfg.token,
@@ -37,4 +47,39 @@ export function saveFeedbackApiConfig(cfg: FeedbackApiConfig): void {
 
 export function isFeedbackApiConfigured(cfg = loadFeedbackApiConfig()): boolean {
   return Boolean(cfg.baseUrl && cfg.token)
+}
+
+export function loadFeedbackEmailConfig(): FeedbackEmailConfig {
+  const fromEnvKey =
+    (import.meta.env.VITE_WEB3FORMS_ACCESS_KEY as string | undefined)?.trim() ?? ''
+  const fromEnvTo =
+    (import.meta.env.VITE_FEEDBACK_EMAIL_TO as string | undefined)?.trim() ||
+    DEFAULT_FEEDBACK_EMAIL_TO
+  try {
+    const raw = localStorage.getItem(EMAIL_KEY)
+    if (raw) {
+      const parsed = JSON.parse(raw) as Partial<FeedbackEmailConfig>
+      return {
+        accessKey: (parsed.accessKey ?? fromEnvKey).trim(),
+        emailTo: (parsed.emailTo ?? fromEnvTo).trim() || DEFAULT_FEEDBACK_EMAIL_TO,
+      }
+    }
+  } catch {
+    /* ignore */
+  }
+  return { accessKey: fromEnvKey, emailTo: fromEnvTo }
+}
+
+export function saveFeedbackEmailConfig(cfg: FeedbackEmailConfig): void {
+  localStorage.setItem(
+    EMAIL_KEY,
+    JSON.stringify({
+      accessKey: cfg.accessKey.trim(),
+      emailTo: (cfg.emailTo.trim() || DEFAULT_FEEDBACK_EMAIL_TO),
+    }),
+  )
+}
+
+export function isFeedbackEmailConfigured(cfg = loadFeedbackEmailConfig()): boolean {
+  return Boolean(cfg.accessKey)
 }

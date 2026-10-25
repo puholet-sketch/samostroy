@@ -1,4 +1,5 @@
 import { isFeedbackApiConfigured, loadFeedbackApiConfig } from './feedbackConfig'
+import { sendFeedbackEmail } from './feedbackEmail'
 import type { FeedbackItem, FeedbackStatus } from './feedbackStore'
 import { upsertFeedback } from './feedbackStore'
 
@@ -58,13 +59,14 @@ export async function postFeedbackRemote(
   return { tgMessageId: data.tgMessageId }
 }
 
-/** Сохранить локально и попытаться отправить на API. */
+/** Сохранить локально, попытаться API, затем email (Web3Forms). */
 export async function submitFeedbackWithSync(
   item: FeedbackItem,
   imageBlob: Blob,
 ): Promise<FeedbackItem> {
   let next: FeedbackItem = { ...item, syncStatus: 'pending' }
   upsertFeedback(next)
+
   try {
     const { tgMessageId } = await postFeedbackRemote(next, imageBlob)
     next = {
@@ -83,6 +85,31 @@ export async function submitFeedbackWithSync(
       syncError: cfgOk ? msg : undefined,
     }
   }
+
+  const email = await sendFeedbackEmail(next, imageBlob)
+  if (email.skipped) {
+    next = { ...next, emailStatus: 'skipped', emailAttached: false, emailError: undefined }
+  } else if (email.ok) {
+    next = {
+      ...next,
+      emailStatus: 'sent',
+      emailAttached: email.attached,
+      emailError: undefined,
+      updatedAt: new Date().toISOString(),
+    }
+    // На Pages без API письмо — единственный канал до разработчика
+    if (next.syncStatus === 'local' || next.syncStatus === 'pending') {
+      next = { ...next, syncStatus: 'synced', syncError: undefined }
+    }
+  } else {
+    next = {
+      ...next,
+      emailStatus: 'error',
+      emailAttached: false,
+      emailError: email.error,
+    }
+  }
+
   upsertFeedback(next)
   return next
 }
@@ -91,4 +118,32 @@ export function remoteImageUrl(id: string): string | null {
   const cfg = loadFeedbackApiConfig()
   if (!isFeedbackApiConfigured(cfg)) return null
   return `${cfg.baseUrl}/api/feedback/${encodeURIComponent(id)}/image`
+}
+
+/** Текст статуса для заказчика после отправки. */
+export function feedbackSubmitUserMessage(item: FeedbackItem): string {
+  const parts: string[] = [`Сохранено · ${item.id}`]
+  if (item.emailStatus === 'sent') {
+    parts.push(
+      item.emailAttached
+        ? 'письмо с вложением отправлено разработчику'
+        : 'письмо отправлено разработчику (скрин — в этом браузере)',
+    )
+  } else if (item.emailStatus === 'error') {
+    parts.push('письмо не удалось отправить')
+  } else if (item.emailStatus === 'skipped') {
+    parts.push('email-канал не настроен')
+  }
+
+  if (item.syncStatus === 'synced' && item.tgMessageId != null) {
+    parts.push('очередь API')
+  } else if (item.syncStatus === 'synced' && item.emailStatus === 'sent') {
+    /* уже отметили письмо */
+  } else if (item.syncStatus === 'error') {
+    parts.push('API недоступен')
+  } else if (item.syncStatus === 'local' && item.emailStatus !== 'sent') {
+    parts.push('только в этом браузере')
+  }
+
+  return parts.join(' · ')
 }

@@ -38,7 +38,15 @@ npm run preview
 
 - [docs/architecture.md](docs/architecture.md) — слои, деплой, модули
 - [docs/modules/](docs/modules/) — помодульные описания (в т.ч. [Замечания / Ревизор](docs/modules/feedback.md))
-- Feedback API (Termux): [bots/feedback-bot/README.md](bots/feedback-bot/README.md)
+- Feedback API (Docker / Termux): [bots/feedback-bot/README.md](bots/feedback-bot/README.md)
+
+## Замечания с GitHub Pages → почта
+
+Без публичного Feedback API замечания на Pages остаются только в браузере заказчика. Доставка разработчику — **Web3Forms**:
+
+1. Access Key на [web3forms.com](https://web3forms.com) для ящика (по умолчанию `sorvanvon@yandex.ru`).
+2. `VITE_WEB3FORMS_ACCESS_KEY` (+ опц. `VITE_FEEDBACK_EMAIL_TO`) в [.env.example](.env.example) перед сборкой, либо CRM → Безопасность → «Feedback email».
+3. Подробности: [docs/modules/feedback.md](docs/modules/feedback.md).
 
 ## Архитектура данных (фаза 1)
 

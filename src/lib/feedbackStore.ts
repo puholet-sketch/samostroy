@@ -41,6 +41,10 @@ export type FeedbackItem = {
   tgMessageId?: number
   syncStatus: FeedbackSyncStatus
   syncError?: string
+  /** Email через Web3Forms: sent | error | skipped (канал не настроен) */
+  emailStatus?: 'sent' | 'error' | 'skipped'
+  emailAttached?: boolean
+  emailError?: string
 }
 
 function loadAll(): FeedbackItem[] {

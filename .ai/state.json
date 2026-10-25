@@ -1,15 +1,15 @@
 {
   "v": 4,
-  "updated": "2026-10-24",
+  "updated": "2026-10-25",
   "status": "active",
-  "goal": "CRM + developer + Docker feedback foundation",
-  "next": "Скопировать bots/feedback-bot/.env.example → .env, npm start, указать API URL в Безопасности",
-  "blockers": [],
+  "goal": "Pages feedback → email (Web3Forms)",
+  "next": "Создать Web3Forms Access Key на sorvanvon@yandex.ru и вписать в .env / Безопасность; проверить письмо с Pages",
+  "blockers": ["Нужен Access Key от пользователя (web3forms.com)"],
   "hot_files": [
-    "docker-compose.yml",
-    "bots/feedback-bot/server.mjs",
-    "bots/feedback-bot/README.md",
-    "src/components/security/SecurityPage.tsx",
-    "docs/modules/feedback.md"
+    "src/lib/feedbackEmail.ts",
+    "src/lib/feedbackConfig.ts",
+    "src/lib/feedbackApi.ts",
+    "docs/modules/feedback.md",
+    ".env.example"
   ]
 }
