@@ -3,13 +3,13 @@
   "updated": "2026-10-25",
   "status": "active",
   "goal": "Pages feedback → email (Web3Forms)",
-  "next": "Создать Web3Forms Access Key на sorvanvon@yandex.ru и вписать в .env / Безопасность; проверить письмо с Pages",
-  "blockers": ["Нужен Access Key от пользователя (web3forms.com)"],
+  "next": "Проверить письмо с Pages после деплоя 2026-10-25-c",
+  "blockers": [],
   "hot_files": [
     "src/lib/feedbackEmail.ts",
     "src/lib/feedbackConfig.ts",
-    "src/lib/feedbackApi.ts",
-    "docs/modules/feedback.md",
-    ".env.example"
+    ".env.production",
+    "data/changelog.json",
+    "docs/modules/feedback.md"
   ]
 }
