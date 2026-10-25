@@ -31,10 +31,28 @@ type Step = 'shot' | 'mark' | 'form'
 
 type Tool = FeedbackMarkerType
 
+type Draft = { x: number; y: number; x2: number; y2: number }
+
+type TextDraft = { x: number; y: number; value: string }
+
 type Props = {
   open: boolean
   onClose: () => void
   onSubmitted?: (id: string) => void
+}
+
+const MIN_DRAG_PCT = 1.2
+
+/** Visible image box inside an object-contain <img> (may be letterboxed). */
+function objectContainContentRect(img: HTMLImageElement): DOMRect {
+  const box = img.getBoundingClientRect()
+  const nw = img.naturalWidth
+  const nh = img.naturalHeight
+  if (!nw || !nh || box.width < 1 || box.height < 1) return box
+  const scale = Math.min(box.width / nw, box.height / nh)
+  const w = nw * scale
+  const h = nh * scale
+  return new DOMRect(box.left + (box.width - w) / 2, box.top + (box.height - h) / 2, w, h)
 }
 
 export function FeedbackCapture({ open, onClose, onSubmitted }: Props) {
@@ -47,13 +65,26 @@ export function FeedbackCapture({ open, onClose, onSubmitted }: Props) {
   const [msg, setMsg] = useState('')
   const [tool, setTool] = useState<Tool>('rect')
   const [markers, setMarkers] = useState<FeedbackMarker[]>([])
-  const [draft, setDraft] = useState<{ x: number; y: number; x2?: number; y2?: number } | null>(
-    null,
-  )
+  const [draft, setDraft] = useState<Draft | null>(null)
+  const [textDraft, setTextDraft] = useState<TextDraft | null>(null)
   const [title, setTitle] = useState('')
   const [body, setBody] = useState('')
   const [kind, setKind] = useState<FeedbackKind>('ux')
+  /** Overlay inset % relative to surface (matches object-contain content). */
+  const [overlayInset, setOverlayInset] = useState({
+    left: 0,
+    top: 0,
+    width: 100,
+    height: 100,
+  })
+  const surfaceRef = useRef<HTMLDivElement>(null)
   const imgRef = useRef<HTMLImageElement>(null)
+  const contentRectRef = useRef<DOMRect | null>(null)
+  const draftRef = useRef<Draft | null>(null)
+  const drawingRef = useRef(false)
+  const textInputRef = useRef<HTMLInputElement>(null)
+  /** Ignore leftover pointer/click after opening text sheet or switching tools. */
+  const suppressPointerUntilRef = useRef(0)
 
   const reset = useCallback(() => {
     if (shotUrl) URL.revokeObjectURL(shotUrl)
@@ -62,6 +93,9 @@ export function FeedbackCapture({ open, onClose, onSubmitted }: Props) {
     setStep('shot')
     setMarkers([])
     setDraft(null)
+    draftRef.current = null
+    drawingRef.current = false
+    setTextDraft(null)
     setTitle('')
     setBody('')
     setKind('ux')
@@ -76,6 +110,36 @@ export function FeedbackCapture({ open, onClose, onSubmitted }: Props) {
     void capture()
     // eslint-disable-next-line react-hooks/exhaustive-deps -- capture once on open
   }, [open])
+
+  useEffect(() => {
+    if (!textDraft) return
+    const t = window.setTimeout(() => textInputRef.current?.focus(), 50)
+    return () => window.clearTimeout(t)
+  }, [textDraft])
+
+  const syncOverlayToImage = useCallback(() => {
+    const surface = surfaceRef.current
+    const img = imgRef.current
+    if (!surface || !img) return
+    const sr = surface.getBoundingClientRect()
+    const cr = objectContainContentRect(img)
+    contentRectRef.current = cr
+    if (sr.width < 1 || sr.height < 1) return
+    setOverlayInset({
+      left: ((cr.left - sr.left) / sr.width) * 100,
+      top: ((cr.top - sr.top) / sr.height) * 100,
+      width: (cr.width / sr.width) * 100,
+      height: (cr.height / sr.height) * 100,
+    })
+  }, [])
+
+  useEffect(() => {
+    if (!shotUrl || step === 'shot') return
+    syncOverlayToImage()
+    const onResize = () => syncOverlayToImage()
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [shotUrl, step, syncOverlayToImage])
 
   async function capture() {
     setBusy(true)
@@ -105,10 +169,10 @@ export function FeedbackCapture({ open, onClose, onSubmitted }: Props) {
     }
   }
 
-  function pctFromEvent(e: ReactPointerEvent) {
+  function pctFromEvent(e: ReactPointerEvent | PointerEvent) {
     const img = imgRef.current
-    if (!img) return null
-    const rect = img.getBoundingClientRect()
+    const rect = contentRectRef.current ?? (img ? objectContainContentRect(img) : null)
+    if (!rect || rect.width < 1 || rect.height < 1) return null
     const x = ((e.clientX - rect.left) / rect.width) * 100
     const y = ((e.clientY - rect.top) / rect.height) * 100
     return {
@@ -117,68 +181,140 @@ export function FeedbackCapture({ open, onClose, onSubmitted }: Props) {
     }
   }
 
-  function onPointerDown(e: ReactPointerEvent) {
-    if (step !== 'mark') return
-    const p = pctFromEvent(e)
-    if (!p) return
-    ;(e.target as HTMLElement).setPointerCapture?.(e.pointerId)
-    if (tool === 'pin' || tool === 'text') {
+  function selectTool(next: Tool) {
+    setTool(next)
+    setDraft(null)
+    draftRef.current = null
+    drawingRef.current = false
+    setTextDraft(null)
+    suppressPointerUntilRef.current = performance.now() + 300
+  }
+
+  function commitTextDraft(note: string | null) {
+    if (!textDraft) return
+    const trimmed = note?.trim()
+    if (trimmed) {
       const label = String(markers.length + 1)
-      let note: string | undefined
-      if (tool === 'text') {
-        note = window.prompt('Подпись на скрине') || undefined
-        if (!note) return
-      }
       setMarkers((prev) => [
         ...prev,
-        { id: `m-${Date.now()}`, type: tool, x: p.x, y: p.y, label, note },
+        {
+          id: `m-${Date.now()}`,
+          type: 'text',
+          x: textDraft.x,
+          y: textDraft.y,
+          label,
+          note: trimmed,
+        },
       ])
+    }
+    setTextDraft(null)
+    suppressPointerUntilRef.current = performance.now() + 400
+  }
+
+  function onPointerDown(e: ReactPointerEvent) {
+    if (step !== 'mark' || textDraft) return
+    if (performance.now() < suppressPointerUntilRef.current) return
+    if (e.button !== 0 && e.pointerType === 'mouse') return
+    const p = pctFromEvent(e)
+    if (!p) return
+
+    if (tool === 'pin') {
+      e.preventDefault()
+      const label = String(markers.length + 1)
+      setMarkers((prev) => [
+        ...prev,
+        { id: `m-${Date.now()}`, type: 'pin', x: p.x, y: p.y, label },
+      ])
+      suppressPointerUntilRef.current = performance.now() + 250
       return
     }
-    setDraft({ x: p.x, y: p.y, x2: p.x, y2: p.y })
+
+    if (tool === 'text') {
+      e.preventDefault()
+      // Open sheet on this tap only; block residual pointerup/click from re-opening.
+      suppressPointerUntilRef.current = performance.now() + 600
+      setTextDraft({ x: p.x, y: p.y, value: '' })
+      return
+    }
+
+    e.preventDefault()
+    e.currentTarget.setPointerCapture?.(e.pointerId)
+    drawingRef.current = true
+    const next: Draft = { x: p.x, y: p.y, x2: p.x, y2: p.y }
+    draftRef.current = next
+    setDraft(next)
   }
 
   function onPointerMove(e: ReactPointerEvent) {
-    if (!draft) return
+    if (!drawingRef.current || !draftRef.current) return
     const p = pctFromEvent(e)
     if (!p) return
-    setDraft({ ...draft, x2: p.x, y2: p.y })
+    const next: Draft = { ...draftRef.current, x2: p.x, y2: p.y }
+    draftRef.current = next
+    setDraft(next)
   }
 
-  function onPointerUp() {
-    if (!draft || draft.x2 == null || draft.y2 == null) {
-      setDraft(null)
-      return
+  function finishDrag(e: ReactPointerEvent) {
+    if (!drawingRef.current) return
+    drawingRef.current = false
+    try {
+      e.currentTarget.releasePointerCapture?.(e.pointerId)
+    } catch {
+      /* already released */
     }
+    const d = draftRef.current
+    draftRef.current = null
+    setDraft(null)
+    if (!d) return
+
+    const dx = d.x2 - d.x
+    const dy = d.y2 - d.y
+    const len = Math.hypot(dx, dy)
     const label = String(markers.length + 1)
+
     if (tool === 'rect') {
-      const x = Math.min(draft.x, draft.x2)
-      const y = Math.min(draft.y, draft.y2)
-      const w = Math.abs(draft.x2 - draft.x)
-      const h = Math.abs(draft.y2 - draft.y)
-      if (w < 0.5 || h < 0.5) {
-        setDraft(null)
-        return
-      }
+      const x = Math.min(d.x, d.x2)
+      const y = Math.min(d.y, d.y2)
+      const w = Math.abs(dx)
+      const h = Math.abs(dy)
+      if (w < MIN_DRAG_PCT || h < MIN_DRAG_PCT) return
       setMarkers((prev) => [
         ...prev,
         { id: `m-${Date.now()}`, type: 'rect', x, y, w, h, label },
       ])
-    } else if (tool === 'arrow') {
+      return
+    }
+
+    if (tool === 'arrow') {
+      if (len < MIN_DRAG_PCT) return
       setMarkers((prev) => [
         ...prev,
         {
           id: `m-${Date.now()}`,
           type: 'arrow',
-          x: draft.x,
-          y: draft.y,
-          x2: draft.x2,
-          y2: draft.y2,
+          x: d.x,
+          y: d.y,
+          x2: d.x2,
+          y2: d.y2,
           label,
         },
       ])
     }
+  }
+
+  function onPointerUp(e: ReactPointerEvent) {
+    finishDrag(e)
+  }
+
+  function onPointerCancel(e: ReactPointerEvent) {
+    drawingRef.current = false
+    draftRef.current = null
     setDraft(null)
+    try {
+      e.currentTarget.releasePointerCapture?.(e.pointerId)
+    } catch {
+      /* ignore */
+    }
   }
 
   async function onSubmit() {
@@ -294,7 +430,7 @@ export function FeedbackCapture({ open, onClose, onSubmitted }: Props) {
                     <button
                       key={id}
                       type="button"
-                      onClick={() => setTool(id)}
+                      onClick={() => selectTool(id)}
                       className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs font-medium ${
                         tool === id
                           ? 'border-blue-300 bg-blue-50 text-blue-700'
@@ -316,12 +452,14 @@ export function FeedbackCapture({ open, onClose, onSubmitted }: Props) {
               )}
 
               <div
+                ref={surfaceRef}
                 className={`relative overflow-hidden rounded-md border border-gray-200 bg-gray-100 ${
-                  step === 'mark' ? 'cursor-crosshair' : ''
+                  step === 'mark' ? 'cursor-crosshair touch-none' : ''
                 }`}
                 onPointerDown={step === 'mark' ? onPointerDown : undefined}
                 onPointerMove={step === 'mark' ? onPointerMove : undefined}
                 onPointerUp={step === 'mark' ? onPointerUp : undefined}
+                onPointerCancel={step === 'mark' ? onPointerCancel : undefined}
               >
                 <img
                   ref={imgRef}
@@ -329,35 +467,112 @@ export function FeedbackCapture({ open, onClose, onSubmitted }: Props) {
                   alt="Снимок"
                   className="pointer-events-none block max-h-[50vh] w-full object-contain"
                   draggable={false}
+                  onLoad={syncOverlayToImage}
                 />
-                <svg className="pointer-events-none absolute inset-0 h-full w-full">
+                <svg
+                  className="pointer-events-none absolute"
+                  style={{
+                    left: `${overlayInset.left}%`,
+                    top: `${overlayInset.top}%`,
+                    width: `${overlayInset.width}%`,
+                    height: `${overlayInset.height}%`,
+                  }}
+                  viewBox="0 0 100 100"
+                  preserveAspectRatio="none"
+                >
+                  <defs>
+                    <marker
+                      id="fb-arrow"
+                      viewBox="0 0 10 10"
+                      markerWidth="8"
+                      markerHeight="8"
+                      refX="9"
+                      refY="5"
+                      orient="auto"
+                      markerUnits="userSpaceOnUse"
+                    >
+                      <path d="M0,0 L10,5 L0,10 Z" fill="#C00000" />
+                    </marker>
+                  </defs>
                   {markers.map((m) => (
                     <MarkerSvg key={m.id} m={m} />
                   ))}
-                  {draft && draft.x2 != null && draft.y2 != null && tool === 'rect' && (
+                  {draft && tool === 'rect' && (
                     <rect
-                      x={`${Math.min(draft.x, draft.x2)}%`}
-                      y={`${Math.min(draft.y, draft.y2)}%`}
-                      width={`${Math.abs(draft.x2 - draft.x)}%`}
-                      height={`${Math.abs(draft.y2 - draft.y)}%`}
+                      x={Math.min(draft.x, draft.x2)}
+                      y={Math.min(draft.y, draft.y2)}
+                      width={Math.abs(draft.x2 - draft.x)}
+                      height={Math.abs(draft.y2 - draft.y)}
                       fill="none"
                       stroke="#C00000"
                       strokeWidth={2}
                       strokeDasharray="4 3"
+                      vectorEffect="non-scaling-stroke"
                     />
                   )}
-                  {draft && draft.x2 != null && draft.y2 != null && tool === 'arrow' && (
+                  {draft && tool === 'arrow' && (
                     <line
-                      x1={`${draft.x}%`}
-                      y1={`${draft.y}%`}
-                      x2={`${draft.x2}%`}
-                      y2={`${draft.y2}%`}
+                      x1={draft.x}
+                      y1={draft.y}
+                      x2={draft.x2}
+                      y2={draft.y2}
                       stroke="#C00000"
-                      strokeWidth={2}
+                      strokeWidth={2.5}
+                      markerEnd="url(#fb-arrow)"
+                      vectorEffect="non-scaling-stroke"
+                    />
+                  )}
+                  {textDraft && (
+                    <circle
+                      cx={textDraft.x}
+                      cy={textDraft.y}
+                      r={2.2}
+                      fill="#C00000"
+                      fillOpacity={0.85}
                     />
                   )}
                 </svg>
               </div>
+
+              {textDraft && step === 'mark' && (
+                <div className="rounded-lg border border-gray-200 bg-gray-50 p-3 shadow-sm">
+                  <p className="mb-1.5 text-xs font-medium text-gray-700">Подпись на скрине</p>
+                  <input
+                    ref={textInputRef}
+                    type="text"
+                    className="mb-2 block w-full rounded-md border border-gray-300 px-2.5 py-1.5 text-sm"
+                    value={textDraft.value}
+                    maxLength={80}
+                    placeholder="Короткий текст"
+                    onChange={(e) => setTextDraft({ ...textDraft, value: e.target.value })}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault()
+                        commitTextDraft(textDraft.value)
+                      } else if (e.key === 'Escape') {
+                        e.preventDefault()
+                        commitTextDraft(null)
+                      }
+                    }}
+                  />
+                  <div className="flex justify-end gap-2">
+                    <button
+                      type="button"
+                      className="rounded-md border border-gray-200 px-2.5 py-1 text-xs text-gray-600"
+                      onClick={() => commitTextDraft(null)}
+                    >
+                      Отмена
+                    </button>
+                    <button
+                      type="button"
+                      className="rounded-md bg-blue-600 px-2.5 py-1 text-xs font-semibold text-white"
+                      onClick={() => commitTextDraft(textDraft.value)}
+                    >
+                      Готово
+                    </button>
+                  </div>
+                </div>
+              )}
 
               {markers.length > 0 && (
                 <ul className="flex flex-wrap gap-1.5 text-[11px] text-gray-600">
@@ -447,7 +662,10 @@ export function FeedbackCapture({ open, onClose, onSubmitted }: Props) {
             {step === 'mark' && (
               <button
                 type="button"
-                onClick={() => setStep('form')}
+                onClick={() => {
+                  setTextDraft(null)
+                  setStep('form')
+                }}
                 className="rounded-md bg-blue-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-blue-700"
               >
                 Далее
@@ -485,13 +703,14 @@ function MarkerSvg({ m }: { m: FeedbackMarker }) {
     return (
       <>
         <rect
-          x={`${m.x}%`}
-          y={`${m.y}%`}
-          width={`${m.w}%`}
-          height={`${m.h}%`}
+          x={m.x}
+          y={m.y}
+          width={m.w}
+          height={m.h}
           fill="rgba(192,0,0,0.08)"
           stroke={stroke}
           strokeWidth={2}
+          vectorEffect="non-scaling-stroke"
         />
         <Badge x={m.x} y={m.y} label={m.label} />
       </>
@@ -501,13 +720,14 @@ function MarkerSvg({ m }: { m: FeedbackMarker }) {
     return (
       <>
         <line
-          x1={`${m.x}%`}
-          y1={`${m.y}%`}
-          x2={`${m.x2}%`}
-          y2={`${m.y2}%`}
+          x1={m.x}
+          y1={m.y}
+          x2={m.x2}
+          y2={m.y2}
           stroke={stroke}
-          strokeWidth={2}
+          strokeWidth={2.5}
           markerEnd="url(#fb-arrow)"
+          vectorEffect="non-scaling-stroke"
         />
         <Badge x={m.x} y={m.y} label={m.label} />
       </>
@@ -517,7 +737,15 @@ function MarkerSvg({ m }: { m: FeedbackMarker }) {
     <>
       <Badge x={m.x} y={m.y} label={m.label} />
       {m.note && (
-        <text x={`${m.x}%`} y={`${m.y}%`} dx={14} dy={4} fill={stroke} fontSize={11}>
+        <text
+          x={m.x}
+          y={m.y}
+          dx={3.5}
+          dy={1}
+          fill={stroke}
+          fontSize={3.4}
+          fontWeight={600}
+        >
           {m.note}
         </text>
       )}
@@ -528,14 +756,14 @@ function MarkerSvg({ m }: { m: FeedbackMarker }) {
 function Badge({ x, y, label }: { x: number; y: number; label: string }) {
   return (
     <g>
-      <circle cx={`${x}%`} cy={`${y}%`} r={10} fill="#C00000" />
+      <circle cx={x} cy={y} r={2.6} fill="#C00000" />
       <text
-        x={`${x}%`}
-        y={`${y}%`}
+        x={x}
+        y={y}
         textAnchor="middle"
         dominantBaseline="central"
         fill="#fff"
-        fontSize={10}
+        fontSize={2.6}
         fontWeight={700}
       >
         {label}
