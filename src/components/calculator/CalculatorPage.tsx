@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import priceList from '@data/price_list.json'
 import {
+  applyDiscount,
   buildLinesFromQty,
   loadCalcTransfer,
   saveCalcTransfer,
@@ -8,23 +9,42 @@ import {
 import { usePageHeaderActions } from '../../contexts/PageHeaderContext'
 import { Kpi, Panel } from '../ui/Kpi'
 
+type FinishKind = 'chernovye' | 'chistovye' | 'both'
+
 type PriceItem = {
   section: string
   name: string
   unit: string
   price: number
+  kind: FinishKind
 }
 
 type QtyMap = Record<string, number>
+type SectionMode = 'chernovye' | 'chistovye'
+type SectionModes = Record<string, SectionMode>
 
 const STORAGE_KEY = 'samostroy:calc_qty_v1'
 const SECTION_KEY = 'samostroy:calc_section_v1'
+const MODES_KEY = 'samostroy:calc_section_modes_v1'
+const DISCOUNT_KEY = 'samostroy:calc_discount_v1'
+
+const CANON_ORDER: string[] =
+  (priceList as { section_order?: string[] }).section_order ?? [
+    'ДЕМОНТАЖНЫЕ РАБОТЫ',
+    'ПОЛЫ',
+    'СТЕНЫ',
+    'ПОТОЛКИ',
+    'ЭЛЕКТРИКА',
+    'САНТЕХНИКА',
+    'ПРОЧЕЕ',
+  ]
 
 const items: PriceItem[] = (priceList.items ?? []).map((it) => ({
   section: it.section || 'Прочее',
   name: it.name,
   unit: it.unit || 'шт',
   price: Number(it.price) || 0,
+  kind: (it as { kind?: FinishKind }).kind || 'both',
 }))
 
 function itemKey(it: PriceItem, idx: number) {
@@ -51,8 +71,46 @@ function loadSection(fallback: string): string {
   return fallback
 }
 
+function loadModes(): SectionModes {
+  try {
+    const raw = localStorage.getItem(MODES_KEY)
+    if (raw) return JSON.parse(raw) as SectionModes
+  } catch {
+    /* ignore */
+  }
+  return {}
+}
+
+function loadDiscount(): number {
+  try {
+    const raw = localStorage.getItem(DISCOUNT_KEY)
+    if (raw != null) return Math.max(0, Math.min(100, Number(raw) || 0))
+  } catch {
+    /* ignore */
+  }
+  return loadCalcTransfer().discountPct || 0
+}
+
 function money(n: number) {
   return n.toLocaleString('ru-RU', { maximumFractionDigits: 2 })
+}
+
+function prettySection(name: string): string {
+  const map: Record<string, string> = {
+    'ДЕМОНТАЖНЫЕ РАБОТЫ': 'Демонтаж',
+    ПОЛЫ: 'Полы',
+    СТЕНЫ: 'Стены',
+    ПОТОЛКИ: 'Потолки',
+    ЭЛЕКТРИКА: 'Электрика',
+    САНТЕХНИКА: 'Сантехника',
+    ПРОЧЕЕ: 'Прочее',
+  }
+  return map[name] || name
+}
+
+function matchesKind(itemKind: FinishKind, mode: SectionMode): boolean {
+  if (itemKind === 'both') return true
+  return itemKind === mode
 }
 
 const inputCls =
@@ -62,6 +120,8 @@ export default function CalculatorPage() {
   const [qty, setQty] = useState<QtyMap>(() => loadQty())
   const [q, setQ] = useState('')
   const [onlyFilled, setOnlyFilled] = useState(false)
+  const [sectionModes, setSectionModes] = useState<SectionModes>(() => loadModes())
+  const [discountPct, setDiscountPct] = useState(() => loadDiscount())
   const transferInit = loadCalcTransfer()
   const [transferToRemont, setTransferToRemont] = useState(transferInit.transferToRemont)
   const [withDetails, setWithDetails] = useState(transferInit.withDetails)
@@ -75,7 +135,13 @@ export default function CalculatorPage() {
       list.push({ it, idx })
       map.set(it.section, list)
     })
-    return [...map.entries()]
+    const entries = [...map.entries()]
+    entries.sort(([a], [b]) => {
+      const ia = CANON_ORDER.indexOf(a)
+      const ib = CANON_ORDER.indexOf(b)
+      return (ia < 0 ? 999 : ia) - (ib < 0 ? 999 : ib)
+    })
+    return entries
   }, [])
 
   const sectionNames = useMemo(() => sections.map(([name]) => name), [sections])
@@ -96,41 +162,56 @@ export default function CalculatorPage() {
     localStorage.setItem(SECTION_KEY, activeSection)
   }, [activeSection])
 
-  const search = q.trim().toLowerCase()
+  useEffect(() => {
+    localStorage.setItem(MODES_KEY, JSON.stringify(sectionModes))
+  }, [sectionModes])
 
-  const { total, filledCount, lines } = useMemo(() => {
-    let totalSum = 0
+  useEffect(() => {
+    localStorage.setItem(DISCOUNT_KEY, String(discountPct))
+  }, [discountPct])
+
+  const search = q.trim().toLowerCase()
+  const activeMode: SectionMode = sectionModes[activeSection] ?? 'chernovye'
+
+  const { baseTotal, filledCount, lines } = useMemo(() => {
     let filled = 0
     items.forEach((it, idx) => {
-      const key = itemKey(it, idx)
-      const n = Number(qty[key]) || 0
-      if (n > 0) {
-        filled += 1
-        totalSum += n * it.price
-      }
+      const n = Number(qty[itemKey(it, idx)]) || 0
+      if (n > 0) filled += 1
     })
-    const built = buildLinesFromQty(items, qty, itemKey)
+    const built = buildLinesFromQty(items, qty, (it, idx) =>
+      itemKey({ ...it, kind: it.kind ?? 'both' }, idx),
+    )
     return {
-      total: totalSum,
+      baseTotal: built.total,
       filledCount: filled,
       lines: built.lines,
     }
   }, [qty])
+
+  const { total, discountSum } = useMemo(
+    () => applyDiscount(baseTotal, discountPct),
+    [baseTotal, discountPct],
+  )
 
   useEffect(() => {
     saveCalcTransfer({
       transferToRemont,
       withDetails: transferToRemont ? withDetails : false,
       total,
+      baseTotal,
+      discountPct,
       lines,
       updatedAt: new Date().toISOString(),
     })
-  }, [transferToRemont, withDetails, total, lines])
+  }, [transferToRemont, withDetails, total, baseTotal, discountPct, lines])
 
   const filteredSections = useMemo(() => {
     return sections
       .map(([section, rows]) => {
+        const mode = sectionModes[section] ?? 'chernovye'
         const visible = rows.filter(({ it, idx }) => {
+          if (!matchesKind(it.kind, mode)) return false
           const key = itemKey(it, idx)
           const n = Number(qty[key]) || 0
           if (onlyFilled && n <= 0) return false
@@ -142,7 +223,7 @@ export default function CalculatorPage() {
         return [section, visible] as const
       })
       .filter(([, visible]) => visible.length > 0)
-  }, [sections, qty, onlyFilled, search])
+  }, [sections, qty, onlyFilled, search, sectionModes])
 
   const filteredNames = useMemo(
     () => filteredSections.map(([name]) => name),
@@ -169,12 +250,20 @@ export default function CalculatorPage() {
     })
   }
 
+  function setMode(section: string, mode: SectionMode) {
+    setSectionModes((prev) => ({ ...prev, [section]: mode }))
+  }
+
   return (
     <div className="space-y-4 pb-28">
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <Kpi label="Позиций" value={items.length} accent="blue" />
         <Kpi label="Заполнено" value={filledCount} accent="emerald" />
-        <Kpi label="Итого" value={`${money(total)} ₽`} accent="indigo" />
+        <Kpi
+          label={discountPct > 0 ? 'Итого со скидкой' : 'Итого'}
+          value={`${money(total)} ₽`}
+          accent="indigo"
+        />
         <button
           type="button"
           onClick={() => setQty({})}
@@ -192,15 +281,38 @@ export default function CalculatorPage() {
             value={q}
             onChange={(e) => setQ(e.target.value)}
           />
-          <label className="inline-flex items-center gap-2 text-sm text-gray-600">
-            <input
-              type="checkbox"
-              checked={onlyFilled}
-              onChange={(e) => setOnlyFilled(e.target.checked)}
-            />
-            Только с объёмом
-          </label>
+          <div className="flex flex-wrap items-center gap-4">
+            <label className="inline-flex items-center gap-2 text-sm text-gray-600">
+              <span className="whitespace-nowrap">Скидка %</span>
+              <input
+                type="number"
+                min={0}
+                max={100}
+                step={1}
+                className={inputCls}
+                value={discountPct || ''}
+                placeholder="0"
+                onChange={(e) =>
+                  setDiscountPct(Math.max(0, Math.min(100, Number(e.target.value) || 0)))
+                }
+              />
+            </label>
+            <label className="inline-flex items-center gap-2 text-sm text-gray-600">
+              <input
+                type="checkbox"
+                checked={onlyFilled}
+                onChange={(e) => setOnlyFilled(e.target.checked)}
+              />
+              Только с объёмом
+            </label>
+          </div>
         </div>
+        {discountPct > 0 && (
+          <p className="mt-2 text-xs text-gray-500">
+            База {money(baseTotal)} ₽ · скидка −{money(discountSum)} ₽ · к оплате {money(total)} ₽
+            (уйдёт в смету и договор)
+          </p>
+        )}
       </Panel>
 
       {filteredSections.length === 0 ? (
@@ -209,7 +321,6 @@ export default function CalculatorPage() {
         </p>
       ) : (
         <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
-          {/* Одна строка категорий — вместо отдельного заголовка секции */}
           <div className="flex items-center gap-1 overflow-x-auto border-b border-gray-100 bg-gray-50 px-2 py-2">
             {filteredNames.map((name) => {
               const count =
@@ -227,10 +338,38 @@ export default function CalculatorPage() {
                   }`}
                   title={`${count} поз.`}
                 >
-                  {name}
+                  {prettySection(name)}
                 </button>
               )
             })}
+          </div>
+
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-100 px-4 py-2">
+            <p className="text-sm font-medium text-gray-800">{prettySection(activeSection)}</p>
+            <div className="inline-flex rounded-md border border-gray-200 bg-gray-50 p-0.5 text-xs">
+              <button
+                type="button"
+                onClick={() => setMode(activeSection, 'chernovye')}
+                className={`rounded px-2.5 py-1 font-medium transition-colors ${
+                  activeMode === 'chernovye'
+                    ? 'bg-white text-gray-900 shadow-sm'
+                    : 'text-gray-500 hover:text-gray-800'
+                }`}
+              >
+                Черновые
+              </button>
+              <button
+                type="button"
+                onClick={() => setMode(activeSection, 'chistovye')}
+                className={`rounded px-2.5 py-1 font-medium transition-colors ${
+                  activeMode === 'chistovye'
+                    ? 'bg-white text-gray-900 shadow-sm'
+                    : 'text-gray-500 hover:text-gray-800'
+                }`}
+              >
+                Чистовые
+              </button>
+            </div>
           </div>
 
           <div className="overflow-x-auto">
@@ -289,7 +428,9 @@ export default function CalculatorPage() {
         <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
           <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
             <div>
-              <p className="text-xs text-gray-500">Итого по смете</p>
+              <p className="text-xs text-gray-500">
+                {discountPct > 0 ? `Итого (−${discountPct}%)` : 'Итого по смете'}
+              </p>
               <p className="text-lg font-semibold text-gray-900">{money(total)} ₽</p>
             </div>
             <label className="inline-flex items-center gap-2 text-sm text-gray-700">

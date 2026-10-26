@@ -10,6 +10,7 @@ import {
   type ClientCard,
   type ClientObject,
 } from '../../lib/clients'
+import { formatRuPhone } from '../../lib/phoneActions'
 import { Panel } from '../ui/Kpi'
 import { PhoneActions } from '../ui/PhoneActions'
 
@@ -207,10 +208,24 @@ export default function ClientCardPage() {
               <input className={inputCls} value={client.email} onChange={(e) => patch({ email: e.target.value })} />
             </Field>
             <Field label="Мобильный">
-              <input className={inputCls} value={client.mobile} onChange={(e) => patch({ mobile: e.target.value })} />
+              <input
+                className={`${inputCls} tabular-nums`}
+                inputMode="tel"
+                autoComplete="tel"
+                placeholder="+7 (999) 123-45-67"
+                value={client.mobile}
+                onChange={(e) => patch({ mobile: formatRuPhone(e.target.value) })}
+              />
             </Field>
             <Field label="Мобильный доп.">
-              <input className={inputCls} value={client.mobile2} onChange={(e) => patch({ mobile2: e.target.value })} />
+              <input
+                className={`${inputCls} tabular-nums`}
+                inputMode="tel"
+                autoComplete="tel"
+                placeholder="+7 (999) 123-45-67"
+                value={client.mobile2}
+                onChange={(e) => patch({ mobile2: formatRuPhone(e.target.value) })}
+              />
             </Field>
             <Field label="Город">
               <input className={inputCls} value={client.city} onChange={(e) => patch({ city: e.target.value })} />
@@ -252,7 +267,7 @@ export default function ClientCardPage() {
             </Field>
             <div className="col-span-2 space-y-2 xl:col-span-4">
               <div className="flex items-center justify-between gap-2">
-                <p className="text-[11px] font-medium text-gray-500">Объекты (адреса / договоры)</p>
+                <p className="text-[11px] font-medium text-gray-500">Объекты (точный адрес / договоры)</p>
                 <button
                   type="button"
                   onClick={addObject}
@@ -262,7 +277,9 @@ export default function ClientCardPage() {
                 </button>
               </div>
               {client.objects.length === 0 && (
-                <p className="text-xs text-gray-400">Нет объектов — добавьте адрес для контроля.</p>
+                <p className="text-xs text-amber-700">
+                  Нет объектов — добавьте точный адрес (улица, дом, квартира) для контроля и документов.
+                </p>
               )}
               {client.objects.map((o) => (
                 <div
@@ -271,12 +288,13 @@ export default function ClientCardPage() {
                 >
                   <input
                     className={inputCls}
-                    placeholder="Адрес"
+                    placeholder="Точный адрес: улица, дом, кв."
+                    title="Адрес объекта для контроля и договоров"
                     value={o.address}
                     onChange={(e) =>
                       patchObject(o.id, {
                         address: e.target.value,
-                        title: e.target.value || o.title,
+                        title: o.title === o.address || !o.title ? e.target.value : o.title,
                       })
                     }
                   />
@@ -289,7 +307,7 @@ export default function ClientCardPage() {
                   <div className="flex gap-2">
                     <input
                       className={inputCls}
-                      placeholder="Название"
+                      placeholder="Название (ЖК / объект)"
                       value={o.title}
                       onChange={(e) => patchObject(o.id, { title: e.target.value })}
                     />

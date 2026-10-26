@@ -213,6 +213,10 @@ export default function PublicReportPage() {
         )}
 
         <form onSubmit={onSubmit} className="space-y-2.5">
+          <p className="rounded-md border border-emerald-100 bg-emerald-50 px-2 py-1.5 text-[11px] leading-snug text-emerald-900">
+            Форма для <strong>прораба</strong> по этому объекту. Строители отчёт не заполняют.
+          </p>
+
           {/* ФИО + адрес */}
           <div className="space-y-1">
             <input
@@ -220,11 +224,11 @@ export default function PublicReportPage() {
               required
               value={workerName}
               onChange={(e) => setWorkerName(e.target.value)}
-              placeholder="Ваше ФИО"
+              placeholder="ФИО прораба"
               autoComplete="name"
             />
-            <p className="truncate text-xs text-gray-500" title={address}>
-              {address}
+            <p className="truncate text-xs font-medium text-gray-700" title={address}>
+              Объект: {address}
             </p>
           </div>
 
@@ -305,22 +309,58 @@ export default function PublicReportPage() {
             </ul>
           )}
 
-          <textarea
-            className={inputCls}
-            rows={3}
-            required
-            value={workDone}
-            onChange={(e) => setWorkDone(e.target.value)}
-            placeholder="Что сделали сегодня…"
-          />
+          <div>
+            <label className="mb-0.5 block text-[11px] font-medium text-gray-500">
+              Что сделали сегодня (результат работ)
+            </label>
+            <textarea
+              className={inputCls}
+              rows={3}
+              required
+              value={workDone}
+              onChange={(e) => setWorkDone(e.target.value)}
+              placeholder="Напр.: поклейка обоев в гостиной; возведены перегородки в санузле; залита стяжка на кухне"
+            />
+            <p className="mt-0.5 text-[10px] leading-snug text-gray-400">
+              Пишите результат («поклейка стен»), а не сопутствующее («мешал бетон», «сверлил»).
+            </p>
+          </div>
 
-          <textarea
-            className={inputCls}
-            rows={2}
-            value={problems}
-            onChange={(e) => setProblems(e.target.value)}
-            placeholder="Проблемы / вопросы (если есть)"
-          />
+          <div>
+            <label className="mb-0.5 block text-[11px] font-medium text-gray-500">
+              Проблемы / вопросы
+            </label>
+            <textarea
+              className={inputCls}
+              rows={2}
+              value={problems}
+              onChange={(e) => setProblems(e.target.value)}
+              placeholder="Напр.: нет материала на затирку; вопрос по розеткам на кухне; ждём поставку двери"
+            />
+          </div>
+
+          <details className="rounded-md border border-gray-200 bg-white px-2.5 py-1.5 text-[11px] text-gray-600">
+            <summary className="cursor-pointer select-none font-medium text-gray-700">
+              Как заполнять отчёт
+            </summary>
+            <ul className="mt-1.5 list-disc space-y-1 pl-4 leading-snug">
+              <li>
+                <strong>Работы:</strong> итог за день — «поклейка стен», «возведены перегородки»,
+                «уложена плитка в санузле».
+              </li>
+              <li>
+                <strong>Не писать:</strong> помехи и процесс без результата («мешал бетон»,
+                «ждал доставку» — это в проблемы).
+              </li>
+              <li>
+                <strong>Фото/видео:</strong> кнопка со скрепкой · до 5 МБ суммарно · лучше
+                результат работ и проблемные места.
+              </li>
+              <li>
+                <strong>Проблемы:</strong> чего не хватает, вопросы к офису, риски срыва срока.
+              </li>
+            </ul>
+          </details>
 
           {msg && (
             <p

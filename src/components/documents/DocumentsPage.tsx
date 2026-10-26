@@ -7,12 +7,14 @@ import {
   generateAktDoc,
   generateDesignDoc,
   generateRemontDoc,
+  generateSmetaDoc,
   type AktLine,
+  type SmetaLine,
 } from '../../lib/generateDocs'
 import { formatMoney, rublesInWords } from '../../lib/moneyRu'
 import { PhoneActions } from '../ui/PhoneActions'
 
-type DocKind = 'remont' | 'design' | 'akt'
+type DocKind = 'remont' | 'design' | 'akt' | 'smeta'
 
 const inputCls =
   'block w-full rounded-md border border-gray-300 bg-white px-2.5 py-1.5 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500'
@@ -117,6 +119,21 @@ export default function DocumentsPage() {
       { name: '', unit: 'ед.', qty: 1, price: 0 },
     ] as AktLine[],
   })
+  const [smeta, setSmeta] = useState({
+    number: '',
+    date: todayIso(),
+    city: 'Москва',
+    objectAddress: '',
+    objectTitle: '',
+    areaM2: 0,
+    workDays: 100,
+    discountPct: 0,
+    rolledUp: false,
+    lines: [
+      { name: '', unit: 'ед.', qty: 1, price: 0, section: 'Прочее' },
+    ] as SmetaLine[],
+    fromCalc: false,
+  })
   const [executorName, setExecutorName] = useState<string>(CONTRACTOR.name)
   const [calcTransfer, setCalcTransfer] = useState(() => loadCalcTransfer())
 
@@ -130,11 +147,25 @@ export default function DocumentsPage() {
   }, [])
 
   useEffect(() => {
-    if (kind !== 'remont') return
+    if (kind !== 'remont' && kind !== 'smeta') return
     const t = loadCalcTransfer()
     setCalcTransfer(t)
-    if (t.transferToRemont && t.total > 0) {
+    if (kind === 'remont' && t.transferToRemont && t.total > 0) {
       setRemont((f) => ({ ...f, totalSum: t.total }))
+    }
+    if (kind === 'smeta' && t.lines.length > 0) {
+      setSmeta((f) => ({
+        ...f,
+        discountPct: t.discountPct || 0,
+        lines: t.lines.map((l) => ({
+          name: l.name,
+          unit: l.unit,
+          qty: l.qty,
+          price: l.price,
+          section: l.section || 'Прочее',
+        })),
+        fromCalc: true,
+      }))
     }
   }, [kind])
 
@@ -170,11 +201,25 @@ export default function DocumentsPage() {
       city: client.city || f.city,
       objectAddress: f.objectAddress || addr,
     }))
+    const obj0 = client.objects?.[0]
+    setSmeta((f) => ({
+      ...f,
+      city: client.city || f.city,
+      objectAddress: f.objectAddress || obj0?.address || addr,
+      objectTitle: f.objectTitle || obj0?.title || '',
+    }))
   }, [client?.id])
 
   const designTotal = (design.areaM2 || 0) * DESIGN_RATE_PER_M2
   const aktTotal = akt.lines.reduce((s, l) => s + (Number(l.qty) || 0) * (Number(l.price) || 0), 0)
   const aktRest = Math.max(0, aktTotal - (Number(akt.paid) || 0))
+  const smetaBase = smeta.lines.reduce(
+    (s, l) => s + (Number(l.qty) || 0) * (Number(l.price) || 0),
+    0,
+  )
+  const smetaDiscount =
+    Math.round(smetaBase * (Math.max(0, Math.min(100, smeta.discountPct)) / 100) * 100) / 100
+  const smetaTotal = Math.round((smetaBase - smetaDiscount) * 100) / 100
   const cardGaps = client ? missingFromCard(client) : []
 
   async function onGenerate() {
@@ -193,8 +238,10 @@ export default function DocumentsPage() {
         setCalcTransfer(transfer)
         let totalSum = remont.totalSum
         let smetaLines = undefined as
-          | { name: string; unit: string; qty: number; price: number }[]
+          | { name: string; unit: string; qty: number; price: number; section?: string }[]
           | undefined
+        let discountPct = 0
+        let baseTotal: number | undefined
 
         if (transfer.transferToRemont) {
           if (!transfer.total || transfer.lines.length === 0) {
@@ -203,8 +250,16 @@ export default function DocumentsPage() {
             )
           }
           totalSum = transfer.total
+          discountPct = transfer.discountPct || 0
+          baseTotal = transfer.baseTotal || transfer.total
           if (transfer.withDetails) {
-            smetaLines = transfer.lines
+            smetaLines = transfer.lines.map((l) => ({
+              name: l.name,
+              unit: l.unit,
+              qty: l.qty,
+              price: l.price,
+              section: l.section,
+            }))
           }
         } else if (!totalSum) {
           throw new Error('Укажите сумму договора или включите перенос из калькулятора')
@@ -213,6 +268,8 @@ export default function DocumentsPage() {
         await generateRemontDoc(client, {
           ...remont,
           totalSum,
+          discountPct,
+          baseTotal,
           executorName,
           smetaLines,
         })
@@ -221,7 +278,7 @@ export default function DocumentsPage() {
         if (!design.areaM2) throw new Error('Укажите площадь, м²')
         if (!executorName.trim()) throw new Error('Укажите ФИО исполнителя')
         await generateDesignDoc(client, { ...design, executorName })
-      } else {
+      } else if (kind === 'akt') {
         if (!akt.objectAddress.trim()) throw new Error('Укажите адрес объекта')
         if (!akt.stageName.trim()) throw new Error('Укажите название этапа')
         if (!akt.lines.some((l) => l.name.trim() && l.price > 0)) {
@@ -229,6 +286,25 @@ export default function DocumentsPage() {
         }
         if (!executorName.trim()) throw new Error('Укажите ФИО исполнителя')
         await generateAktDoc(client, { ...akt, executorName })
+      } else {
+        if (!smeta.objectAddress.trim()) throw new Error('Укажите адрес объекта')
+        if (!smeta.lines.some((l) => l.name.trim() && l.qty > 0 && l.price >= 0)) {
+          throw new Error('Добавьте хотя бы одну строку работ или перенесите из калькулятора')
+        }
+        if (!executorName.trim()) throw new Error('Укажите ФИО исполнителя')
+        await generateSmetaDoc(client, {
+          number: smeta.number,
+          date: smeta.date,
+          city: smeta.city,
+          objectAddress: smeta.objectAddress,
+          objectTitle: smeta.objectTitle,
+          areaM2: smeta.areaM2,
+          workDays: smeta.workDays,
+          discountPct: smeta.discountPct,
+          rolledUp: smeta.rolledUp,
+          lines: smeta.lines,
+          executorName,
+        })
       }
       setMsg('Документ скачан (.docx)')
     } catch (e) {
@@ -242,6 +318,7 @@ export default function DocumentsPage() {
     { id: 'remont', label: 'Договор ремонт' },
     { id: 'design', label: 'Договор дизайн' },
     { id: 'akt', label: 'Акт работ' },
+    { id: 'smeta', label: 'Смета' },
   ]
 
   const showClientList = q.trim().length > 0 || !client
@@ -613,6 +690,252 @@ export default function DocumentsPage() {
             </Field>
             <span className="text-xs text-gray-600">
               Итого <b>{formatMoney(aktTotal)}</b> · остаток <b>{formatMoney(aktRest)}</b>
+            </span>
+          </div>
+        </div>
+      )}
+
+      {kind === 'smeta' && (
+        <div className="rounded-lg border border-gray-200 bg-white p-3 shadow-sm">
+          <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
+            <Field label="Номер сметы">
+              <input
+                className={inputCls}
+                value={smeta.number}
+                onChange={(e) => setSmeta({ ...smeta, number: e.target.value })}
+                placeholder="13297"
+              />
+            </Field>
+            <Field label="Дата">
+              <input
+                type="date"
+                className={inputCls}
+                value={smeta.date}
+                onChange={(e) => setSmeta({ ...smeta, date: e.target.value })}
+              />
+            </Field>
+            <Field label="Город">
+              <input
+                className={inputCls}
+                value={smeta.city}
+                onChange={(e) => setSmeta({ ...smeta, city: e.target.value })}
+              />
+            </Field>
+            <Field label="Срок, раб. дней">
+              <input
+                type="number"
+                min={1}
+                className={inputCls}
+                value={smeta.workDays || ''}
+                onChange={(e) => setSmeta({ ...smeta, workDays: Number(e.target.value) || 0 })}
+              />
+            </Field>
+            <Field label="Объект (название)" className="col-span-2">
+              <input
+                className={inputCls}
+                value={smeta.objectTitle}
+                onChange={(e) => setSmeta({ ...smeta, objectTitle: e.target.value })}
+                placeholder="ЖК Sky Garden"
+              />
+            </Field>
+            <Field label="Площадь, м²">
+              <input
+                type="number"
+                min={0}
+                step="0.01"
+                className={inputCls}
+                value={smeta.areaM2 || ''}
+                onChange={(e) => setSmeta({ ...smeta, areaM2: Number(e.target.value) || 0 })}
+              />
+            </Field>
+            <Field label="Скидка, %">
+              <input
+                type="number"
+                min={0}
+                max={100}
+                step="1"
+                className={inputCls}
+                value={smeta.discountPct || ''}
+                onChange={(e) => setSmeta({ ...smeta, discountPct: Number(e.target.value) || 0 })}
+              />
+            </Field>
+            <Field label="Адрес объекта" className="col-span-2 lg:col-span-3">
+              <input
+                className={inputCls}
+                value={smeta.objectAddress}
+                onChange={(e) => setSmeta({ ...smeta, objectAddress: e.target.value })}
+              />
+            </Field>
+            <label className="flex items-end gap-2 pb-1 text-xs text-gray-700">
+              <input
+                type="checkbox"
+                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                checked={smeta.rolledUp}
+                onChange={(e) => setSmeta({ ...smeta, rolledUp: e.target.checked })}
+              />
+              Только итоги по разделам
+            </label>
+          </div>
+
+          <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-gray-500">
+            {smeta.fromCalc ? (
+              <span className="rounded bg-emerald-50 px-1.5 py-0.5 text-emerald-800">
+                Строки из калькулятора ({smeta.lines.length})
+              </span>
+            ) : (
+              <span>Заполните строки вручную или откройте калькулятор с объёмами</span>
+            )}
+            <button
+              type="button"
+              className="font-medium text-blue-700 hover:underline"
+              onClick={() => {
+                const t = loadCalcTransfer()
+                setCalcTransfer(t)
+                if (!t.lines.length) {
+                  setMsg('В калькуляторе нет заполненных объёмов')
+                  return
+                }
+                setSmeta((f) => ({
+                  ...f,
+                  discountPct: t.discountPct || 0,
+                  lines: t.lines.map((l) => ({
+                    name: l.name,
+                    unit: l.unit,
+                    qty: l.qty,
+                    price: l.price,
+                    section: l.section || 'Прочее',
+                  })),
+                  fromCalc: true,
+                }))
+                setMsg('')
+              }}
+            >
+              Обновить из калькулятора
+            </button>
+          </div>
+
+          <div className="mt-2 max-h-48 overflow-auto rounded-md border border-gray-200">
+            <table className="min-w-full divide-y divide-gray-200 text-sm">
+              <thead className="sticky top-0 bg-gray-50 text-left text-xs uppercase text-gray-500">
+                <tr>
+                  <th className="px-2 py-1">Раздел</th>
+                  <th className="px-2 py-1">Работа</th>
+                  <th className="px-2 py-1">Ед.</th>
+                  <th className="px-2 py-1">Кол.</th>
+                  <th className="px-2 py-1">Цена</th>
+                  <th className="px-2 py-1">Σ</th>
+                  <th className="px-2 py-1" />
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {smeta.lines.map((l, i) => (
+                  <tr key={i}>
+                    <td className="w-28 px-1 py-1">
+                      <input
+                        className={inputCls}
+                        value={l.section || ''}
+                        onChange={(e) => {
+                          const lines = [...smeta.lines]
+                          lines[i] = { ...l, section: e.target.value }
+                          setSmeta({ ...smeta, lines, fromCalc: false })
+                        }}
+                      />
+                    </td>
+                    <td className="min-w-[140px] px-1 py-1">
+                      <input
+                        className={inputCls}
+                        value={l.name}
+                        onChange={(e) => {
+                          const lines = [...smeta.lines]
+                          lines[i] = { ...l, name: e.target.value }
+                          setSmeta({ ...smeta, lines, fromCalc: false })
+                        }}
+                      />
+                    </td>
+                    <td className="w-14 px-1 py-1">
+                      <input
+                        className={inputCls}
+                        value={l.unit}
+                        onChange={(e) => {
+                          const lines = [...smeta.lines]
+                          lines[i] = { ...l, unit: e.target.value }
+                          setSmeta({ ...smeta, lines, fromCalc: false })
+                        }}
+                      />
+                    </td>
+                    <td className="w-16 px-1 py-1">
+                      <input
+                        type="number"
+                        className={inputCls}
+                        value={l.qty || ''}
+                        onChange={(e) => {
+                          const lines = [...smeta.lines]
+                          lines[i] = { ...l, qty: Number(e.target.value) || 0 }
+                          setSmeta({ ...smeta, lines, fromCalc: false })
+                        }}
+                      />
+                    </td>
+                    <td className="w-20 px-1 py-1">
+                      <input
+                        type="number"
+                        className={inputCls}
+                        value={l.price || ''}
+                        onChange={(e) => {
+                          const lines = [...smeta.lines]
+                          lines[i] = { ...l, price: Number(e.target.value) || 0 }
+                          setSmeta({ ...smeta, lines, fromCalc: false })
+                        }}
+                      />
+                    </td>
+                    <td className="whitespace-nowrap px-1 py-1 text-xs tabular-nums text-gray-800">
+                      {formatMoney(l.qty * l.price)}
+                    </td>
+                    <td className="px-1 py-1">
+                      <button
+                        type="button"
+                        className="text-xs text-red-600"
+                        onClick={() =>
+                          setSmeta({
+                            ...smeta,
+                            lines: smeta.lines.filter((_, j) => j !== i),
+                            fromCalc: false,
+                          })
+                        }
+                      >
+                        ×
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div className="mt-1.5 flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              className="text-xs font-medium text-blue-700 hover:underline"
+              onClick={() =>
+                setSmeta({
+                  ...smeta,
+                  lines: [
+                    ...smeta.lines,
+                    { name: '', unit: 'ед.', qty: 1, price: 0, section: 'Прочее' },
+                  ],
+                  fromCalc: false,
+                })
+              }
+            >
+              + Строка
+            </button>
+            <span className="text-xs text-gray-600">
+              База <b>{formatMoney(smetaBase)}</b>
+              {smeta.discountPct > 0 && (
+                <>
+                  {' '}
+                  · скидка <b>−{formatMoney(smetaDiscount)}</b>
+                </>
+              )}{' '}
+              · итого <b>{formatMoney(smetaTotal)}</b>
             </span>
           </div>
         </div>

@@ -1,15 +1,15 @@
 {
   "v": 4,
-  "updated": "2026-10-25",
+  "updated": "2026-10-26",
   "status": "active",
-  "goal": "Pages feedback → email (Web3Forms)",
-  "next": "Проверить письмо с Pages после деплоя 2026-10-25-c",
+  "goal": "Ship Даниил asks + smeta to Pages",
+  "next": "Уточнить у Даниила порядок стены/полы; клиентский доступ к договорам",
   "blockers": [],
   "hot_files": [
-    "src/lib/feedbackEmail.ts",
-    "src/lib/feedbackConfig.ts",
-    ".env.production",
-    "data/changelog.json",
-    "docs/modules/feedback.md"
+    "docs/customer-calls/2026-10-26-daniil-aquarius.md",
+    "src/components/calculator/CalculatorPage.tsx",
+    "src/components/documents/DocumentsPage.tsx",
+    "src/components/control/PublicReportPage.tsx",
+    "src/components/clients/ClientCardPage.tsx"
   ]
 }

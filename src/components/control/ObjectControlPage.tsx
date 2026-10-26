@@ -341,8 +341,11 @@ export default function ObjectControlPage() {
               <strong className="tabular-nums text-rose-600">{miss}</strong>
             </span>
             <span className="hidden text-gray-300 sm:inline">·</span>
-            <span className="min-w-0 flex-1 truncate text-xs text-gray-500" title={shareUrl}>
-              {shareUrl}
+            <span
+              className="min-w-0 flex-1 truncate text-xs text-gray-500"
+              title={`Ссылка для прораба · ${object.address || object.title} · ${shareUrl}`}
+            >
+              Прорабу: {shareUrl}
             </span>
             <button
               type="button"

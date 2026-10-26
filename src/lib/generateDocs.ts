@@ -373,6 +373,7 @@ export type RemontSmetaLine = {
   unit: string
   qty: number
   price: number
+  section?: string
 }
 
 export type RemontForm = {
@@ -383,6 +384,10 @@ export type RemontForm = {
   totalSum: number
   workDays: number
   executorName: string
+  /** Скидка % из калькулятора; 0 = без скидки */
+  discountPct?: number
+  /** База до скидки (если задана скидка) */
+  baseTotal?: number
   smetaLines?: RemontSmetaLine[]
 }
 
@@ -416,12 +421,24 @@ export type AktForm = {
 /** Сборка без скачивания — для превью / тестов */
 export async function buildRemontDocument(client: ClientCard, form: RemontForm): Promise<Document> {
   const d = formatDateRu(form.date)
+  const discountPct = Math.max(0, Math.min(100, Number(form.discountPct) || 0))
+  const baseTotal =
+    form.baseTotal != null && form.baseTotal > 0
+      ? form.baseTotal
+      : discountPct > 0
+        ? Math.round((form.totalSum / (1 - discountPct / 100)) * 100) / 100
+        : form.totalSum
   const sumWords = rublesInWords(form.totalSum)
   const executor = form.executorName.trim() || CONTRACTOR.name
   const clientFio = shortFio(client.fizurlico === 'ur' ? client.podpisant || client.name : client.name)
   const execFio = shortFio(executor)
   const addr = form.objectAddress || '_______________________________________________'
   const smeta = (form.smetaLines ?? []).filter((l) => l.name.trim() && l.qty > 0)
+
+  const costClause =
+    discountPct > 0
+      ? `4.1. Стоимость работ по смете составляет ${formatMoney(baseTotal)} ₽. Скидка — ${discountPct}%. Итого к оплате по настоящему договору: ${formatMoney(form.totalSum)} (${sumWords}). Стоимость определяется на основании видов работ согласно Приложению №1 и прилагаемой сметы.`
+      : `4.1. Общая стоимость работ по настоящему договору составляет ${formatMoney(form.totalSum)} (${sumWords}) и определяется на основании видов работ согласно Приложению №1 и прилагаемой сметы.`
 
   const children: FileChild[] = [
     title(`ДОГОВОР ПОДРЯДА НА РЕМОНТ КВАРТИРЫ`),
@@ -456,9 +473,7 @@ export async function buildRemontDocument(client: ClientCard, form: RemontForm):
     ),
 
     sectionHead('4. СТОИМОСТЬ РАБОТ И ПОРЯДОК РАСЧЁТА'),
-    clause(
-      `4.1. Общая стоимость работ по настоящему договору составляет ${formatMoney(form.totalSum)} (${sumWords}) и определяется на основании видов работ согласно Приложению №1 и прилагаемой сметы.`,
-    ),
+    clause(costClause),
     clause(
       '4.2. Выплаты по данному договору определяются по факту выполненных работ в процентном соотношении по договорённости Сторон.',
     ),
@@ -554,18 +569,61 @@ export async function buildRemontDocument(client: ClientCard, form: RemontForm):
     ),
     para(`Адрес объекта: ${addr}`, { center: true, after: 200 }),
     clause(
-      `Стоимость видов работ по договору составляет ${formatMoney(form.totalSum)} (${sumWords}). Выплаты определяются по мере выполнения работ по договорённости Сторон.`,
+      discountPct > 0
+        ? `Стоимость видов работ по смете: ${formatMoney(baseTotal)} ₽. Скидка — ${discountPct}%. Итого к оплате: ${formatMoney(form.totalSum)} (${sumWords}). Выплаты определяются по мере выполнения работ по договорённости Сторон.`
+        : `Стоимость видов работ по договору составляет ${formatMoney(form.totalSum)} (${sumWords}). Выплаты определяются по мере выполнения работ по договорённости Сторон.`,
     ),
   ]
 
   if (smeta.length > 0) {
     children.push(para('Детализация сметы', { bold: true, after: 120, before: 120 }))
-    children.push(moneyTable(smeta))
+    const asSmeta: SmetaLine[] = smeta.map((l) => ({
+      name: l.name,
+      unit: l.unit,
+      qty: l.qty,
+      price: l.price,
+      section: l.section || 'Прочее',
+    }))
+    const groups = groupSmetaLines(asSmeta)
+    let nextNo = 1
+    for (const g of groups) {
+      children.push(
+        para(`Раздел: ${prettySectionTitle(g.section)}`, {
+          bold: true,
+          after: 80,
+          before: 120,
+        }),
+      )
+      const built = smetaSectionTable(nextNo, g.rows)
+      nextNo = built.nextNo
+      children.push(built.table)
+      children.push(
+        para(`Итого по разделу «${prettySectionTitle(g.section)}»: ${formatMoney(built.subtotal)} ₽`, {
+          bold: true,
+          after: 60,
+          before: 60,
+        }),
+      )
+    }
+    if (discountPct > 0) {
+      children.push(
+        para(`Итого по смете (без скидки): ${formatMoney(baseTotal)} ₽`, {
+          bold: true,
+          after: 40,
+          before: 120,
+        }),
+      )
+      children.push(
+        para(`Скидка — ${discountPct}%: −${formatMoney(baseTotal - form.totalSum)} ₽`, {
+          after: 40,
+        }),
+      )
+    }
     children.push(
-      para(`Итого по смете: ${formatMoney(form.totalSum)} ₽`, {
+      para(`Итого к оплате: ${formatMoney(form.totalSum)} ₽`, {
         bold: true,
         after: 80,
-        before: 120,
+        before: discountPct > 0 ? 40 : 120,
       }),
     )
   } else {
@@ -786,6 +844,261 @@ export async function buildAktDocument(client: ClientCard, form: AktForm): Promi
   return docShell(children, `Акт № ${form.number || '—'}`)
 }
 
+export type SmetaLine = {
+  name: string
+  unit: string
+  qty: number
+  price: number
+  section?: string
+}
+
+export type SmetaForm = {
+  number: string
+  date: string
+  city: string
+  objectAddress: string
+  objectTitle: string
+  areaM2: number
+  workDays: number
+  /** Скидка, % (из калькулятора / эталон Sky Garden); 0 = без скидки */
+  discountPct: number
+  /** Свёртка: только итоги по разделам, без построчной детализации */
+  rolledUp: boolean
+  lines: SmetaLine[]
+  executorName: string
+}
+
+/** Порядок разделов как в смете Sky Garden / прайсе (полы до стен); неизвестные — в конец */
+const SMETA_SECTION_ORDER = [
+  'ДЕМОНТАЖНЫЕ РАБОТЫ',
+  'Демонтажные работы',
+  'Демонтаж',
+  'ПОЛЫ',
+  'Полы',
+  'СТЕНЫ',
+  'Стены',
+  'ПОТОЛКИ',
+  'Потолки',
+  'ЭЛЕКТРИКА',
+  'Электрика',
+  'САНТЕХНИКА',
+  'Сантехника',
+  'Завершающие работы',
+  'Подготовительные работы',
+  'ПРОЧЕЕ',
+  'Прочее',
+]
+
+function prettySectionTitle(name: string): string {
+  const map: Record<string, string> = {
+    'ДЕМОНТАЖНЫЕ РАБОТЫ': 'Демонтажные работы',
+    ПОЛЫ: 'Полы',
+    СТЕНЫ: 'Стены',
+    ПОТОЛКИ: 'Потолки',
+    ЭЛЕКТРИКА: 'Электрика',
+    САНТЕХНИКА: 'Сантехника',
+    ПРОЧЕЕ: 'Прочее',
+  }
+  const key = name.trim().toUpperCase()
+  return map[key] || name.trim() || 'Прочее'
+}
+
+function sectionSortKey(name: string): number {
+  const n = name.trim().toLowerCase()
+  const idx = SMETA_SECTION_ORDER.findIndex(
+    (s) => s.toLowerCase() === n || n.includes(s.toLowerCase()) || s.toLowerCase().includes(n),
+  )
+  return idx >= 0 ? idx : 100 + (name.charCodeAt(0) || 0)
+}
+
+function groupSmetaLines(lines: SmetaLine[]): { section: string; rows: SmetaLine[] }[] {
+  const map = new Map<string, SmetaLine[]>()
+  for (const l of lines) {
+    const sec = (l.section || 'Прочее').trim() || 'Прочее'
+    const list = map.get(sec) ?? []
+    list.push(l)
+    map.set(sec, list)
+  }
+  return [...map.entries()]
+    .sort(([a], [b]) => sectionSortKey(a) - sectionSortKey(b))
+    .map(([section, rows]) => ({ section, rows }))
+}
+
+function smetaSectionTable(
+  startNo: number,
+  rows: SmetaLine[],
+): { table: Table; nextNo: number; subtotal: number } {
+  const cols = [700, 3800, 900, 900, 1400, 1600]
+  const header = new TableRow({
+    children: ['№', 'Наименование работ', 'Ед.', 'Кол-во', 'Цена, ₽', 'Стоимость, ₽'].map(
+      (t, i) => cell(t, cols[i], { header: true, center: true }),
+    ),
+  })
+  let no = startNo
+  let subtotal = 0
+  const body = rows.map((l, i) => {
+    const sum = l.qty * l.price
+    subtotal += sum
+    const zebra = i % 2 === 1 ? ZEBRA : undefined
+    const rowNo = no++
+    return new TableRow({
+      children: [
+        cell(String(rowNo), cols[0], { center: true, fill: zebra }),
+        cell(l.name, cols[1], { fill: zebra }),
+        cell(l.unit || 'ед.', cols[2], { center: true, fill: zebra }),
+        cell(String(l.qty), cols[3], { center: true, fill: zebra }),
+        cell(formatMoney(l.price), cols[4], { center: true, fill: zebra }),
+        cell(formatMoney(sum), cols[5], { center: true, fill: zebra, bold: true }),
+      ],
+    })
+  })
+  return {
+    table: new Table({
+      width: { size: CONTENT_W, type: WidthType.DXA },
+      columnWidths: cols,
+      rows: [header, ...body],
+    }),
+    nextNo: no,
+    subtotal,
+  }
+}
+
+/** Свёртка: одна строка на раздел */
+function smetaRollupTable(
+  groups: { section: string; rows: SmetaLine[]; subtotal: number }[],
+): Table {
+  const cols = [700, 6200, 2400]
+  const header = new TableRow({
+    children: ['№', 'Раздел / этап', 'Стоимость, ₽'].map((t, i) =>
+      cell(t, cols[i], { header: true, center: true }),
+    ),
+  })
+  const body = groups.map((g, i) => {
+    const zebra = i % 2 === 1 ? ZEBRA : undefined
+    return new TableRow({
+      children: [
+        cell(String(i + 1), cols[0], { center: true, fill: zebra }),
+        cell(prettySectionTitle(g.section), cols[1], { fill: zebra, bold: true }),
+        cell(formatMoney(g.subtotal), cols[2], { center: true, fill: zebra, bold: true }),
+      ],
+    })
+  })
+  return new Table({
+    width: { size: CONTENT_W, type: WidthType.DXA },
+    columnWidths: cols,
+    rows: [header, ...body],
+  })
+}
+
+function smetaBanner(text: string): Paragraph {
+  return new Paragraph({
+    alignment: AlignmentType.CENTER,
+    spacing: { after: 120, before: 0 },
+    border: {
+      bottom: { style: BorderStyle.SINGLE, size: 12, color: 'A8C9A0', space: 6 },
+    },
+    children: [run(text, { bold: true, size: 32, color: '1A1A1A' })],
+  })
+}
+
+/** Отдельный документ «Смета» (эталон: приложение к договору / Sky Garden PDF) */
+export async function buildSmetaDocument(client: ClientCard, form: SmetaForm): Promise<Document> {
+  const d = formatDateRu(form.date)
+  const executor = form.executorName.trim() || CONTRACTOR.name
+  const clientFio = shortFio(client.fizurlico === 'ur' ? client.podpisant || client.name : client.name)
+  const execFio = shortFio(executor)
+  const addr = form.objectAddress || '—'
+  const objectLabel = form.objectTitle.trim() || addr
+  const lines = form.lines.filter((l) => l.name.trim() && l.qty > 0)
+  const groups = groupSmetaLines(lines)
+  const groupsWithSum = groups.map((g) => ({
+    ...g,
+    subtotal: g.rows.reduce((s, l) => s + l.qty * l.price, 0),
+  }))
+  const baseTotal = lines.reduce((s, l) => s + l.qty * l.price, 0)
+  const discountPct = Math.max(0, Math.min(100, Number(form.discountPct) || 0))
+  const discountSum = Math.round(baseTotal * (discountPct / 100) * 100) / 100
+  const grandTotal = Math.round((baseTotal - discountSum) * 100) / 100
+  const rolledUp = Boolean(form.rolledUp)
+
+  const children: FileChild[] = [
+    smetaBanner(`СМЕТА № ${form.number || '___'}`),
+    para(`от ${d.full}`, { center: true, bold: true, size: 22, after: 40 }),
+    para('Приложение №1 к договору', { center: true, italics: true, after: 80 }),
+    metaLine(form.city, d.full),
+    partyTable('РЕКВИЗИТЫ СМЕТЫ', [
+      ['Заказчик', client.name || '—'],
+      ['Объект', objectLabel],
+      ['Адрес', addr],
+      ['Площадь', form.areaM2 ? `${form.areaM2} м²` : '—'],
+      ['Срок исполнения', form.workDays ? `${form.workDays} раб. дней` : '—'],
+      ['Исполнитель', executor],
+      ...(discountPct > 0 ? ([['Скидка', `${discountPct} %`]] as [string, string][]) : []),
+      ...(rolledUp
+        ? ([['Форма', 'Сводная (по разделам)']] as [string, string][])
+        : []),
+    ]),
+    para(''),
+  ]
+
+  if (groupsWithSum.length === 0) {
+    children.push(
+      para('Позиции сметы не заполнены — добавьте строки или перенесите объёмы из калькулятора.', {
+        italics: true,
+      }),
+    )
+  } else if (rolledUp) {
+    children.push(sectionHead('СВОДКА ПО РАЗДЕЛАМ'))
+    children.push(smetaRollupTable(groupsWithSum))
+  } else {
+    let nextNo = 1
+    groupsWithSum.forEach((g, gi) => {
+      children.push(sectionHead(`Раздел ${gi + 1}. ${prettySectionTitle(g.section)}`))
+      const built = smetaSectionTable(nextNo, g.rows)
+      nextNo = built.nextNo
+      children.push(built.table)
+      children.push(
+        para(
+          `Итого по разделу «${prettySectionTitle(g.section)}»: ${formatMoney(built.subtotal)} ₽`,
+          {
+            bold: true,
+            after: 100,
+            before: 80,
+          },
+        ),
+      )
+    })
+  }
+
+  const summaryRows: [string, string][] = [
+    ['Итого по всем разделам', `${formatMoney(baseTotal)} ₽`],
+  ]
+  if (discountPct > 0) {
+    summaryRows.push([`Скидка — ${discountPct}%`, `−${formatMoney(discountSum)} ₽`])
+  }
+  summaryRows.push(['Итого к оплате', `${formatMoney(grandTotal)} ₽`])
+  summaryRows.push(['Сумма прописью', rublesInWords(grandTotal)])
+
+  children.push(sectionHead('ИТОГО'))
+  children.push(partyTable('СВОДКА', summaryRows))
+  children.push(para(''))
+  children.push(
+    clause(
+      'Настоящая смета определяет перечень, объёмы и стоимость работ. Дополнительные работы, не учтённые в смете, оформляются отдельным соглашением.',
+    ),
+  )
+  children.push(para(''))
+  children.push(partyTable('ЗАКАЗЧИК', clientPartyRows(client)))
+  children.push(para(''))
+  children.push(signatureBlock('Заказчик', clientFio))
+  children.push(para(''))
+  children.push(partyTable('ИСПОЛНИТЕЛЬ', contractorPartyRows(executor)))
+  children.push(para(''))
+  children.push(signatureBlock('Исполнитель', execFio))
+
+  return docShell(children, `Смета № ${form.number || '—'}`)
+}
+
 export async function generateRemontDoc(client: ClientCard, form: RemontForm) {
   const doc = await buildRemontDocument(client, form)
   await downloadDoc(doc, `Dogovor_remont_${form.number || client.id}.docx`)
@@ -799,4 +1112,9 @@ export async function generateDesignDoc(client: ClientCard, form: DesignForm) {
 export async function generateAktDoc(client: ClientCard, form: AktForm) {
   const doc = await buildAktDocument(client, form)
   await downloadDoc(doc, `Akt_${form.number || client.id}.docx`)
+}
+
+export async function generateSmetaDoc(client: ClientCard, form: SmetaForm) {
+  const doc = await buildSmetaDocument(client, form)
+  await downloadDoc(doc, `Smeta_${form.number || client.id}.docx`)
 }

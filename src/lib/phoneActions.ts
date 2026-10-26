@@ -7,6 +7,27 @@ export function phoneDigits(raw: string): string {
   return d
 }
 
+/**
+ * Маска ввода РФ: `+7 (999) 123-45-67`.
+ * 8… и 10 цифр без кода страны приводятся к +7.
+ */
+export function formatRuPhone(raw: string): string {
+  let d = raw.replace(/\D/g, '')
+  if (!d) return ''
+  if (d.startsWith('8')) d = `7${d.slice(1)}`
+  if (!d.startsWith('7')) d = `7${d}`
+  d = d.slice(0, 11)
+  const rest = d.slice(1)
+  if (!rest) return '+7'
+  let out = `+7 (${rest.slice(0, 3)}`
+  if (rest.length <= 3) return out
+  out += `) ${rest.slice(3, 6)}`
+  if (rest.length <= 6) return out
+  out += `-${rest.slice(6, 8)}`
+  if (rest.length <= 8) return out
+  return `${out}-${rest.slice(8, 10)}`
+}
+
 export function telHref(raw: string): string | null {
   const trimmed = raw.trim()
   if (!trimmed) return null
