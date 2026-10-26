@@ -2,14 +2,13 @@
   "v": 4,
   "updated": "2026-10-26",
   "status": "active",
-  "goal": "Ship Даниил asks + smeta to Pages",
+  "goal": "Call summary 2026-10-26-c on Pages",
   "next": "Уточнить у Даниила порядок стены/полы; клиентский доступ к договорам",
   "blockers": [],
   "hot_files": [
+    "data/changelog.json",
+    "data/releases/2026-10-26-c.md",
     "docs/customer-calls/2026-10-26-daniil-aquarius.md",
-    "src/components/calculator/CalculatorPage.tsx",
-    "src/components/documents/DocumentsPage.tsx",
-    "src/components/control/PublicReportPage.tsx",
-    "src/components/clients/ClientCardPage.tsx"
+    "src/lib/buildStamp.ts"
   ]
 }
