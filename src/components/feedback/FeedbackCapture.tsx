@@ -819,8 +819,60 @@ function Badge({ x, y, label }: { x: number; y: number; label: string }) {
   )
 }
 
+const FAB_GAP_PX = 12
+const FAB_BASE_BOTTOM_PX = 20
+const FAB_BASE_BOTTOM_LG_PX = 24
+
+/** Поднимает FAB над липкими нижними панелями (`[data-sticky-footer]`). */
+function useFabBottomPx(): number {
+  const { pathname } = useLocation()
+  const [bottomPx, setBottomPx] = useState(FAB_BASE_BOTTOM_PX)
+
+  useEffect(() => {
+    const baseBottom = () =>
+      window.matchMedia('(min-width: 1024px)').matches
+        ? FAB_BASE_BOTTOM_LG_PX
+        : FAB_BASE_BOTTOM_PX
+
+    const measure = () => {
+      let maxH = 0
+      document.querySelectorAll<HTMLElement>('[data-sticky-footer]').forEach((el) => {
+        const rect = el.getBoundingClientRect()
+        if (rect.height <= 0) return
+        if (rect.bottom < window.innerHeight - 4) return
+        maxH = Math.max(maxH, Math.ceil(rect.height))
+      })
+      setBottomPx(maxH > 0 ? maxH + FAB_GAP_PX : baseBottom())
+    }
+
+    const ro = new ResizeObserver(measure)
+    const bind = () => {
+      ro.disconnect()
+      document.querySelectorAll('[data-sticky-footer]').forEach((el) => ro.observe(el))
+      measure()
+    }
+
+    bind()
+    // Панель может смонтироваться после перехода по маршруту.
+    const t0 = window.setTimeout(bind, 0)
+    const t1 = window.setTimeout(bind, 100)
+    window.addEventListener('resize', measure)
+
+    return () => {
+      ro.disconnect()
+      window.clearTimeout(t0)
+      window.clearTimeout(t1)
+      window.removeEventListener('resize', measure)
+    }
+  }, [pathname])
+
+  return bottomPx
+}
+
 /** FAB + открытие мастера. */
 export function FeedbackFab({ onOpen }: { onOpen: () => void }) {
+  const bottomPx = useFabBottomPx()
+
   return (
     <button
       type="button"
@@ -828,7 +880,8 @@ export function FeedbackFab({ onOpen }: { onOpen: () => void }) {
       onClick={onOpen}
       title="Оставить замечание"
       aria-label="Оставить замечание"
-      className="fixed bottom-5 right-5 z-[60] inline-flex h-12 w-12 items-center justify-center rounded-full bg-rose-600 text-white shadow-lg hover:bg-rose-700 lg:bottom-6 lg:right-6"
+      style={{ bottom: bottomPx }}
+      className="fixed right-5 z-[60] inline-flex h-12 w-12 items-center justify-center rounded-full bg-rose-600 text-white shadow-lg hover:bg-rose-700 lg:right-6"
     >
       <RiAddLine className="h-6 w-6" />
     </button>

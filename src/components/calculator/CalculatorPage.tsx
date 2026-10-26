@@ -332,43 +332,39 @@ export default function CalculatorPage() {
             </nav>
 
             <div className="min-w-0 flex-1">
-              <div className="space-y-3 border-b border-gray-100 px-4 py-3">
-                <h2 className="text-base font-semibold text-gray-900">
-                  {prettySection(activeSection)}
-                </h2>
-
-                <div
-                  className="inline-flex rounded-lg border border-gray-200 bg-gray-100 p-0.5 text-xs"
-                  role="group"
-                  aria-label="Тип работ"
-                >
-                  {(
-                    [
-                      { id: 'chernovye', label: 'Черновые' },
-                      { id: 'all', label: 'Все' },
-                      { id: 'chistovye', label: 'Чистовые' },
-                    ] as const
-                  ).map(({ id, label }) => {
-                    const on = activeMode === id
-                    return (
-                      <button
-                        key={id}
-                        type="button"
-                        aria-pressed={on}
-                        onClick={() => setMode(activeSection, id)}
-                        className={`rounded-md px-2.5 py-1.5 font-semibold transition-colors ${
-                          on
-                            ? 'bg-blue-600 text-white shadow-sm'
-                            : 'text-gray-500 hover:bg-white/70 hover:text-gray-800'
-                        }`}
-                      >
-                        {label}
-                      </button>
-                    )
-                  })}
-                </div>
-
+              <div className="border-b border-gray-100 px-4 py-3">
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+                  <div
+                    className="inline-flex rounded-lg border border-gray-200 bg-gray-100 p-0.5 text-xs"
+                    role="group"
+                    aria-label="Тип работ"
+                  >
+                    {(
+                      [
+                        { id: 'all', label: 'Все' },
+                        { id: 'chistovye', label: 'Чистовые' },
+                        { id: 'chernovye', label: 'Черновые' },
+                      ] as const
+                    ).map(({ id, label }) => {
+                      const on = activeMode === id
+                      return (
+                        <button
+                          key={id}
+                          type="button"
+                          aria-pressed={on}
+                          onClick={() => setMode(activeSection, id)}
+                          className={`rounded-md px-2.5 py-1.5 font-semibold transition-colors ${
+                            on
+                              ? 'bg-blue-600 text-white shadow-sm'
+                              : 'text-gray-500 hover:bg-white/70 hover:text-gray-800'
+                          }`}
+                        >
+                          {label}
+                        </button>
+                      )
+                    })}
+                  </div>
+
                   <label className="inline-flex items-center gap-1.5 text-sm text-gray-600">
                     <span className="whitespace-nowrap">Скидка %</span>
                     <input
@@ -466,8 +462,11 @@ export default function CalculatorPage() {
         )}
       </div>
 
-      <div className="fixed bottom-0 left-0 right-0 z-30 border-t border-gray-200 bg-white/95 backdrop-blur lg:left-64">
-        <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
+      <div
+        data-sticky-footer
+        className="fixed bottom-0 left-0 right-0 z-30 border-t border-gray-200 bg-white/95 backdrop-blur lg:left-64"
+      >
+        <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-3 pr-16 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:pr-20 lg:px-8 lg:pr-20">
           <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
             <div>
               <p className="text-xs text-gray-500">

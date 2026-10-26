@@ -1189,8 +1189,11 @@ export default function DocumentsPage() {
       )}
 
       {/* Липкая панель: исполнитель + сформировать — всегда на экране */}
-      <div className="fixed bottom-0 left-0 right-0 z-30 border-t border-gray-200 bg-white/95 backdrop-blur lg:left-64">
-        <div className="mx-auto flex max-w-7xl flex-col gap-2 px-4 py-2.5 sm:flex-row sm:items-end sm:gap-4 sm:px-6 lg:px-8">
+      <div
+        data-sticky-footer
+        className="fixed bottom-0 left-0 right-0 z-30 border-t border-gray-200 bg-white/95 backdrop-blur lg:left-64"
+      >
+        <div className="mx-auto flex max-w-7xl flex-col gap-2 px-4 py-2.5 pr-16 sm:flex-row sm:items-end sm:gap-4 sm:px-6 sm:pr-20 lg:px-8 lg:pr-20">
           <Field label="ФИО Исполнителя" className="min-w-0 flex-1">
             <input
               className={inputCls}
