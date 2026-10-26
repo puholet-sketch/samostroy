@@ -287,146 +287,181 @@ export default function CalculatorPage() {
       </Panel>
 
       <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
-        <div className="flex flex-wrap items-center gap-2 border-b border-gray-100 bg-gray-50 px-2 py-2">
-          <div className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto">
-            {filteredNames.map((name) => {
-              const count =
-                filteredSections.find(([s]) => s === name)?.[1].length ?? 0
-              const active = name === activeSection
-              return (
-                <button
-                  key={name}
-                  type="button"
-                  onClick={() => setActiveSection(name)}
-                  className={`shrink-0 rounded-md px-3 py-1.5 text-sm font-medium whitespace-nowrap transition-colors ${
-                    active
-                      ? 'bg-blue-600 text-white shadow-sm'
-                      : 'text-gray-600 hover:bg-white hover:text-gray-900'
-                  }`}
-                  title={`${count} поз.`}
-                >
-                  {prettySection(name)}
-                </button>
-              )
-            })}
-          </div>
-
-          <div
-            className="inline-flex shrink-0 rounded-lg border border-gray-200 bg-gray-100 p-0.5 text-xs"
-            role="group"
-            aria-label="Тип работ"
-          >
-            {(
-              [
-                { id: 'chernovye', label: 'Черновые' },
-                { id: 'all', label: 'Все' },
-                { id: 'chistovye', label: 'Чистовые' },
-              ] as const
-            ).map(({ id, label }) => {
-              const on = activeMode === id
-              return (
-                <button
-                  key={id}
-                  type="button"
-                  aria-pressed={on}
-                  onClick={() => setMode(activeSection, id)}
-                  className={`rounded-md px-2.5 py-1.5 font-semibold transition-colors ${
-                    on
-                      ? 'bg-blue-600 text-white shadow-sm'
-                      : 'text-gray-500 hover:bg-white/70 hover:text-gray-800'
-                  }`}
-                >
-                  {label}
-                </button>
-              )
-            })}
-          </div>
-
-          <label className="inline-flex shrink-0 items-center gap-1.5 text-sm text-gray-600">
-            <span className="whitespace-nowrap">Скидка %</span>
-            <input
-              type="number"
-              min={0}
-              max={100}
-              step={1}
-              className={discountInputCls}
-              value={discountPct || ''}
-              placeholder="0"
-              onChange={(e) =>
-                setDiscountPct(Math.max(0, Math.min(100, Number(e.target.value) || 0)))
-              }
-            />
-          </label>
-
-          <label className="inline-flex shrink-0 items-center gap-1.5 text-sm text-gray-600">
-            <input
-              type="checkbox"
-              checked={onlyFilled}
-              onChange={(e) => setOnlyFilled(e.target.checked)}
-            />
-            <span className="whitespace-nowrap">Только с объёмом</span>
-          </label>
-
-          <button
-            type="button"
-            onClick={() => setQty({})}
-            className="shrink-0 rounded-md border border-red-200 px-2.5 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50"
-          >
-            Сбросить
-          </button>
-        </div>
-
         {filteredSections.length === 0 ? (
           <p className="px-4 py-10 text-center text-sm text-gray-500">Ничего не найдено</p>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200 text-sm">
-              <thead className="bg-white text-left text-xs uppercase text-gray-500">
-                <tr>
-                  <th className="px-4 py-2 font-medium">Работа</th>
-                  <th className="whitespace-nowrap px-3 py-2 font-medium">Ед.</th>
-                  <th className="whitespace-nowrap px-3 py-2 text-right font-medium">Цена</th>
-                  <th className="w-40 whitespace-nowrap px-3 py-2 font-medium">Объём</th>
-                  <th className="whitespace-nowrap px-4 py-2 text-right font-medium">Сумма</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {activeRows.map(({ it, idx }) => {
-                  const key = itemKey(it, idx)
-                  const n = Number(qty[key]) || 0
-                  const line = n * it.price
+          <div className="flex flex-col lg:flex-row lg:items-stretch">
+            {/* Sections: vertical list — no horizontal chip scroll */}
+            <nav
+              className="shrink-0 border-b border-gray-200 bg-gray-50 lg:w-52 lg:border-b-0 lg:border-r"
+              aria-label="Разделы сметы"
+            >
+              <p className="hidden px-3 pb-1 pt-3 text-[11px] font-semibold uppercase tracking-wide text-gray-400 lg:block">
+                Разделы
+              </p>
+              <ul className="flex flex-col gap-0.5 p-2 lg:max-h-[min(70vh,36rem)] lg:overflow-y-auto">
+                {filteredNames.map((name) => {
+                  const count =
+                    filteredSections.find(([s]) => s === name)?.[1].length ?? 0
+                  const active = name === activeSection
                   return (
-                    <tr key={key} className={n > 0 ? 'bg-emerald-50/60' : 'bg-white'}>
-                      <td className="max-w-xl px-4 py-2.5 text-gray-800">{it.name}</td>
-                      <td className="whitespace-nowrap px-3 py-2.5 text-gray-500">{it.unit}</td>
-                      <td className="whitespace-nowrap px-3 py-2.5 text-right tabular-nums text-gray-700">
-                        {money(it.price)} ₽
-                      </td>
-                      <td className="px-3 py-2">
-                        <div className="flex items-center gap-1.5">
-                          <input
-                            type="number"
-                            min={0}
-                            step="any"
-                            inputMode="decimal"
-                            className={inputCls}
-                            value={n || ''}
-                            placeholder="0"
-                            onChange={(e) => setItemQty(key, e.target.value)}
-                          />
-                          <span className="whitespace-nowrap text-xs text-gray-400">
-                            {it.unit}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="whitespace-nowrap px-4 py-2.5 text-right font-semibold tabular-nums text-gray-900">
-                        {n > 0 ? `${money(line)} ₽` : '—'}
-                      </td>
-                    </tr>
+                    <li key={name}>
+                      <button
+                        type="button"
+                        onClick={() => setActiveSection(name)}
+                        className={`flex w-full items-center justify-between gap-2 rounded-md px-3 py-2 text-left text-sm font-medium transition-colors ${
+                          active
+                            ? 'bg-blue-600 text-white shadow-sm'
+                            : 'text-gray-700 hover:bg-white hover:text-gray-900'
+                        }`}
+                        aria-current={active ? 'page' : undefined}
+                      >
+                        <span className="min-w-0 truncate">{prettySection(name)}</span>
+                        <span
+                          className={`shrink-0 tabular-nums text-xs ${
+                            active ? 'text-blue-100' : 'text-gray-400'
+                          }`}
+                        >
+                          {count}
+                        </span>
+                      </button>
+                    </li>
                   )
                 })}
-              </tbody>
-            </table>
+              </ul>
+            </nav>
+
+            <div className="min-w-0 flex-1">
+              <div className="space-y-3 border-b border-gray-100 px-4 py-3">
+                <h2 className="text-base font-semibold text-gray-900">
+                  {prettySection(activeSection)}
+                </h2>
+
+                <div
+                  className="inline-flex rounded-lg border border-gray-200 bg-gray-100 p-0.5 text-xs"
+                  role="group"
+                  aria-label="Тип работ"
+                >
+                  {(
+                    [
+                      { id: 'chernovye', label: 'Черновые' },
+                      { id: 'all', label: 'Все' },
+                      { id: 'chistovye', label: 'Чистовые' },
+                    ] as const
+                  ).map(({ id, label }) => {
+                    const on = activeMode === id
+                    return (
+                      <button
+                        key={id}
+                        type="button"
+                        aria-pressed={on}
+                        onClick={() => setMode(activeSection, id)}
+                        className={`rounded-md px-2.5 py-1.5 font-semibold transition-colors ${
+                          on
+                            ? 'bg-blue-600 text-white shadow-sm'
+                            : 'text-gray-500 hover:bg-white/70 hover:text-gray-800'
+                        }`}
+                      >
+                        {label}
+                      </button>
+                    )
+                  })}
+                </div>
+
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+                  <label className="inline-flex items-center gap-1.5 text-sm text-gray-600">
+                    <span className="whitespace-nowrap">Скидка %</span>
+                    <input
+                      type="number"
+                      min={0}
+                      max={100}
+                      step={1}
+                      className={discountInputCls}
+                      value={discountPct || ''}
+                      placeholder="0"
+                      onChange={(e) =>
+                        setDiscountPct(
+                          Math.max(0, Math.min(100, Number(e.target.value) || 0)),
+                        )
+                      }
+                    />
+                  </label>
+
+                  <label className="inline-flex items-center gap-1.5 text-sm text-gray-600">
+                    <input
+                      type="checkbox"
+                      checked={onlyFilled}
+                      onChange={(e) => setOnlyFilled(e.target.checked)}
+                    />
+                    <span className="whitespace-nowrap">Только с объёмом</span>
+                  </label>
+
+                  <button
+                    type="button"
+                    onClick={() => setQty({})}
+                    className="rounded-md border border-red-200 px-2.5 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50"
+                  >
+                    Сбросить
+                  </button>
+                </div>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200 text-sm">
+                  <thead className="bg-white text-left text-xs uppercase text-gray-500">
+                    <tr>
+                      <th className="px-4 py-2 font-medium">Работа</th>
+                      <th className="whitespace-nowrap px-3 py-2 font-medium">Ед.</th>
+                      <th className="whitespace-nowrap px-3 py-2 text-right font-medium">
+                        Цена
+                      </th>
+                      <th className="w-40 whitespace-nowrap px-3 py-2 font-medium">Объём</th>
+                      <th className="whitespace-nowrap px-4 py-2 text-right font-medium">
+                        Сумма
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {activeRows.map(({ it, idx }) => {
+                      const key = itemKey(it, idx)
+                      const n = Number(qty[key]) || 0
+                      const line = n * it.price
+                      return (
+                        <tr key={key} className={n > 0 ? 'bg-emerald-50/60' : 'bg-white'}>
+                          <td className="max-w-xl px-4 py-2.5 text-gray-800">{it.name}</td>
+                          <td className="whitespace-nowrap px-3 py-2.5 text-gray-500">
+                            {it.unit}
+                          </td>
+                          <td className="whitespace-nowrap px-3 py-2.5 text-right tabular-nums text-gray-700">
+                            {money(it.price)} ₽
+                          </td>
+                          <td className="px-3 py-2">
+                            <div className="flex items-center gap-1.5">
+                              <input
+                                type="number"
+                                min={0}
+                                step="any"
+                                inputMode="decimal"
+                                className={inputCls}
+                                value={n || ''}
+                                placeholder="0"
+                                onChange={(e) => setItemQty(key, e.target.value)}
+                              />
+                              <span className="whitespace-nowrap text-xs text-gray-400">
+                                {it.unit}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="whitespace-nowrap px-4 py-2.5 text-right font-semibold tabular-nums text-gray-900">
+                            {n > 0 ? `${money(line)} ₽` : '—'}
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
         )}
       </div>
