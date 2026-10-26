@@ -31,7 +31,8 @@ function buildMessage(
           .join('\n')
 
   return [
-    `Кому (ожидаемый ящик): ${emailTo}`,
+    'Доставка: инбокс Access Key Web3Forms (email, с которым ключ создан и подтверждён).',
+    `Метка команды (не меняет маршрут письма): ${emailTo}`,
     `ID: ${item.id}`,
     `Тема: ${item.title}`,
     `Тип: ${item.kind}`,
@@ -83,11 +84,13 @@ async function toCompressedJpeg(source: Blob): Promise<Blob | null> {
   }
 }
 
-async function postWeb3Forms(body: FormData | Record<string, unknown>): Promise<void> {
+async function postWeb3FormsOnce(body: FormData | Record<string, unknown>): Promise<void> {
   const isFd = body instanceof FormData
   const res = await fetch(WEB3FORMS_URL, {
     method: 'POST',
-    headers: isFd ? { Accept: 'application/json' } : { 'Content-Type': 'application/json', Accept: 'application/json' },
+    headers: isFd
+      ? { Accept: 'application/json' }
+      : { 'Content-Type': 'application/json', Accept: 'application/json' },
     body: isFd ? body : JSON.stringify(body),
   })
   const data = (await res.json().catch(() => ({}))) as {
@@ -96,6 +99,37 @@ async function postWeb3Forms(body: FormData | Record<string, unknown>): Promise<
   }
   if (!res.ok || data.success === false) {
     throw new Error(data.message || `Web3Forms ${res.status}`)
+  }
+}
+
+function cloneBody(
+  body: FormData | Record<string, unknown>,
+): FormData | Record<string, unknown> {
+  if (!(body instanceof FormData)) return body
+  const fd = new FormData()
+  body.forEach((value, key) => {
+    fd.append(key, value)
+  })
+  return fd
+}
+
+/** Одна повторная попытка при сетевом/временном сбое. */
+async function postWeb3Forms(body: FormData | Record<string, unknown>): Promise<void> {
+  try {
+    await postWeb3FormsOnce(cloneBody(body))
+  } catch (first) {
+    await new Promise((r) => setTimeout(r, 600))
+    try {
+      await postWeb3FormsOnce(cloneBody(body))
+    } catch (second) {
+      const msg =
+        second instanceof Error
+          ? second.message
+          : first instanceof Error
+            ? first.message
+            : 'email error'
+      throw new Error(msg)
+    }
   }
 }
 
@@ -136,7 +170,8 @@ export async function sendFeedbackEmail(
             'Скриншот: вложение JPEG (если тариф Web3Forms допускает файлы). Иначе смотрите локальный инбокс CRM.',
           ),
         )
-        fd.append('target_email', cfg.emailTo)
+        // team_inbox — только метаданные в письме; free Web3Forms не перенаправляет по to/email
+        fd.append('team_inbox', cfg.emailTo)
         fd.append('feedback_id', item.id)
         fd.append('route', item.route)
         fd.append('build_stamp', item.buildStamp)
@@ -163,7 +198,7 @@ export async function sendFeedbackEmail(
           ? `${localOnlyNote} (вложение отклонено провайдером — нужен Web3Forms PRO или смотрите CRM).`
           : `${localOnlyNote} JPEG слишком большой или недоступен.`,
       ),
-      target_email: cfg.emailTo,
+      team_inbox: cfg.emailTo,
       feedback_id: item.id,
       route: item.route,
       build_stamp: item.buildStamp,

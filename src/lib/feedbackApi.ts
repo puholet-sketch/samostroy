@@ -122,28 +122,34 @@ export function remoteImageUrl(id: string): string | null {
 
 /** Текст статуса для заказчика после отправки. */
 export function feedbackSubmitUserMessage(item: FeedbackItem): string {
-  const parts: string[] = [`Сохранено · ${item.id}`]
   if (item.emailStatus === 'sent') {
-    parts.push(
-      item.emailAttached
-        ? 'письмо с вложением отправлено разработчику'
-        : 'письмо отправлено разработчику (скрин — в этом браузере)',
-    )
-  } else if (item.emailStatus === 'error') {
-    parts.push('письмо не удалось отправить')
-  } else if (item.emailStatus === 'skipped') {
-    parts.push('email-канал не настроен')
+    const attach = item.emailAttached
+      ? 'письмо с вложением ушло на почту разработчика'
+      : 'письмо ушло на почту разработчика (скрин — в этом браузере)'
+    return `Отправлено на почту · ${attach} · ${item.id}`
   }
 
+  if (item.emailStatus === 'error') {
+    const detail = item.emailError ? ` (${item.emailError})` : ''
+    return `Ошибка: письмо не доставлено${detail}. Сохранено только в этом браузере · ${item.id}`
+  }
+
+  if (item.emailStatus === 'skipped') {
+    return `Ошибка: email-канал не настроен в сборке. Сохранено только в этом браузере · ${item.id}`
+  }
+
+  const parts: string[] = [`Сохранено · ${item.id}`]
   if (item.syncStatus === 'synced' && item.tgMessageId != null) {
     parts.push('очередь API')
-  } else if (item.syncStatus === 'synced' && item.emailStatus === 'sent') {
-    /* уже отметили письмо */
   } else if (item.syncStatus === 'error') {
     parts.push('API недоступен')
-  } else if (item.syncStatus === 'local' && item.emailStatus !== 'sent') {
+  } else if (item.syncStatus === 'local') {
     parts.push('только в этом браузере')
   }
-
   return parts.join(' · ')
+}
+
+/** Успешная доставка разработчику (email и/или API). */
+export function feedbackSubmitSucceeded(item: FeedbackItem): boolean {
+  return item.emailStatus === 'sent' || (item.syncStatus === 'synced' && item.tgMessageId != null)
 }

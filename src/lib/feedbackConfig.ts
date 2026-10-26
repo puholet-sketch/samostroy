@@ -13,7 +13,10 @@ export type FeedbackApiConfig = {
 export type FeedbackEmailConfig = {
   /** Web3Forms access key (публичный, VITE_ / Безопасность) */
   accessKey: string
-  /** Куда должны приходить письма (ключ Web3Forms создаётся на этот адрес) */
+  /**
+   * Метка ящика команды в теле письма.
+   * Доставка идёт на email, с которым создан access key — free tier не перенаправляет.
+   */
   emailTo: string
 }
 
@@ -59,9 +62,12 @@ export function loadFeedbackEmailConfig(): FeedbackEmailConfig {
     const raw = localStorage.getItem(EMAIL_KEY)
     if (raw) {
       const parsed = JSON.parse(raw) as Partial<FeedbackEmailConfig>
+      // Пустая строка в localStorage не должна перекрывать ключ из сборки Pages
+      const lsKey = typeof parsed.accessKey === 'string' ? parsed.accessKey.trim() : ''
+      const lsTo = typeof parsed.emailTo === 'string' ? parsed.emailTo.trim() : ''
       return {
-        accessKey: (parsed.accessKey ?? fromEnvKey).trim(),
-        emailTo: (parsed.emailTo ?? fromEnvTo).trim() || DEFAULT_FEEDBACK_EMAIL_TO,
+        accessKey: lsKey || fromEnvKey,
+        emailTo: lsTo || fromEnvTo || DEFAULT_FEEDBACK_EMAIL_TO,
       }
     }
   } catch {

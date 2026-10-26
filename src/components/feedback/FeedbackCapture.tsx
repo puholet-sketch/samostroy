@@ -18,7 +18,11 @@ import {
 import { useAuth } from '../../contexts/AuthContext'
 import { BUILD_STAMP } from '../../lib/buildStamp'
 import { composeAnnotatedPng } from '../../lib/feedbackAnnotate'
-import { feedbackSubmitUserMessage, submitFeedbackWithSync } from '../../lib/feedbackApi'
+import {
+  feedbackSubmitSucceeded,
+  feedbackSubmitUserMessage,
+  submitFeedbackWithSync,
+} from '../../lib/feedbackApi'
 import {
   saveFeedbackImage,
   type FeedbackKind,
@@ -42,6 +46,8 @@ type Props = {
 }
 
 const MIN_DRAG_PCT = 1.2
+/** Верхняя граница высоты кадра (canvas OOM на длинных страницах / mobile). */
+const MAX_CAPTURE_HEIGHT = 14_000
 
 /** Visible image box inside an object-contain <img> (may be letterboxed). */
 function objectContainContentRect(img: HTMLImageElement): DOMRect {
@@ -144,12 +150,47 @@ export function FeedbackCapture({ open, onClose, onSubmitted }: Props) {
   async function capture() {
     setBusy(true)
     setMsg('')
+    const scrollX = window.scrollX
+    const scrollY = window.scrollY
+    const feedbackEls = Array.from(
+      document.querySelectorAll<HTMLElement>('[data-feedback-ui]'),
+    )
+    const prevVisibility = feedbackEls.map((el) => el.style.visibility)
+    feedbackEls.forEach((el) => {
+      el.style.visibility = 'hidden'
+    })
     try {
       await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)))
-      const node = document.documentElement
+
+      // Полный scrollable документ / #root — иначе html-to-image берёт только viewport
+      const root = document.getElementById('root')
+      const node = (root ?? document.documentElement) as HTMLElement
+      const width = Math.max(
+        node.scrollWidth,
+        document.documentElement.scrollWidth,
+        document.body?.scrollWidth ?? 0,
+        window.innerWidth,
+      )
+      const fullHeight = Math.max(
+        node.scrollHeight,
+        document.documentElement.scrollHeight,
+        document.body?.scrollHeight ?? 0,
+        window.innerHeight,
+      )
+      const height = Math.min(fullHeight, MAX_CAPTURE_HEIGHT)
+      const pixelRatio = Math.min(1.5, window.devicePixelRatio || 1)
+
       const dataUrl = await toPng(node, {
         cacheBust: true,
-        pixelRatio: Math.min(2, window.devicePixelRatio || 1),
+        pixelRatio,
+        width,
+        height,
+        style: {
+          width: `${width}px`,
+          height: `${height}px`,
+          transform: 'none',
+          overflow: 'visible',
+        },
         filter: (el) => {
           if (!(el instanceof HTMLElement)) return true
           return !el.closest('[data-feedback-ui]')
@@ -161,10 +202,17 @@ export function FeedbackCapture({ open, onClose, onSubmitted }: Props) {
       setShotBlob(blob)
       setShotUrl(url)
       setStep('mark')
+      if (fullHeight > MAX_CAPTURE_HEIGHT) {
+        setMsg('Снимок обрезан по высоте (очень длинная страница)')
+      }
     } catch {
       setMsg('Не удалось сделать снимок экрана')
       setStep('shot')
     } finally {
+      feedbackEls.forEach((el, i) => {
+        el.style.visibility = prevVisibility[i] ?? ''
+      })
+      window.scrollTo(scrollX, scrollY)
       setBusy(false)
     }
   }
@@ -359,10 +407,13 @@ export function FeedbackCapture({ open, onClose, onSubmitted }: Props) {
       )
       onSubmitted?.(item.id)
       setMsg(feedbackSubmitUserMessage(item))
-      setTimeout(() => {
-        onClose()
-        reset()
-      }, 900)
+      if (feedbackSubmitSucceeded(item)) {
+        setTimeout(() => {
+          onClose()
+          reset()
+        }, 1600)
+      }
+      // При ошибке email оставляем мастер открытым — заказчик видит статус
     } catch {
       setMsg('Не удалось сохранить замечание')
     } finally {
@@ -633,7 +684,11 @@ export function FeedbackCapture({ open, onClose, onSubmitted }: Props) {
           {msg && (
             <p
               className={`mt-2 text-xs ${
-                msg.startsWith('Отправлено') ? 'text-emerald-700' : 'text-red-600'
+                msg.startsWith('Отправлено')
+                  ? 'text-emerald-700'
+                  : msg.startsWith('Ошибка') || msg.includes('Не удалось')
+                    ? 'text-red-600'
+                    : 'text-amber-700'
               }`}
             >
               {msg}

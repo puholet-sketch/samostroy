@@ -419,7 +419,7 @@ function FeedbackEmailSettings() {
       <form onSubmit={onSave} className="grid gap-3 sm:grid-cols-2">
         <label className="block sm:col-span-2">
           <span className="mb-0.5 block text-xs text-gray-500">
-            Кому (ящик разработчика; access key создаётся на этот адрес)
+            Метка ящика команды (в письме; доставка = email Access Key, не это поле)
           </span>
           <input
             className={inputCls}
@@ -431,7 +431,7 @@ function FeedbackEmailSettings() {
         </label>
         <label className="block sm:col-span-2">
           <span className="mb-0.5 block text-xs text-gray-500">
-            Web3Forms Access Key (публичный, из кабинета web3forms.com)
+            Web3Forms Access Key (создайте ключ, подтвердив нужный ящик — на него и придут письма)
           </span>
           <input
             className={inputCls}
