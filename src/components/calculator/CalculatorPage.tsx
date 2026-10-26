@@ -332,10 +332,11 @@ export default function CalculatorPage() {
             </nav>
 
             <div className="min-w-0 flex-1">
+              {/* One toolbar row: kind | discount | volume | reset (wrap only on very narrow) */}
               <div className="border-b border-gray-100 px-4 py-3">
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-2 md:flex-nowrap">
                   <div
-                    className="inline-flex rounded-lg border border-gray-200 bg-gray-100 p-0.5 text-xs"
+                    className="inline-flex shrink-0 rounded-lg border border-gray-200 bg-gray-100 p-0.5 text-xs"
                     role="group"
                     aria-label="Тип работ"
                   >
@@ -365,7 +366,7 @@ export default function CalculatorPage() {
                     })}
                   </div>
 
-                  <label className="inline-flex items-center gap-1.5 text-sm text-gray-600">
+                  <label className="inline-flex shrink-0 items-center gap-1.5 text-sm text-gray-600">
                     <span className="whitespace-nowrap">Скидка %</span>
                     <input
                       type="number"
@@ -383,7 +384,7 @@ export default function CalculatorPage() {
                     />
                   </label>
 
-                  <label className="inline-flex items-center gap-1.5 text-sm text-gray-600">
+                  <label className="inline-flex shrink-0 items-center gap-1.5 text-sm text-gray-600">
                     <input
                       type="checkbox"
                       checked={onlyFilled}
@@ -395,7 +396,7 @@ export default function CalculatorPage() {
                   <button
                     type="button"
                     onClick={() => setQty({})}
-                    className="rounded-md border border-red-200 px-2.5 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50"
+                    className="shrink-0 rounded-md border border-red-200 px-2.5 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50"
                   >
                     Сбросить
                   </button>
