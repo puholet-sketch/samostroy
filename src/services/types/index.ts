@@ -44,7 +44,7 @@ export const MVP_MODULE_LABEL: Record<MvpModule, string> = {
   calculator: 'Калькулятор',
   documents: 'Договоры и акты',
   object_control: 'Контроль объекта',
-  security: 'Безопасность',
+  security: 'Настройки',
   updates: 'Обновления',
   feedback: 'Замечания',
 }

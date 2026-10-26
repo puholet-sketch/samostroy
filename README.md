@@ -45,7 +45,7 @@ npm run preview
 Без публичного Feedback API замечания на Pages остаются только в браузере заказчика. Доставка разработчику — **Web3Forms**:
 
 1. Access Key на [web3forms.com](https://web3forms.com) для ящика (по умолчанию `sorvanvon@yandex.ru`).
-2. `VITE_WEB3FORMS_ACCESS_KEY` (+ опц. `VITE_FEEDBACK_EMAIL_TO`) в [.env.example](.env.example) перед сборкой, либо CRM → Безопасность → «Feedback email».
+2. `VITE_WEB3FORMS_ACCESS_KEY` (+ опц. `VITE_FEEDBACK_EMAIL_TO`) в [.env.example](.env.example) перед сборкой, либо CRM → Настройки → «Замечания / API» → «Feedback email».
 3. Подробности: [docs/modules/feedback.md](docs/modules/feedback.md).
 
 ## Архитектура данных (фаза 1)
@@ -62,7 +62,7 @@ npm run preview
 | Модуль | Статус |
 |--------|--------|
 | Login + сессия | работает |
-| Безопасность (матрица прав) | работает (owner) |
+| Настройки / безопасность (матрица прав) | работает (owner) |
 | Дашборд | работает (overview) |
 | Объекты CRM | работает |
 | Pipeline 14 этапов | работает (суммы per object) |

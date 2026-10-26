@@ -11,7 +11,7 @@ export type FeedbackApiConfig = {
 }
 
 export type FeedbackEmailConfig = {
-  /** Web3Forms access key (публичный, VITE_ / Безопасность) */
+  /** Web3Forms access key (публичный, VITE_ / Настройки → Замечания / API) */
   accessKey: string
   /**
    * Метка ящика команды в теле письма.

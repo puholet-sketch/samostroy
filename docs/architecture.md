@@ -59,7 +59,7 @@ PII локальной CRM не коммитить (`clients` seed публич�
 
 ## Модули MVP (`ModuleKey`)
 
-Назначаются в разделе «Безопасность» на учётку (`allowedModules`):
+Назначаются в «Настройки» → «Учётки» (`allowedModules`; модуль прав `security`):
 
 - `clients`, `calculator`, `documents`, `object_control`, `updates`, `security`, `feedback`
 

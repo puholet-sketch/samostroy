@@ -7,7 +7,7 @@
 | Договоры и акты | `documents` | [crm_client_card_fields.md](../crm_client_card_fields.md), `src/lib/generateDocs.ts` |
 | Контроль объекта | `object_control` | [object_control.md](object_control.md) |
 | Обновления | `updates` | [updates.md](updates.md), `data/changelog.json`, `data/releases/` |
-| Безопасность | `security` | [security.md](security.md) |
+| Настройки (безопасность) | `security` | [security.md](security.md) · `/settings/security` |
 | Замечания (Ревизор) | `feedback` | [feedback.md](feedback.md), [процесс](../processes/feedback.md) |
 
 Общая архитектура: [../architecture.md](../architecture.md).

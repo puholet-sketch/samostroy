@@ -2,13 +2,14 @@
   "v": 4,
   "updated": "2026-10-26",
   "status": "active",
-  "goal": "Call summary 2026-10-26-c on Pages",
+  "goal": "Ship 2026-10-26-d to Pages",
   "next": "Уточнить у Даниила порядок стены/полы; клиентский доступ к договорам",
   "blockers": [],
   "hot_files": [
     "data/changelog.json",
-    "data/releases/2026-10-26-c.md",
-    "docs/customer-calls/2026-10-26-daniil-aquarius.md",
-    "src/lib/buildStamp.ts"
+    "data/releases/2026-10-26-d.md",
+    "src/lib/buildStamp.ts",
+    "src/components/documents/DocumentsPage.tsx",
+    "src/components/security/SecurityPage.tsx"
   ]
 }

@@ -15,7 +15,8 @@ export const MVP_ROUTES: NavRoute[] = [
   { path: '/control', name: 'Контроль объекта', module: 'object_control' },
   { path: '/feedback', name: 'Замечания', module: 'feedback' },
   { path: '/updates', name: 'Обновления', module: 'updates' },
-  { path: '/security', name: 'Безопасность', module: 'security' },
+  /** Права модуля `security`; UI — раздел «Настройки» */
+  { path: '/settings/security', name: 'Настройки', module: 'security' },
 ]
 
 const CLIENT_CARD_RE = /^\/clients\/([^/]+)(?:\/([^/]+))?$/

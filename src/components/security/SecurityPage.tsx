@@ -17,6 +17,13 @@ import {
 } from '../../services/types'
 import { Panel } from '../ui/Kpi'
 
+type SecurityTab = 'accounts' | 'feedback'
+
+const TABS: { id: SecurityTab; label: string }[] = [
+  { id: 'accounts', label: 'Учётки' },
+  { id: 'feedback', label: 'Замечания / API' },
+]
+
 const ROLE_OPTS: { id: Role; label: string; defaultModules: ModuleKey[] }[] = [
   {
     id: 'owner',
@@ -57,6 +64,7 @@ const emptyForm = (): Omit<User, 'id'> & { id?: string } => ({
 
 export default function SecurityPage() {
   const { user: me, can } = useAuth()
+  const [tab, setTab] = useState<SecurityTab>('accounts')
   const [users, setUsers] = useState<User[]>([])
   const [form, setForm] = useState(emptyForm())
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -68,7 +76,7 @@ export default function SecurityPage() {
   }
 
   useEffect(() => {
-    document.title = 'Безопасность — СамоСтрой'
+    document.title = 'Настройки — СамоСтрой'
     void reload()
   }, [])
 
@@ -180,151 +188,174 @@ export default function SecurityPage() {
         прораб (контроль объекта). Модуль «Замечания» включает FAB и инбокс Ревизора.
       </p>
 
-      <FeedbackApiSettings />
-      <FeedbackEmailSettings />
-
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Panel title={editingId ? 'Изменить учётку' : 'Новая учётная запись'}>
-          <form onSubmit={onSubmit} className="space-y-3">
-            <label className="block">
-              <span className="mb-0.5 block text-xs text-gray-500">Имя</span>
-              <input
-                className={inputCls}
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-              />
-            </label>
-            <div className="grid grid-cols-2 gap-2">
-              <label className="block">
-                <span className="mb-0.5 block text-xs text-gray-500">Логин</span>
-                <input
-                  className={inputCls}
-                  value={form.login}
-                  onChange={(e) => setForm({ ...form, login: e.target.value })}
-                  autoComplete="off"
-                />
-              </label>
-              <label className="block">
-                <span className="mb-0.5 block text-xs text-gray-500">Пароль</span>
-                <input
-                  className={inputCls}
-                  value={form.password}
-                  onChange={(e) => setForm({ ...form, password: e.target.value })}
-                  autoComplete="new-password"
-                />
-              </label>
-            </div>
-            <label className="block">
-              <span className="mb-0.5 block text-xs text-gray-500">Роль</span>
-              <select
-                className={inputCls}
-                value={normalizeSecurityRole(form.role)}
-                onChange={(e) => onRoleChange(e.target.value as Role)}
-              >
-                {ROLE_OPTS.map((r) => (
-                  <option key={r.id} value={r.id}>
-                    {r.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <fieldset>
-              <legend className="mb-1.5 text-xs font-medium text-gray-500">
-                Видимые разделы
-              </legend>
-              <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
-                {MVP_MODULES.map((mod) => {
-                  const locked = form.role !== 'owner' && mod === 'security'
-                  const checked = Boolean(form.allowedModules?.includes(mod))
-                  return (
-                    <label
-                      key={mod}
-                      className={`inline-flex items-center gap-2 rounded-md border px-2 py-1.5 text-sm ${
-                        locked ? 'border-gray-100 text-gray-400' : 'border-gray-200 text-gray-800'
-                      }`}
-                    >
-                      <input
-                        type="checkbox"
-                        disabled={locked}
-                        checked={checked && !locked}
-                        onChange={() => toggleModule(mod)}
-                      />
-                      {MVP_MODULE_LABEL[mod]}
-                    </label>
-                  )
-                })}
-              </div>
-            </fieldset>
-
-            <label className="inline-flex items-center gap-2 text-sm text-gray-700">
-              <input
-                type="checkbox"
-                checked={form.active}
-                onChange={(e) => setForm({ ...form, active: e.target.checked })}
-              />
-              Активна
-            </label>
-
-            <div className="flex flex-wrap gap-2">
-              <button
-                type="submit"
-                disabled={busy}
-                className="rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
-              >
-                {busy ? '…' : editingId ? 'Сохранить' : 'Создать'}
-              </button>
-              {editingId && (
-                <button
-                  type="button"
-                  onClick={startCreate}
-                  className="rounded-md border border-gray-200 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                >
-                  Отмена
-                </button>
-              )}
-            </div>
-            {msg && <p className="text-sm text-emerald-700">{msg}</p>}
-          </form>
-        </Panel>
-
-        <Panel title="Учётные записи">
-          <ul className="divide-y divide-gray-100">
-            {users.map((u) => (
-              <li key={u.id} className="flex flex-wrap items-center gap-2 py-2.5">
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium text-gray-900">
-                    {u.name}{' '}
-                    <span className="font-normal text-gray-400">@{u.login}</span>
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    {roleLabel(normalizeSecurityRole(u.role))}
-                    {!u.active ? ' · отключена' : ''}
-                    {' · '}
-                    {(u.allowedModules ?? [])
-                      .map((m) => MVP_MODULE_LABEL[m as keyof typeof MVP_MODULE_LABEL] || m)
-                      .join(', ') || 'по роли'}
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  className="rounded-md border border-gray-200 px-2 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50"
-                  onClick={() => startEdit(u)}
-                >
-                  Изменить
-                </button>
-                <button
-                  type="button"
-                  className="rounded-md border border-red-200 px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-50"
-                  onClick={() => void onDelete(u.id)}
-                >
-                  Удалить
-                </button>
-              </li>
-            ))}
-          </ul>
-        </Panel>
+      <div className="flex flex-wrap gap-0.5 border-b border-gray-200">
+        {TABS.map((t) => (
+          <button
+            key={t.id}
+            type="button"
+            onClick={() => setTab(t.id)}
+            className={`-mb-px border-b-2 px-2.5 py-1.5 text-sm font-medium ${
+              tab === t.id
+                ? 'border-blue-600 text-blue-700'
+                : 'border-transparent text-gray-500 hover:text-gray-800'
+            }`}
+          >
+            {t.label}
+          </button>
+        ))}
       </div>
+
+      {tab === 'feedback' && (
+        <div className="space-y-4">
+          <FeedbackApiSettings />
+          <FeedbackEmailSettings />
+        </div>
+      )}
+
+      {tab === 'accounts' && (
+        <div className="grid gap-4 lg:grid-cols-2">
+          <Panel title={editingId ? 'Изменить учётку' : 'Новая учётная запись'}>
+            <form onSubmit={onSubmit} className="space-y-3">
+              <label className="block">
+                <span className="mb-0.5 block text-xs text-gray-500">Имя</span>
+                <input
+                  className={inputCls}
+                  value={form.name}
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                />
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                <label className="block">
+                  <span className="mb-0.5 block text-xs text-gray-500">Логин</span>
+                  <input
+                    className={inputCls}
+                    value={form.login}
+                    onChange={(e) => setForm({ ...form, login: e.target.value })}
+                    autoComplete="off"
+                  />
+                </label>
+                <label className="block">
+                  <span className="mb-0.5 block text-xs text-gray-500">Пароль</span>
+                  <input
+                    className={inputCls}
+                    value={form.password}
+                    onChange={(e) => setForm({ ...form, password: e.target.value })}
+                    autoComplete="new-password"
+                  />
+                </label>
+              </div>
+              <label className="block">
+                <span className="mb-0.5 block text-xs text-gray-500">Роль</span>
+                <select
+                  className={inputCls}
+                  value={normalizeSecurityRole(form.role)}
+                  onChange={(e) => onRoleChange(e.target.value as Role)}
+                >
+                  {ROLE_OPTS.map((r) => (
+                    <option key={r.id} value={r.id}>
+                      {r.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <fieldset>
+                <legend className="mb-1.5 text-xs font-medium text-gray-500">
+                  Видимые разделы
+                </legend>
+                <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
+                  {MVP_MODULES.map((mod) => {
+                    const locked = form.role !== 'owner' && mod === 'security'
+                    const checked = Boolean(form.allowedModules?.includes(mod))
+                    return (
+                      <label
+                        key={mod}
+                        className={`inline-flex items-center gap-2 rounded-md border px-2 py-1.5 text-sm ${
+                          locked ? 'border-gray-100 text-gray-400' : 'border-gray-200 text-gray-800'
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          disabled={locked}
+                          checked={checked && !locked}
+                          onChange={() => toggleModule(mod)}
+                        />
+                        {MVP_MODULE_LABEL[mod]}
+                      </label>
+                    )
+                  })}
+                </div>
+              </fieldset>
+
+              <label className="inline-flex items-center gap-2 text-sm text-gray-700">
+                <input
+                  type="checkbox"
+                  checked={form.active}
+                  onChange={(e) => setForm({ ...form, active: e.target.checked })}
+                />
+                Активна
+              </label>
+
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="submit"
+                  disabled={busy}
+                  className="rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
+                >
+                  {busy ? '…' : editingId ? 'Сохранить' : 'Создать'}
+                </button>
+                {editingId && (
+                  <button
+                    type="button"
+                    onClick={startCreate}
+                    className="rounded-md border border-gray-200 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                  >
+                    Отмена
+                  </button>
+                )}
+              </div>
+              {msg && <p className="text-sm text-emerald-700">{msg}</p>}
+            </form>
+          </Panel>
+
+          <Panel title="Учётные записи">
+            <ul className="divide-y divide-gray-100">
+              {users.map((u) => (
+                <li key={u.id} className="flex flex-wrap items-center gap-2 py-2.5">
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium text-gray-900">
+                      {u.name}{' '}
+                      <span className="font-normal text-gray-400">@{u.login}</span>
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {roleLabel(normalizeSecurityRole(u.role))}
+                      {!u.active ? ' · отключена' : ''}
+                      {' · '}
+                      {(u.allowedModules ?? [])
+                        .map((m) => MVP_MODULE_LABEL[m as keyof typeof MVP_MODULE_LABEL] || m)
+                        .join(', ') || 'по роли'}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    className="rounded-md border border-gray-200 px-2 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50"
+                    onClick={() => startEdit(u)}
+                  >
+                    Изменить
+                  </button>
+                  <button
+                    type="button"
+                    className="rounded-md border border-red-200 px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-50"
+                    onClick={() => void onDelete(u.id)}
+                  >
+                    Удалить
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </Panel>
+        </div>
+      )}
     </div>
   )
 }

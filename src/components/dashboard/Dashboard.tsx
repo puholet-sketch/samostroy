@@ -95,7 +95,7 @@ export default function Dashboard() {
         <div className="card p-5">
           <h2 className="font-semibold text-gray-900 mb-3">Подсказки MVP</h2>
           <ul className="text-sm text-gray-600 space-y-2 list-disc pl-5">
-            <li>Матрица прав — раздел «Безопасность» (только директор).</li>
+            <li>Матрица прав — «Настройки» → «Учётки» (только владелец).</li>
             <li>Суммы этапов редактируются на карточке объекта.</li>
             <li>Клиент видит этапы/отчёты только с флагом clientVisible.</li>
             <li>Медиа хранятся как файлы в media/, в JSON — пути.</li>

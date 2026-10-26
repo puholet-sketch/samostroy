@@ -7,7 +7,7 @@ import {
   saveCalcTransfer,
 } from '../../lib/calcTransfer'
 import { usePageHeaderActions } from '../../contexts/PageHeaderContext'
-import { Kpi, Panel } from '../ui/Kpi'
+import { Panel } from '../ui/Kpi'
 
 type FinishKind = 'chernovye' | 'chistovye' | 'both'
 
@@ -20,13 +20,19 @@ type PriceItem = {
 }
 
 type QtyMap = Record<string, number>
-type SectionMode = 'chernovye' | 'chistovye'
+type SectionMode = 'chernovye' | 'all' | 'chistovye'
 type SectionModes = Record<string, SectionMode>
 
 const STORAGE_KEY = 'samostroy:calc_qty_v1'
 const SECTION_KEY = 'samostroy:calc_section_v1'
 const MODES_KEY = 'samostroy:calc_section_modes_v1'
 const DISCOUNT_KEY = 'samostroy:calc_discount_v1'
+const DEFAULT_SECTION_MODE: SectionMode = 'all'
+const SECTION_MODES: SectionMode[] = ['chernovye', 'all', 'chistovye']
+
+function isSectionMode(v: unknown): v is SectionMode {
+  return typeof v === 'string' && (SECTION_MODES as string[]).includes(v)
+}
 
 const CANON_ORDER: string[] =
   (priceList as { section_order?: string[] }).section_order ?? [
@@ -74,7 +80,13 @@ function loadSection(fallback: string): string {
 function loadModes(): SectionModes {
   try {
     const raw = localStorage.getItem(MODES_KEY)
-    if (raw) return JSON.parse(raw) as SectionModes
+    if (!raw) return {}
+    const parsed = JSON.parse(raw) as Record<string, unknown>
+    const out: SectionModes = {}
+    for (const [section, mode] of Object.entries(parsed)) {
+      if (isSectionMode(mode)) out[section] = mode
+    }
+    return out
   } catch {
     /* ignore */
   }
@@ -109,12 +121,15 @@ function prettySection(name: string): string {
 }
 
 function matchesKind(itemKind: FinishKind, mode: SectionMode): boolean {
+  if (mode === 'all') return true
   if (itemKind === 'both') return true
   return itemKind === mode
 }
 
 const inputCls =
   'w-24 rounded-md border border-gray-300 bg-white px-2 py-1.5 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500'
+const discountInputCls =
+  'w-16 rounded-md border border-gray-300 bg-white px-2 py-1 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500'
 
 export default function CalculatorPage() {
   const [qty, setQty] = useState<QtyMap>(() => loadQty())
@@ -171,7 +186,7 @@ export default function CalculatorPage() {
   }, [discountPct])
 
   const search = q.trim().toLowerCase()
-  const activeMode: SectionMode = sectionModes[activeSection] ?? 'chernovye'
+  const activeMode: SectionMode = sectionModes[activeSection] ?? DEFAULT_SECTION_MODE
 
   const { baseTotal, filledCount, lines } = useMemo(() => {
     let filled = 0
@@ -209,7 +224,7 @@ export default function CalculatorPage() {
   const filteredSections = useMemo(() => {
     return sections
       .map(([section, rows]) => {
-        const mode = sectionModes[section] ?? 'chernovye'
+        const mode = sectionModes[section] ?? DEFAULT_SECTION_MODE
         const visible = rows.filter(({ it, idx }) => {
           if (!matchesKind(it.kind, mode)) return false
           const key = itemKey(it, idx)
@@ -256,57 +271,13 @@ export default function CalculatorPage() {
 
   return (
     <div className="space-y-4 pb-28">
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <Kpi label="Позиций" value={items.length} accent="blue" />
-        <Kpi label="Заполнено" value={filledCount} accent="emerald" />
-        <Kpi
-          label={discountPct > 0 ? 'Итого со скидкой' : 'Итого'}
-          value={`${money(total)} ₽`}
-          accent="indigo"
-        />
-        <button
-          type="button"
-          onClick={() => setQty({})}
-          className="flex items-center justify-center rounded-md border border-red-200 border-l-4 border-l-red-500 bg-white px-3 py-2.5 text-sm font-semibold text-red-600 shadow-sm hover:bg-red-50"
-        >
-          Сбросить
-        </button>
-      </div>
-
       <Panel>
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <input
-            className="block w-full max-w-md rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-            placeholder="Поиск по названию работы…"
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-          />
-          <div className="flex flex-wrap items-center gap-4">
-            <label className="inline-flex items-center gap-2 text-sm text-gray-600">
-              <span className="whitespace-nowrap">Скидка %</span>
-              <input
-                type="number"
-                min={0}
-                max={100}
-                step={1}
-                className={inputCls}
-                value={discountPct || ''}
-                placeholder="0"
-                onChange={(e) =>
-                  setDiscountPct(Math.max(0, Math.min(100, Number(e.target.value) || 0)))
-                }
-              />
-            </label>
-            <label className="inline-flex items-center gap-2 text-sm text-gray-600">
-              <input
-                type="checkbox"
-                checked={onlyFilled}
-                onChange={(e) => setOnlyFilled(e.target.checked)}
-              />
-              Только с объёмом
-            </label>
-          </div>
-        </div>
+        <input
+          className="block w-full max-w-md rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          placeholder="Поиск по названию работы…"
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+        />
         {discountPct > 0 && (
           <p className="mt-2 text-xs text-gray-500">
             База {money(baseTotal)} ₽ · скидка −{money(discountSum)} ₽ · к оплате {money(total)} ₽
@@ -315,13 +286,9 @@ export default function CalculatorPage() {
         )}
       </Panel>
 
-      {filteredSections.length === 0 ? (
-        <p className="rounded-lg border border-gray-200 bg-white px-4 py-10 text-center text-sm text-gray-500 shadow-sm">
-          Ничего не найдено
-        </p>
-      ) : (
-        <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
-          <div className="flex items-center gap-1 overflow-x-auto border-b border-gray-100 bg-gray-50 px-2 py-2">
+      <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+        <div className="flex flex-wrap items-center gap-2 border-b border-gray-100 bg-gray-50 px-2 py-2">
+          <div className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto">
             {filteredNames.map((name) => {
               const count =
                 filteredSections.find(([s]) => s === name)?.[1].length ?? 0
@@ -344,34 +311,74 @@ export default function CalculatorPage() {
             })}
           </div>
 
-          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-100 px-4 py-2">
-            <p className="text-sm font-medium text-gray-800">{prettySection(activeSection)}</p>
-            <div className="inline-flex rounded-md border border-gray-200 bg-gray-50 p-0.5 text-xs">
-              <button
-                type="button"
-                onClick={() => setMode(activeSection, 'chernovye')}
-                className={`rounded px-2.5 py-1 font-medium transition-colors ${
-                  activeMode === 'chernovye'
-                    ? 'bg-white text-gray-900 shadow-sm'
-                    : 'text-gray-500 hover:text-gray-800'
-                }`}
-              >
-                Черновые
-              </button>
-              <button
-                type="button"
-                onClick={() => setMode(activeSection, 'chistovye')}
-                className={`rounded px-2.5 py-1 font-medium transition-colors ${
-                  activeMode === 'chistovye'
-                    ? 'bg-white text-gray-900 shadow-sm'
-                    : 'text-gray-500 hover:text-gray-800'
-                }`}
-              >
-                Чистовые
-              </button>
-            </div>
+          <div
+            className="inline-flex shrink-0 rounded-lg border border-gray-200 bg-gray-100 p-0.5 text-xs"
+            role="group"
+            aria-label="Тип работ"
+          >
+            {(
+              [
+                { id: 'chernovye', label: 'Черновые' },
+                { id: 'all', label: 'Все' },
+                { id: 'chistovye', label: 'Чистовые' },
+              ] as const
+            ).map(({ id, label }) => {
+              const on = activeMode === id
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  aria-pressed={on}
+                  onClick={() => setMode(activeSection, id)}
+                  className={`rounded-md px-2.5 py-1.5 font-semibold transition-colors ${
+                    on
+                      ? 'bg-blue-600 text-white shadow-sm'
+                      : 'text-gray-500 hover:bg-white/70 hover:text-gray-800'
+                  }`}
+                >
+                  {label}
+                </button>
+              )
+            })}
           </div>
 
+          <label className="inline-flex shrink-0 items-center gap-1.5 text-sm text-gray-600">
+            <span className="whitespace-nowrap">Скидка %</span>
+            <input
+              type="number"
+              min={0}
+              max={100}
+              step={1}
+              className={discountInputCls}
+              value={discountPct || ''}
+              placeholder="0"
+              onChange={(e) =>
+                setDiscountPct(Math.max(0, Math.min(100, Number(e.target.value) || 0)))
+              }
+            />
+          </label>
+
+          <label className="inline-flex shrink-0 items-center gap-1.5 text-sm text-gray-600">
+            <input
+              type="checkbox"
+              checked={onlyFilled}
+              onChange={(e) => setOnlyFilled(e.target.checked)}
+            />
+            <span className="whitespace-nowrap">Только с объёмом</span>
+          </label>
+
+          <button
+            type="button"
+            onClick={() => setQty({})}
+            className="shrink-0 rounded-md border border-red-200 px-2.5 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50"
+          >
+            Сбросить
+          </button>
+        </div>
+
+        {filteredSections.length === 0 ? (
+          <p className="px-4 py-10 text-center text-sm text-gray-500">Ничего не найдено</p>
+        ) : (
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200 text-sm">
               <thead className="bg-white text-left text-xs uppercase text-gray-500">
@@ -421,8 +428,8 @@ export default function CalculatorPage() {
               </tbody>
             </table>
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       <div className="fixed bottom-0 left-0 right-0 z-30 border-t border-gray-200 bg-white/95 backdrop-blur lg:left-64">
         <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">

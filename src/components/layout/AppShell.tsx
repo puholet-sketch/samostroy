@@ -10,7 +10,7 @@ import {
   RiMenuLine,
   RiBankCardFill,
   RiFolderFill,
-  RiShieldKeyholeFill,
+  RiSettings3Fill,
   RiUserFill,
   RiLogoutBoxRLine,
   RiHistoryFill,
@@ -41,7 +41,7 @@ const NAV_ICONS: Record<string, NavIcon> = {
   documents: { Icon: RiFileTextFill, ink: 'text-amber-600' },
   object_control: { Icon: RiBuilding2Fill, ink: 'text-emerald-600' },
   updates: { Icon: RiHistoryFill, ink: 'text-sky-600' },
-  security: { Icon: RiShieldKeyholeFill, ink: 'text-rose-600' },
+  security: { Icon: RiSettings3Fill, ink: 'text-rose-600' },
   feedback: { Icon: RiFeedbackFill, ink: 'text-rose-600' },
 }
 

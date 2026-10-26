@@ -18,7 +18,7 @@ npm install
 npm start
 ```
 
-В CRM → **Безопасность → Feedback API**:
+В CRM → **Настройки → «Замечания / API» → Feedback API**:
 
 - Base URL: `http://127.0.0.1:8787` (локальная разработка)
 - Token: тот же `FEEDBACK_TOKEN`

@@ -112,14 +112,16 @@ export default function App() {
                   </ProtectedRoute>
                 }
               />
+              <Route path="/settings" element={<Navigate to="/settings/security" replace />} />
               <Route
-                path="/security"
+                path="/settings/security"
                 element={
                   <ProtectedRoute module="security">
                     <SecurityPage />
                   </ProtectedRoute>
                 }
               />
+              <Route path="/security" element={<Navigate to="/settings/security" replace />} />
             </Route>
             <Route path="*" element={<HomeRedirect />} />
           </Routes>

@@ -7,7 +7,7 @@
 ## Права
 
 - `ModuleKey`: `feedback`
-- Назначается в «Безопасность» → чекбокс «Замечания»
+- Назначается в «Настройки» → «Учётки» → чекбокс «Замечания»
 - С модулем: FAB «Замечание», раздел «Замечания», смена статусов
 - «Скопировать постановку»: роли `owner`, `developer`, либо `security` write
 - Роль `developer`: feedback full + updates read (+ object_control read по умолчанию), без clients PII
@@ -45,7 +45,7 @@
 | 1 | Открыть [web3forms.com](https://web3forms.com), указать **тот** email, куда нужны письма (напр. `sorvanvon@yandex.ru`) |
 | 2 | Подтвердить ящик по письму активации |
 | 3 | Скопировать Access Key |
-| 4 | Либо `VITE_WEB3FORMS_ACCESS_KEY` в `.env` перед сборкой Pages, либо в CRM → **Безопасность** → «Feedback email» (сохраняется в localStorage этого браузера) |
+| 4 | Либо `VITE_WEB3FORMS_ACCESS_KEY` в `.env` перед сборкой Pages, либо в CRM → **Настройки** → «Замечания / API» → «Feedback email» (сохраняется в localStorage этого браузера) |
 | 5 | `VITE_FEEDBACK_EMAIL_TO` / «метка команды» — только текст в письме; **не** перенаправляет free-тариф |
 
 В письме: тема, описание, автор, route, buildStamp, метки + явная строка про инбокс ключа. Скриншот: сжимаем PNG→JPEG (~1280px, ≤~900 КБ) и пробуем `attachment`; на **бесплатном** Web3Forms вложения — PRO → при reject повтор без файла + пометка «смотрите локальный инбокс CRM». SMTP-пароли в репозиторий не кладём.

@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { RiCalculatorFill } from '@remixicon/react'
 import { Link } from 'react-router-dom'
-import { loadCalcTransfer } from '../../lib/calcTransfer'
-import { loadClients, type ClientCard } from '../../lib/clients'
+import { loadCalcTransfer, saveCalcTransfer } from '../../lib/calcTransfer'
+import { loadClients, type ClientCard, type ClientObject } from '../../lib/clients'
 import { CONTRACTOR, DESIGN_RATE_PER_M2 } from '../../lib/contractor'
 import {
   generateAktDoc,
@@ -60,10 +61,16 @@ function clientHaystack(c: ClientCard): string {
     c.dogovor_design,
     c.dogovor_otdelka,
     c.smeta,
+    ...c.objects.flatMap((o) => [o.title, o.address, o.contractNumber]),
   ]
     .filter(Boolean)
     .join(' ')
     .toLowerCase()
+}
+
+function objectLabel(o: ClientObject): string {
+  const main = o.title && o.address && o.title !== o.address ? `${o.title} — ${o.address}` : o.address || o.title || 'Объект'
+  return o.contractNumber ? `${main} · дог. ${o.contractNumber}` : main
 }
 
 function missingFromCard(c: ClientCard): string[] {
@@ -88,9 +95,12 @@ export default function DocumentsPage() {
   const [clients, setClients] = useState<ClientCard[]>(() => loadClients())
   const [q, setQ] = useState('')
   const [clientId, setClientId] = useState('')
+  const [objectId, setObjectId] = useState('')
   const [kind, setKind] = useState<DocKind>('remont')
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState('')
+  const [calcMenuOpen, setCalcMenuOpen] = useState(false)
+  const calcMenuRef = useRef<HTMLDivElement>(null)
 
   const [remont, setRemont] = useState({
     number: '',
@@ -142,8 +152,28 @@ export default function DocumentsPage() {
     const list = loadClients()
     setClients(list)
     setCalcTransfer(loadCalcTransfer())
-    // один клиент в базе — выбираем сразу
-    if (list.length === 1) setClientId(list[0].id)
+    // один клиент в базе — выбираем сразу (и объект, если один)
+    if (list.length === 1) {
+      // отложенно через тот же путь, что и клик по списку
+      const c = list[0]
+      setClientId(c.id)
+      const objs = c.objects ?? []
+      if (objs.length === 1) {
+        setObjectId(objs[0].id)
+        applyObjectToForms(objs[0], c.city || 'Москва')
+      } else if (objs.length === 0) {
+        const fallback = (c.objects_note || c.address || '').trim()
+        setRemont((f) => ({ ...f, city: c.city || f.city, objectAddress: fallback }))
+        setDesign((f) => ({ ...f, city: c.city || f.city, objectAddress: fallback }))
+        setAkt((f) => ({ ...f, city: c.city || f.city, objectAddress: fallback }))
+        setSmeta((f) => ({
+          ...f,
+          city: c.city || f.city,
+          objectAddress: fallback,
+        }))
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- mount only
   }, [])
 
   useEffect(() => {
@@ -176,39 +206,154 @@ export default function DocumentsPage() {
   }, [clients, q])
 
   const client = clients.find((c) => c.id === clientId) ?? null
+  const clientObjects = client?.objects ?? []
+  const selectedObject = clientObjects.find((o) => o.id === objectId) ?? null
+
+  function applyObjectToForms(obj: ClientObject, cityFallback: string) {
+    const addr = obj.address?.trim() || ''
+    const title = obj.title?.trim() || ''
+    const num = obj.contractNumber?.trim() || ''
+    const city = cityFallback || 'Москва'
+
+    setRemont((f) => ({
+      ...f,
+      city: city || f.city,
+      objectAddress: addr,
+      number: num || f.number,
+    }))
+    setDesign((f) => ({
+      ...f,
+      city: city || f.city,
+      objectAddress: addr,
+      number: num || f.number,
+    }))
+    setAkt((f) => ({
+      ...f,
+      city: city || f.city,
+      objectAddress: addr,
+      number: num || f.number,
+    }))
+    setSmeta((f) => ({
+      ...f,
+      city: city || f.city,
+      objectAddress: addr,
+      objectTitle: title,
+      number: num || f.number,
+    }))
+  }
+
+  function pickClient(c: ClientCard) {
+    setClientId(c.id)
+    setQ('')
+    setMsg('')
+    const objs = c.objects ?? []
+    if (objs.length === 1) {
+      setObjectId(objs[0].id)
+      applyObjectToForms(objs[0], c.city || 'Москва')
+    } else if (objs.length > 1) {
+      setObjectId('')
+      setRemont((f) => ({ ...f, city: c.city || f.city, objectAddress: '' }))
+      setDesign((f) => ({ ...f, city: c.city || f.city, objectAddress: '' }))
+      setAkt((f) => ({ ...f, city: c.city || f.city, objectAddress: '' }))
+      setSmeta((f) => ({
+        ...f,
+        city: c.city || f.city,
+        objectAddress: '',
+        objectTitle: '',
+      }))
+    } else {
+      setObjectId('')
+      const fallback = (c.objects_note || c.address || '').trim()
+      setRemont((f) => ({ ...f, city: c.city || f.city, objectAddress: fallback }))
+      setDesign((f) => ({ ...f, city: c.city || f.city, objectAddress: fallback }))
+      setAkt((f) => ({ ...f, city: c.city || f.city, objectAddress: fallback }))
+      setSmeta((f) => ({
+        ...f,
+        city: c.city || f.city,
+        objectAddress: fallback,
+        objectTitle: '',
+      }))
+    }
+  }
+
+  function clearClient() {
+    setClientId('')
+    setObjectId('')
+  }
+
+  function pickObject(id: string) {
+    setObjectId(id)
+    if (!client || !id) return
+    const obj = clientObjects.find((o) => o.id === id)
+    if (obj) applyObjectToForms(obj, client.city || 'Москва')
+  }
+
+  /** Подтянуть сумму / детализацию из калькулятора в договор ремонт */
+  function takeFromCalculator(mode: 'summary' | 'details') {
+    const t = loadCalcTransfer()
+    if (!t.total && t.lines.length === 0) {
+      setMsg('В калькуляторе нет заполненных объёмов — сначала заполните смету')
+      return
+    }
+    const next = {
+      ...t,
+      transferToRemont: true,
+      withDetails: mode === 'details',
+      updatedAt: new Date().toISOString(),
+    }
+    saveCalcTransfer(next)
+    setCalcTransfer(next)
+    setRemont((f) => ({ ...f, totalSum: next.total || f.totalSum }))
+    setCalcMenuOpen(false)
+    setMsg(
+      mode === 'details'
+        ? `Из калькулятора: ${formatMoney(next.total)} ₽ + детализация (${next.lines.length} строк)`
+        : `Из калькулятора: общая сумма ${formatMoney(next.total)} ₽`,
+    )
+  }
+
+  function clearCalculatorLink() {
+    const t = loadCalcTransfer()
+    const next = { ...t, transferToRemont: false, withDetails: false }
+    saveCalcTransfer(next)
+    setCalcTransfer(next)
+    if (t.total > 0) {
+      setRemont((f) => ({ ...f, totalSum: t.total }))
+    }
+    setCalcMenuOpen(false)
+    setMsg('')
+  }
+
+  useEffect(() => {
+    if (!calcMenuOpen) return
+    const onDoc = (e: MouseEvent) => {
+      if (!calcMenuRef.current?.contains(e.target as Node)) setCalcMenuOpen(false)
+    }
+    document.addEventListener('mousedown', onDoc)
+    return () => document.removeEventListener('mousedown', onDoc)
+  }, [calcMenuOpen])
 
   useEffect(() => {
     if (clientId && !filtered.some((c) => c.id === clientId)) {
       setClientId('')
+      setObjectId('')
     }
   }, [filtered, clientId])
 
+  // один объект у уже выбранного клиента — автовыбор
   useEffect(() => {
     if (!client) return
-    const addr = client.objects_note || client.address || ''
-    setRemont((f) => ({
-      ...f,
-      city: client.city || f.city,
-      objectAddress: f.objectAddress || addr,
-    }))
-    setDesign((f) => ({
-      ...f,
-      city: client.city || f.city,
-      objectAddress: f.objectAddress || addr,
-    }))
-    setAkt((f) => ({
-      ...f,
-      city: client.city || f.city,
-      objectAddress: f.objectAddress || addr,
-    }))
-    const obj0 = client.objects?.[0]
-    setSmeta((f) => ({
-      ...f,
-      city: client.city || f.city,
-      objectAddress: f.objectAddress || obj0?.address || addr,
-      objectTitle: f.objectTitle || obj0?.title || '',
-    }))
-  }, [client?.id])
+    if (clientObjects.length === 1 && objectId !== clientObjects[0].id) {
+      setObjectId(clientObjects[0].id)
+      applyObjectToForms(clientObjects[0], client.city || 'Москва')
+    }
+    if (clientObjects.length === 0 && objectId) {
+      setObjectId('')
+    }
+    if (objectId && clientObjects.length > 0 && !clientObjects.some((o) => o.id === objectId)) {
+      setObjectId('')
+    }
+  }, [client?.id, clientObjects.length])
 
   const designTotal = (design.areaM2 || 0) * DESIGN_RATE_PER_M2
   const aktTotal = akt.lines.reduce((s, l) => s + (Number(l.qty) || 0) * (Number(l.price) || 0), 0)
@@ -355,11 +500,7 @@ export default function DocumentsPage() {
                         >
                           <button
                             type="button"
-                            onClick={() => {
-                              setClientId(c.id)
-                              setQ('')
-                              setMsg('')
-                            }}
+                            onClick={() => pickClient(c)}
                             className="min-w-0 flex-1 truncate text-left font-medium text-gray-900"
                           >
                             {c.name || 'Без имени'}
@@ -389,13 +530,54 @@ export default function DocumentsPage() {
                 type="button"
                 className="text-emerald-800/70 hover:text-emerald-950"
                 title="Сменить клиента"
-                onClick={() => setClientId('')}
+                onClick={clearClient}
               >
                 ×
               </button>
             </div>
           )}
         </div>
+        {client && (
+          <div className="mt-2 border-t border-gray-100 pt-2">
+            {clientObjects.length === 0 ? (
+              <p className="text-[11px] text-amber-700">
+                У клиента нет объектов — адрес заполните вручную или{' '}
+                <Link
+                  to={`/clients/${client.id}/main`}
+                  className="font-medium text-blue-700 hover:underline"
+                >
+                  добавьте объект в карточке →
+                </Link>
+              </p>
+            ) : (
+              <Field
+                label="Объект"
+                hint={
+                  selectedObject
+                    ? undefined
+                    : clientObjects.length > 1
+                      ? 'Выберите объект — подставятся адрес и номер договора'
+                      : undefined
+                }
+              >
+                <select
+                  className={inputCls}
+                  value={objectId}
+                  onChange={(e) => pickObject(e.target.value)}
+                >
+                  {clientObjects.length > 1 && (
+                    <option value="">Выберите объект…</option>
+                  )}
+                  {clientObjects.map((o) => (
+                    <option key={o.id} value={o.id}>
+                      {objectLabel(o)}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+            )}
+          </div>
+        )}
         {client && cardGaps.length > 0 && (
           <p className="mt-1.5 truncate text-[11px] text-amber-700" title={cardGaps.join(', ')}>
             В КК не хватает: {cardGaps.join(', ')}
@@ -467,23 +649,88 @@ export default function DocumentsPage() {
               className="col-span-2 lg:col-span-2"
               hint={
                 calcTransfer.transferToRemont
-                  ? `Калькулятор${calcTransfer.withDetails ? ' + детализация' : ''}`
+                  ? `Из калькулятора${calcTransfer.withDetails ? ' + детализация' : ' (общая)'}${
+                      calcTransfer.discountPct ? ` · −${calcTransfer.discountPct}%` : ''
+                    }`
                   : remont.totalSum
                     ? rublesInWords(remont.totalSum)
-                    : undefined
+                    : 'Кнопка справа — взять данные из калькулятора'
               }
             >
-              <input
-                type="number"
-                min={0}
-                step="0.01"
-                className={inputCls}
-                value={
-                  calcTransfer.transferToRemont ? calcTransfer.total || '' : remont.totalSum || ''
-                }
-                readOnly={calcTransfer.transferToRemont}
-                onChange={(e) => setRemont({ ...remont, totalSum: Number(e.target.value) || 0 })}
-              />
+              <div className="flex items-center gap-1.5">
+                <input
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  className={`${inputCls} h-9 min-w-0 flex-1`}
+                  value={
+                    calcTransfer.transferToRemont ? calcTransfer.total || '' : remont.totalSum || ''
+                  }
+                  readOnly={calcTransfer.transferToRemont}
+                  onChange={(e) => setRemont({ ...remont, totalSum: Number(e.target.value) || 0 })}
+                />
+                <div className="relative shrink-0" ref={calcMenuRef}>
+                  <button
+                    type="button"
+                    className={`inline-flex h-9 w-9 items-center justify-center rounded-md border shadow-sm ${
+                      calcTransfer.transferToRemont
+                        ? 'border-violet-300 bg-violet-50 text-violet-700'
+                        : 'border-gray-300 bg-white text-gray-600 hover:border-violet-300 hover:bg-violet-50 hover:text-violet-700'
+                    }`}
+                    title="Взять данные из калькулятора"
+                    aria-label="Взять данные из калькулятора"
+                    aria-expanded={calcMenuOpen}
+                    onClick={() => setCalcMenuOpen((o) => !o)}
+                  >
+                    <RiCalculatorFill className="h-4 w-4" aria-hidden />
+                  </button>
+                  {calcMenuOpen && (
+                    <div className="absolute right-0 z-20 mt-1 w-64 overflow-hidden rounded-md border border-gray-200 bg-white py-1 text-sm shadow-lg">
+                      <p className="px-3 py-1 text-[11px] font-medium uppercase tracking-wide text-gray-400">
+                        Из калькулятора
+                      </p>
+                      <button
+                        type="button"
+                        className="block w-full px-3 py-1.5 text-left text-gray-800 hover:bg-violet-50"
+                        onClick={() => {
+                          takeFromCalculator('summary')
+                          setCalcMenuOpen(false)
+                        }}
+                      >
+                        Общая информация
+                        <span className="mt-0.5 block text-[11px] font-normal text-gray-400">
+                          Сумма и скидка без строк сметы
+                        </span>
+                      </button>
+                      <button
+                        type="button"
+                        className="block w-full px-3 py-1.5 text-left text-gray-800 hover:bg-violet-50"
+                        onClick={() => {
+                          takeFromCalculator('details')
+                          setCalcMenuOpen(false)
+                        }}
+                      >
+                        С детализированной сметой
+                        <span className="mt-0.5 block text-[11px] font-normal text-gray-400">
+                          Сумма + приложение со строками
+                        </span>
+                      </button>
+                      {calcTransfer.transferToRemont && (
+                        <>
+                          <div className="my-1 border-t border-gray-100" />
+                          <button
+                            type="button"
+                            className="block w-full px-3 py-1.5 text-left text-gray-500 hover:bg-gray-50"
+                            onClick={clearCalculatorLink}
+                          >
+                            Отвязать калькулятор
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
             </Field>
           </div>
         </div>
