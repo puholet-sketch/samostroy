@@ -4,7 +4,12 @@ import type { FeedbackItem, FeedbackStatus } from './feedbackStore'
 import { upsertFeedback } from './feedbackStore'
 
 function headers(token: string, extra?: HeadersInit): HeadersInit {
-  return { 'X-Feedback-Token': token, ...(extra ?? {}) }
+  // ngrok free interstitial блокирует fetch без этого заголовка
+  return {
+    'X-Feedback-Token': token,
+    'ngrok-skip-browser-warning': '1',
+    ...(extra ?? {}),
+  }
 }
 
 export async function fetchFeedbackList(): Promise<FeedbackItem[]> {

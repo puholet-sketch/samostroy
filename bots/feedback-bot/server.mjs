@@ -57,7 +57,8 @@ function sendJson(res, code, body) {
   res.writeHead(code, {
     'Content-Type': 'application/json; charset=utf-8',
     'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'Content-Type, X-Feedback-Token',
+    'Access-Control-Allow-Headers':
+      'Content-Type, X-Feedback-Token, ngrok-skip-browser-warning',
     'Access-Control-Allow-Methods': 'GET,POST,PATCH,OPTIONS',
   })
   res.end(data)
@@ -66,7 +67,8 @@ function sendJson(res, code, body) {
 function cors(res) {
   res.writeHead(204, {
     'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'Content-Type, X-Feedback-Token',
+    'Access-Control-Allow-Headers':
+      'Content-Type, X-Feedback-Token, ngrok-skip-browser-warning',
     'Access-Control-Allow-Methods': 'GET,POST,PATCH,OPTIONS',
   })
   res.end()

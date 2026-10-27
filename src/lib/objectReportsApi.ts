@@ -4,7 +4,11 @@ import { isFeedbackApiConfigured, loadFeedbackApiConfig } from './feedbackConfig
 import type { ControlLink, ObjectDailyReport } from './objectReports'
 
 function headers(token: string, extra?: HeadersInit): HeadersInit {
-  return { 'X-Feedback-Token': token, ...(extra ?? {}) }
+  return {
+    'X-Feedback-Token': token,
+    'ngrok-skip-browser-warning': '1',
+    ...(extra ?? {}),
+  }
 }
 
 export function isObjectReportsApiConfigured(): boolean {

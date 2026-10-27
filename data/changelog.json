@@ -1,5 +1,31 @@
 [
   {
+    "id": "2026-10-27-b",
+    "at": "2026-10-27T18:25:00+03:00",
+    "title": "Pro: публичный туннель к локальному API",
+    "items": [
+      {
+        "section": "Инфраструктура",
+        "text": "Pages ходит на публичный HTTPS-туннель к Docker API на ПК (замечания, дневные отчёты, ссылки контроля)"
+      },
+      {
+        "section": "Замечания / API",
+        "text": "Заголовок ngrok-skip-browser-warning на запросах; CORS API разрешает его для github.io"
+      },
+      {
+        "section": "Инфраструктура",
+        "text": "Документ ежедневного рестарта Docker + туннель: docs/modules/pro-local-ngrok.md"
+      }
+    ],
+    "docs": [
+      { "label": "Релиз 2026-10-27-b", "href": "/updates/2026-10-27-b", "kind": "app" },
+      { "label": "Pro + ngrok", "href": "docs/modules/pro-local-ngrok.md", "kind": "repo" },
+      { "label": "Безопасность", "href": "/security", "kind": "app" },
+      { "label": "Feedback / API bot", "href": "bots/feedback-bot/README.md", "kind": "repo" },
+      { "label": "Релиз 2026-10-27-a", "href": "/updates/2026-10-27-a", "kind": "app" }
+    ]
+  },
+  {
     "id": "2026-10-27-a",
     "at": "2026-10-27T17:35:00+03:00",
     "title": "Pro: Amo, клиенты, сводный отчёт, Docker API",
