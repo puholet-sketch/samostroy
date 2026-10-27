@@ -1,5 +1,30 @@
 [
   {
+    "id": "2026-10-27-c",
+    "at": "2026-10-27T18:56:00+03:00",
+    "title": "Pro: ngrok вместо cloudflared к локальному API",
+    "items": [
+      {
+        "section": "Инфраструктура",
+        "text": "Pages печёт VITE_FEEDBACK_API_URL на текущий ngrok HTTPS (*.ngrok-free.dev) к Docker API :8787"
+      },
+      {
+        "section": "Инфраструктура",
+        "text": "cloudflared quick tunnel остановлен; ежедневный рестарт — ngrok http 8787 (агент ≥3.20)"
+      },
+      {
+        "section": "Замечания / API",
+        "text": "Проверены /health и GET /api/feedback через ngrok с ngrok-skip-browser-warning"
+      }
+    ],
+    "docs": [
+      { "label": "Релиз 2026-10-27-c", "href": "/updates/2026-10-27-c", "kind": "app" },
+      { "label": "Pro + ngrok", "href": "docs/modules/pro-local-ngrok.md", "kind": "repo" },
+      { "label": "Безопасность", "href": "/security", "kind": "app" },
+      { "label": "Релиз 2026-10-27-b", "href": "/updates/2026-10-27-b", "kind": "app" }
+    ]
+  },
+  {
     "id": "2026-10-27-b",
     "at": "2026-10-27T18:25:00+03:00",
     "title": "Pro: публичный туннель к локальному API",

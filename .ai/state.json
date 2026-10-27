@@ -2,14 +2,14 @@
   "v": 4,
   "updated": "2026-10-27",
   "status": "active",
-  "goal": "Pages 2026-10-27-a + local Docker API for shared reports",
-  "next": "После деплоя: docker health; при необходимости туннель API для Pages",
+  "goal": "Pages 2026-10-27-c + ngrok → Docker API :8787",
+  "next": "Держать docker + ngrok http 8787; при новом hostname — обновить .env.production и redeploy",
   "blockers": [],
   "hot_files": [
+    "docs/modules/pro-local-ngrok.md",
     "data/changelog.json",
-    "src/lib/buildStamp.ts",
-    "docker-compose.yml",
-    "src/components/control/PeriodReportPage.tsx",
-    "src/components/clients/ClientsListPage.tsx"
+    ".env.production",
+    "bots/feedback-bot/server.mjs",
+    "src/lib/feedbackApi.ts"
   ]
 }
