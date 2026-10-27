@@ -89,8 +89,6 @@ function anonymize(row, i) {
     tag: row.tag || 'договор',
     source: 'демо',
     amo_link: '',
-    client_access_remont: Boolean(row.client_access_remont),
-    client_access_design: Boolean(row.client_access_design),
     objects_note: address,
     dob: `${pad(1 + (i % 28))}/${pad(1 + (i % 12))}/${1970 + (i % 25)}`,
     pob: `г. ${city}`,

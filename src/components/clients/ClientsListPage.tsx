@@ -8,10 +8,13 @@ import {
   loadClients,
   matchClientFilters,
   saveClients,
+  sortClientsRecentFirst,
   type ClientCard,
 } from '../../lib/clients'
 import { Kpi } from '../ui/Kpi'
 import { PhoneActions } from '../ui/PhoneActions'
+
+const PAGE_SIZE = 10
 
 const filterCls =
   'rounded-md border border-gray-300 bg-white px-2.5 py-1.5 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500'
@@ -32,6 +35,7 @@ export default function ClientsListPage() {
   const [qName, setQName] = useState('')
   const [qPhone, setQPhone] = useState('')
   const [qChannel, setQChannel] = useState('')
+  const [page, setPage] = useState(1)
 
   useEffect(() => {
     document.title = 'Клиенты — СамоСтрой'
@@ -61,6 +65,7 @@ export default function ClientsListPage() {
     const next = [row, ...clients]
     setClients(next)
     saveClients(next)
+    setPage(1)
     navigate(`/clients/${row.id}/main`)
   }
 
@@ -79,16 +84,33 @@ export default function ClientsListPage() {
   )
   usePageHeaderActions(headerBtn)
 
-  const filtered = useMemo(
-    () =>
-      clients.filter((c) =>
-        matchClientFilters(c, { name: qName, phone: qPhone, channel: qChannel }),
-      ),
-    [clients, qName, qPhone, qChannel],
-  )
+  const filtered = useMemo(() => {
+    const matched = clients.filter((c) =>
+      matchClientFilters(c, { name: qName, phone: qPhone, channel: qChannel }),
+    )
+    return sortClientsRecentFirst(matched)
+  }, [clients, qName, qPhone, qChannel])
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
+  const safePage = Math.min(page, totalPages)
+
+  useEffect(() => {
+    setPage(1)
+  }, [qName, qPhone, qChannel])
+
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages)
+  }, [page, totalPages])
+
+  const pageRows = useMemo(() => {
+    const start = (safePage - 1) * PAGE_SIZE
+    return filtered.slice(start, start + PAGE_SIZE)
+  }, [filtered, safePage])
 
   const leads = clients.filter(isLead).length
   const contracts = clients.filter(isContract).length
+  const from = filtered.length === 0 ? 0 : (safePage - 1) * PAGE_SIZE + 1
+  const to = Math.min(safePage * PAGE_SIZE, filtered.length)
 
   return (
     <div className="space-y-4">
@@ -140,14 +162,14 @@ export default function ClientsListPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 bg-white">
-              {filtered.length === 0 && (
+              {pageRows.length === 0 && (
                 <tr>
                   <td colSpan={7} className="px-4 py-8 text-center text-gray-500">
                     Ничего не найдено
                   </td>
                 </tr>
               )}
-              {filtered.map((c) => (
+              {pageRows.map((c) => (
                 <tr
                   key={c.id}
                   className="cursor-pointer hover:bg-blue-50/60"
@@ -191,6 +213,35 @@ export default function ClientsListPage() {
             </tbody>
           </table>
         </div>
+        {filtered.length > 0 && (
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-sm text-gray-600">
+            <p>
+              {from}–{to} из {filtered.length}
+              <span className="ml-1 text-xs text-gray-400">(по {PAGE_SIZE}, новые сверху)</span>
+            </p>
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                disabled={safePage <= 1}
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                className="rounded-md border border-gray-200 px-2.5 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                ← Назад
+              </button>
+              <span className="tabular-nums px-2 text-xs text-gray-500">
+                {safePage} / {totalPages}
+              </span>
+              <button
+                type="button"
+                disabled={safePage >= totalPages}
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                className="rounded-md border border-gray-200 px-2.5 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                Вперёд →
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )

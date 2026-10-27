@@ -247,8 +247,31 @@ export default function ClientCardPage() {
             <Field label="Источник (доп.)">
               <input className={inputCls} value={client.source} onChange={(e) => patch({ source: e.target.value })} />
             </Field>
-            <Field label="Ссылка Amo" className="col-span-2">
-              <input className={inputCls} value={client.amo_link} onChange={(e) => patch({ amo_link: e.target.value })} />
+            <Field label="Ссылка на AmoCRM" className="col-span-2 xl:col-span-2">
+              <div className="flex gap-2">
+                <input
+                  className={inputCls}
+                  placeholder="https://…"
+                  value={client.amo_link}
+                  onChange={(e) => patch({ amo_link: e.target.value })}
+                />
+                {(() => {
+                  const raw = client.amo_link.trim()
+                  if (!raw) return null
+                  const href = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`
+                  return (
+                    <a
+                      href={href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex shrink-0 items-center rounded-md border border-gray-200 px-2.5 text-xs font-medium text-blue-700 hover:bg-blue-50"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      Открыть
+                    </a>
+                  )
+                })()}
+              </div>
             </Field>
             <Field label="Менеджер">
               <input className={inputCls} value={client.manager} onChange={(e) => patch({ manager: e.target.value })} />
@@ -322,28 +345,6 @@ export default function ClientCardPage() {
                 </div>
               ))}
             </div>
-            <label
-              className="flex cursor-help items-center gap-2 text-xs text-gray-700"
-              title="Клиентский доступ к разделу ремонта: смета, договоры на ремонт, отчёты по объекту. Если галочка снята — клиент этот блок в личном кабинете не видит."
-            >
-              <input
-                type="checkbox"
-                checked={client.client_access_remont}
-                onChange={(e) => patch({ client_access_remont: e.target.checked })}
-              />
-              Доступ: Ремонт
-            </label>
-            <label
-              className="flex cursor-help items-center gap-2 text-xs text-gray-700"
-              title="Клиентский доступ к разделу дизайна: договор на дизайн-проект и связанные материалы. Если галочка снята — клиент дизайн в кабинете не видит."
-            >
-              <input
-                type="checkbox"
-                checked={client.client_access_design}
-                onChange={(e) => patch({ client_access_design: e.target.checked })}
-              />
-              Доступ: Дизайн
-            </label>
           </div>
         )}
 

@@ -1,5 +1,6 @@
 /**
- * Хранилище feedback: Postgres при DATABASE_URL, иначе JSON-файл.
+ * Хранилище: Postgres при DATABASE_URL, иначе JSON-файлы.
+ * Feedback + object daily reports + control links.
  */
 import fs from 'node:fs'
 import path from 'node:path'
@@ -36,10 +37,39 @@ function rowToItem(row) {
   }
 }
 
+function rowToReport(row) {
+  return {
+    id: row.id,
+    token: row.token,
+    date: toDateOnly(row.report_date),
+    workDone: row.work_done ?? '',
+    problems: row.problems ?? '',
+    workerName: row.worker_name ?? '',
+    media: Array.isArray(row.media) ? row.media : row.media ?? [],
+    createdAt: toIso(row.created_at),
+  }
+}
+
+function rowToLink(row) {
+  return {
+    token: row.token,
+    clientId: row.client_id ?? '',
+    objectId: row.object_id ?? '',
+    objectTitle: row.object_title ?? '',
+    objectAddress: row.object_address ?? '',
+  }
+}
+
 function toIso(v) {
   if (!v) return new Date().toISOString()
   if (v instanceof Date) return v.toISOString()
   return String(v)
+}
+
+function toDateOnly(v) {
+  if (!v) return ''
+  if (v instanceof Date) return v.toISOString().slice(0, 10)
+  return String(v).slice(0, 10)
 }
 
 function createPgStore(databaseUrl, imgDir) {
@@ -139,6 +169,83 @@ function createPgStore(databaseUrl, imgDir) {
     imagePath(id) {
       return path.join(imgDir, `${id}.png`)
     },
+
+    async listObjectReports(token) {
+      if (token) {
+        const { rows } = await pool.query(
+          'select * from object_reports where token = $1 order by report_date desc',
+          [token],
+        )
+        return rows.map(rowToReport)
+      }
+      const { rows } = await pool.query(
+        'select * from object_reports order by report_date desc limit 500',
+      )
+      return rows.map(rowToReport)
+    },
+    async upsertObjectReport(report) {
+      const now = new Date().toISOString()
+      const media = JSON.stringify(report.media ?? [])
+      const createdAt = report.createdAt || now
+      const { rows } = await pool.query(
+        `insert into object_reports (
+          id, token, report_date, work_done, problems, worker_name, media, created_at, updated_at
+        ) values ($1,$2,$3,$4,$5,$6,$7::jsonb,$8,$9)
+        on conflict (token, report_date) do update set
+          work_done = excluded.work_done,
+          problems = excluded.problems,
+          worker_name = excluded.worker_name,
+          media = excluded.media,
+          updated_at = excluded.updated_at
+        returning *
+        `,
+        [
+          report.id,
+          report.token,
+          report.date,
+          report.workDone ?? '',
+          report.problems ?? '',
+          report.workerName ?? '',
+          media,
+          createdAt,
+          now,
+        ],
+      )
+      return rows[0] ? rowToReport(rows[0]) : { ...report, createdAt, media: report.media ?? [] }
+    },
+    async getControlLink(token) {
+      const { rows } = await pool.query(
+        'select * from control_links where token = $1',
+        [token],
+      )
+      return rows[0] ? rowToLink(rows[0]) : null
+    },
+    async upsertControlLink(link) {
+      const now = new Date().toISOString()
+      await pool.query(
+        `insert into control_links (
+          token, client_id, object_id, object_title, object_address, created_at, updated_at
+        ) values ($1,$2,$3,$4,$5,$6,$7)
+        on conflict (token) do update set
+          client_id = excluded.client_id,
+          object_id = excluded.object_id,
+          object_title = excluded.object_title,
+          object_address = excluded.object_address,
+          updated_at = excluded.updated_at
+        `,
+        [
+          link.token,
+          link.clientId ?? '',
+          link.objectId ?? '',
+          link.objectTitle ?? '',
+          link.objectAddress ?? '',
+          now,
+          now,
+        ],
+      )
+      return link
+    },
+
     async close() {
       await pool.end()
     },
@@ -148,18 +255,30 @@ function createPgStore(databaseUrl, imgDir) {
 function createJsonStore(dataDir, imgDir, dbFile) {
   fs.mkdirSync(imgDir, { recursive: true })
   if (!fs.existsSync(dbFile)) fs.writeFileSync(dbFile, '[]')
+  const reportsFile = path.join(dataDir, 'object_reports.json')
+  const linksFile = path.join(dataDir, 'control_links.json')
+  if (!fs.existsSync(reportsFile)) fs.writeFileSync(reportsFile, '[]')
+  if (!fs.existsSync(linksFile)) fs.writeFileSync(linksFile, '[]')
 
-  function readDb() {
+  function readJson(file) {
     try {
-      const raw = JSON.parse(fs.readFileSync(dbFile, 'utf8'))
+      const raw = JSON.parse(fs.readFileSync(file, 'utf8'))
       return Array.isArray(raw) ? raw : []
     } catch {
       return []
     }
   }
 
+  function writeJson(file, list) {
+    fs.writeFileSync(file, JSON.stringify(list, null, 2))
+  }
+
+  function readDb() {
+    return readJson(dbFile)
+  }
+
   function writeDb(list) {
-    fs.writeFileSync(dbFile, JSON.stringify(list, null, 2))
+    writeJson(dbFile, list)
   }
 
   return {
@@ -198,6 +317,42 @@ function createJsonStore(dataDir, imgDir, dbFile) {
     imagePath(id) {
       return path.join(imgDir, `${id}.png`)
     },
+
+    async listObjectReports(token) {
+      const list = readJson(reportsFile)
+      if (token) return list.filter((r) => r.token === token)
+      return list
+    },
+    async upsertObjectReport(report) {
+      const list = readJson(reportsFile)
+      const now = new Date().toISOString()
+      const next = {
+        ...report,
+        media: report.media ?? [],
+        createdAt: report.createdAt || now,
+      }
+      const idx = list.findIndex((r) => r.token === next.token && r.date === next.date)
+      if (idx >= 0) {
+        next.id = list[idx].id
+        list[idx] = next
+      } else {
+        list.unshift(next)
+      }
+      writeJson(reportsFile, list)
+      return next
+    },
+    async getControlLink(token) {
+      return readJson(linksFile).find((l) => l.token === token) ?? null
+    },
+    async upsertControlLink(link) {
+      const list = readJson(linksFile)
+      const idx = list.findIndex((l) => l.token === link.token)
+      if (idx >= 0) list[idx] = link
+      else list.push(link)
+      writeJson(linksFile, list)
+      return link
+    },
+
     async close() {},
   }
 }

@@ -15,8 +15,8 @@ MVP CRM для ремонта: карточка клиента → догово�
 | Auth / права | `src/contexts/AuthContext.tsx`, `data/users.json`, `data/permissions.json` | сессия в localStorage; модули в `allowedModules` |
 | Seed / демо-данные | `data/*.json` | без PII заказчика в git |
 | Медиа | IndexedDB (`src/lib/mediaStore.ts`) | фото/видео отчётов и скрины замечаний |
-| Feedback API | `bots/feedback-bot/` | REST + Telegram; JSON или Postgres |
-| СУБД (local) | `docker-compose.yml` → Postgres 16 | durable store замечаний |
+| Local API | `bots/feedback-bot/` (+ Docker `api`) | REST: feedback + object reports + control links; Telegram notify |
+| СУБД (local) | `docker-compose.yml` → Postgres 16 `:5433` | durable store замечаний и дневных отчётов |
 | Деплой | GitHub Pages (`gh-pages`) | статика; `GITHUB_PAGES=1` → base `/samostroy/` |
 
 ## Роли (MVP UI)
@@ -50,12 +50,26 @@ MVP CRM для ремонта: карточка клиента → догово�
 
 ## Хранение данных
 
-- **Локально в браузере:** клиенты (v4), ссылки контроля, дневные отчёты, очередь замечаний (мета в localStorage, PNG в IDB).
-- **Feedback API:** один REST; на ПК — Docker Postgres (`DATABASE_URL`) или JSON; Termux — JSON + cloudflared при необходимости.
-- **Telegram:** notify (и опционально webhook кнопок) — процесс на ПК или телефоне.
-- **Цель дальше:** тот же REST → облачная БД при необходимости; Supabase не обязателен для MVP.
+- **Локально в браузере:** клиенты (v4 + `createdAt`, `amo_link`), медиа отчётов (IndexedDB), очередь замечаний (мета + PNG).
+- **Local pro-stack (этот ПК):** `docker compose up -d` → Postgres `:5433` + API `:8787`. CRM: `VITE_FEEDBACK_API_URL` / `VITE_API_URL` + token → общий store feedback и дневных отчётов.
+- **Без API:** отчёты/замечания остаются в localStorage отправителя.
+- **Telegram / Web3Forms:** опциональный notify; primary store при pro-stack = Postgres + API.
+- **Pages → localhost:** с интернета не достучится; нужен туннель или серверный API.
+- **Цель дальше:** тот же REST на сервер / репликация; Supabase не обязателен для MVP.
 
 PII локальной CRM не коммитить (`clients` seed публичный отдельно).
+
+### Быстрый старт local pro-stack
+
+```bash
+docker compose up -d
+# скопировать .env.example → .env (URL + token local-dev-token)
+npm run dev
+# CRM → Настройки → Замечания / API: http://127.0.0.1:8787 + тот же token
+curl http://127.0.0.1:8787/health
+```
+
+Подробнее: [bots/feedback-bot/README.md](../bots/feedback-bot/README.md), [modules/object_control.md](modules/object_control.md).
 
 ## Модули MVP (`ModuleKey`)
 

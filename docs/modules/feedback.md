@@ -78,14 +78,20 @@
 
 ```bash
 docker compose up -d
-# bots/feedback-bot/.env → DATABASE_URL=postgres://samostroy:samostroy@127.0.0.1:5433/samostroy
+# поднимает postgres (:5433) + api (:8787) с DATABASE_URL внутри сети compose
+# FEEDBACK_TOKEN по умолчанию local-dev-token (переопределить в .env корня)
 ```
 
-Схема: `docker/postgres/init/001_feedback.sql`. CRM по-прежнему бьёт в тот же REST (`http://127.0.0.1:8787` локально или cloudflared).
+Схема: `docker/postgres/init/001_feedback.sql` (+ `002_object_reports.sql` для дневных отчётов).  
+CRM: `VITE_FEEDBACK_API_URL=http://127.0.0.1:8787` и тот же token (или Настройки → Замечания / API).
+
+Альтернатива без контейнера API: `cd bots/feedback-bot && npm start` с `DATABASE_URL=…@127.0.0.1:5433/…`.
 
 Termux-бот может остаться как Telegram-notify **или** полным API (JSON без Postgres). Предпочтение: **API+DB на ПК**, телефон — опционально.
 
 При недоступности API замечание остаётся локально; email при настроенном ключе всё равно уходит.
+
+**Важно:** GitHub Pages не достучится до `127.0.0.1` на вашем ПК — для удалённых заказчиков нужен туннель/сервер или Web3Forms.
 
 ## Бриф для исполнителя
 

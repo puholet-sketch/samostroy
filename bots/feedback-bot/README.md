@@ -1,82 +1,77 @@
-# Feedback bot
+# СамоСтрой local API (feedback + object reports)
 
-REST API + уведомления в Telegram. Тот же контракт для CRM (GitHub Pages / localhost).
+REST + опциональные уведомления в Telegram. Тот же контракт для CRM (Vite localhost / Pages через туннель).
 
-**Предпочтительно на ПК:** Docker Postgres + этот процесс на localhost. Телефон / Termux — опционально (туннель или только Telegram).
+**Предпочтительно на ПК:** `docker compose up -d` из корня репо (Postgres + этот API).
 
-## Быстрый старт (ПК + Docker)
+## Быстрый старт (Docker)
 
 Из корня репозитория:
 
 ```bash
 docker compose up -d
+curl http://127.0.0.1:8787/health
+# → { "ok": true, "store": "postgres", "services": [...] }
+```
+
+Токен по умолчанию: `local-dev-token` (env `FEEDBACK_TOKEN`).
+
+В корневом `.env` (Vite) или CRM → **Настройки → «Замечания / API»**:
+
+- Base URL: `http://127.0.0.1:8787`
+- Token: `local-dev-token`
+
+CORS открыт (`Access-Control-Allow-Origin: *`). Заголовок всех `/api/*`: `X-Feedback-Token`.
+
+GitHub Pages → API на вашем localhost **с интернета не работает**. Нужен `cloudflared tunnel` или хостинг API.
+
+## Запуск API на хосте (без контейнера api)
+
+```bash
+docker compose up -d postgres
 cd bots/feedback-bot
 cp .env.example .env
-# FEEDBACK_TOKEN, опционально TELEGRAM_*;
-# DATABASE_URL → порт 5433 (см. docker-compose.yml)
+# DATABASE_URL=postgres://samostroy:samostroy@127.0.0.1:5433/samostroy
 npm install
 npm start
 ```
 
-В CRM → **Настройки → «Замечания / API» → Feedback API**:
-
-- Base URL: `http://127.0.0.1:8787` (локальная разработка)
-- Token: тот же `FEEDBACK_TOKEN`
-
-Для доступа с GitHub Pages к API на ПК нужен туннель (`cloudflared tunnel --url http://127.0.0.1:8787`) и публичный URL в настройках.
-
-## Termux (телефон, опционально)
+## Существующий Postgres volume без таблиц отчётов
 
 ```bash
-pkg install nodejs git cloudflared
-cd ~/samostroy/bots/feedback-bot
-cp .env.example .env
-nano .env
-npm install
-npm start
+Get-Content docker/postgres/migrations/002_object_reports.sql | docker compose exec -T postgres psql -U samostroy -d samostroy
 ```
 
-В другом сеансе:
+## Telegram (опционально)
 
-```bash
-cloudflared tunnel --url http://127.0.0.1:8787
-```
+1. `@BotFather` → `TELEGRAM_BOT_TOKEN`
+2. `TELEGRAM_CHAT_ID`
+3. Webhook (опц.): `…/setWebhook?url=https://YOUR_TUNNEL/telegram/webhook`
 
-**VPN на телефоне** может ломать или менять маршруты cloudflared — если туннель не поднимается, отключите VPN на время туннеля или гоняйте API на ПК.
-
-Без `DATABASE_URL` данные в `data/feedback.json` + `data/images/` (удобно на Termux без Postgres).
-
-## Telegram
-
-1. `@BotFather` → бот → `TELEGRAM_BOT_TOKEN`.
-2. Написать боту / группа → `TELEGRAM_CHAT_ID`.
-3. Опционально webhook:  
-   `https://api.telegram.org/bot<TOKEN>/setWebhook?url=https://YOUR_TUNNEL/telegram/webhook`
-
-Без webhook кнопки в Telegram не обновят API (статус меняется из инбокса CRM).
+Без webhook кнопки в Telegram не обновят API (статус — из инбокса CRM).
 
 ## API
 
-Заголовок всех `/api/*`: `X-Feedback-Token: <FEEDBACK_TOKEN>`.
-
 | Метод | Путь | Описание |
 |-------|------|----------|
-| GET | `/health` | без токена; `{ ok, store: "json"\|"postgres" }` |
-| GET | `/api/feedback` | список |
+| GET | `/health` | без токена; `{ ok, store }` |
+| GET | `/api/feedback` | список замечаний |
 | POST | `/api/feedback` | multipart `meta` + `image` |
 | GET | `/api/feedback/:id` | карточка |
 | GET | `/api/feedback/:id/image` | PNG |
-| PATCH | `/api/feedback/:id` | `{ "status": "new\|in_progress\|done" }` |
+| PATCH | `/api/feedback/:id` | `{ "status" }` |
+| GET | `/api/object-reports?token=` | дневные отчёты по токену |
+| POST | `/api/object-reports` | upsert отчёта (JSON) |
+| GET | `/api/control-links/:token` | мета ссылки контроля |
+| POST | `/api/control-links` | upsert ссылки |
 
 ## Хранение
 
 | Режим | Когда | Где |
 |-------|--------|-----|
-| JSON | нет `DATABASE_URL` | `data/feedback.json`, PNG в `data/images/` |
-| Postgres | задан `DATABASE_URL` | таблица `feedback_items` (см. `docker/postgres/`), PNG на диске |
+| JSON | нет `DATABASE_URL` | `data/feedback.json`, `object_reports.json`, `control_links.json` |
+| Postgres | задан `DATABASE_URL` | таблицы `feedback_items`, `object_reports`, `control_links` |
 
-Схема: `docker/postgres/init/001_feedback.sql`. CRM всегда бьёт в тот же REST.
+Медиа вложений отчётов по объекту пока остаются в IndexedDB браузера; в API — метаданные.
 
-## Фаза B / дальше
-
-Supabase не обязателен: Docker Postgres + этот REST достаточно. Telegram остаётся notify.
+Схемы: `docker/postgres/init/001_feedback.sql`, `002_object_reports.sql`.

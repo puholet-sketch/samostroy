@@ -11,11 +11,13 @@ import {
 import {
   datesWithReports,
   getOrCreateControlLink,
+  hydrateReportsForToken,
   loadControlSelection,
   saveControlSelection,
   todayIso,
   type ControlLink,
 } from '../../lib/objectReports'
+import { defaultPeriodRange } from '../../lib/periodReport'
 import { PhoneActions } from '../ui/PhoneActions'
 
 type DayCell = { date: string; hasReport: boolean; future: boolean; today: boolean }
@@ -133,6 +135,9 @@ export default function ObjectControlPage() {
   const [reportDate, setReportDate] = useState(todayIso())
   const [tick, setTick] = useState(0)
   const [copied, setCopied] = useState(false)
+  const periodDefaults = defaultPeriodRange()
+  const [periodFrom, setPeriodFrom] = useState(periodDefaults.from)
+  const [periodTo, setPeriodTo] = useState(periodDefaults.to)
 
   const filteredClients = useMemo(
     () =>
@@ -159,6 +164,18 @@ export default function ObjectControlPage() {
   useEffect(() => {
     if (clientId && objectId) saveControlSelection({ clientId, objectId })
   }, [clientId, objectId])
+
+  useEffect(() => {
+    if (!link?.token) return
+    let cancelled = false
+    ;(async () => {
+      await hydrateReportsForToken(link.token)
+      if (!cancelled) setTick((t) => t + 1)
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [link?.token])
 
   const reported = useMemo(() => {
     void tick
@@ -204,6 +221,18 @@ export default function ObjectControlPage() {
     window.setTimeout(() => setCopied(false), 1500)
   }
 
+  function openPeriodReport() {
+    let from = periodFrom
+    let to = periodTo
+    if (from > to) {
+      const t = from
+      from = to
+      to = t
+    }
+    const qs = new URLSearchParams({ from, to })
+    navigate(`/control/period-report?${qs.toString()}`)
+  }
+
   useEffect(() => {
     document.title = 'Контроль объекта — СамоСтрой'
   }, [])
@@ -227,6 +256,51 @@ export default function ObjectControlPage() {
 
   return (
     <div className="space-y-3">
+      <div className="rounded-lg border border-gray-200 bg-white p-3 shadow-sm">
+        <p className="mb-2 text-xs font-medium text-gray-500">Сводный отчёт по всем объектам</p>
+        <div className="flex flex-wrap items-end gap-2">
+          <label className="min-w-0">
+            <span className="mb-0.5 block text-[10px] text-gray-500">С</span>
+            <input
+              type="date"
+              className={`${inputCls} w-[9.5rem] tabular-nums`}
+              value={periodFrom}
+              max={todayIso()}
+              onChange={(e) => setPeriodFrom(e.target.value)}
+            />
+          </label>
+          <label className="min-w-0">
+            <span className="mb-0.5 block text-[10px] text-gray-500">По</span>
+            <input
+              type="date"
+              className={`${inputCls} w-[9.5rem] tabular-nums`}
+              value={periodTo}
+              max={todayIso()}
+              onChange={(e) => setPeriodTo(e.target.value)}
+            />
+          </label>
+          <button
+            type="button"
+            onClick={openPeriodReport}
+            disabled={!periodFrom || !periodTo}
+            className="inline-flex h-[34px] items-center rounded-md bg-emerald-600 px-3 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            Сводный отчёт
+          </button>
+          <button
+            type="button"
+            onClick={openPeriodReport}
+            disabled={!periodFrom || !periodTo}
+            className="inline-flex h-[34px] items-center rounded-md border border-gray-300 bg-white px-3 text-sm font-medium text-gray-800 shadow-sm hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            Выгрузить
+          </button>
+        </div>
+        <p className="mt-1.5 text-[11px] text-gray-500">
+          Таблица по всем адресам за период → печать или PDF в браузере.
+        </p>
+      </div>
+
       <div className="rounded-lg border border-gray-200 bg-white p-3 shadow-sm">
         <p className="mb-2 text-xs font-medium text-gray-500">1. Клиент</p>
         <div className="flex flex-wrap items-center gap-2">

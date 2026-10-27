@@ -16,9 +16,11 @@ src/components/updates/ | список и страница релиза
 src/lib/generateDocs.ts | договоры/акты
 src/lib/feedbackStore.ts | очередь замечаний
 src/lib/feedbackApi.ts | клиент Feedback API
-bots/feedback-bot/ | REST + Telegram; JSON или Postgres
-docker-compose.yml | Postgres для feedback
-docker/postgres/ | схема feedback_items
+bots/feedback-bot/ | local API: feedback + object reports + Telegram
+docker-compose.yml | Postgres :5433 + api :8787
+docker/postgres/ | init/migrations feedback + object_reports
+src/lib/objectReports.ts | дневные отчёты; sync через API
+src/lib/objectReportsApi.ts | REST-клиент отчётов/control links
 src/components/feedback/ | capture + inbox
 .ai/CONTEXT.md | канон MVP
 .ai/state.json | resume

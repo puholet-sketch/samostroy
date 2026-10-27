@@ -1,4 +1,14 @@
-/** Публичные отчёты по объекту (токен ссылки → отчёты по датам) */
+/** Публичные отчёты по объекту (токен ссылки → отчёты по датам).
+ * Локально: localStorage. При настроенном Feedback/API URL — ещё и Postgres через REST.
+ */
+
+import {
+  fetchControlLinkRemote,
+  fetchObjectReportsRemote,
+  isObjectReportsApiConfigured,
+  postControlLinkRemote,
+  postObjectReportRemote,
+} from './objectReportsApi'
 
 export type ReportMediaMeta = {
   id: string
@@ -35,6 +45,26 @@ const SELECT_KEY = 'samostroy:control_selection_v1'
 function todayIso(): string {
   const d = new Date()
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
+export function listControlLinks(): ControlLink[] {
+  return loadLinks()
+}
+
+/** Inclusive ISO date range YYYY-MM-DD → YYYY-MM-DD */
+export function enumerateIsoDates(fromIso: string, toIso: string): string[] {
+  const out: string[] = []
+  const cur = new Date(`${fromIso.slice(0, 10)}T12:00:00`)
+  const end = new Date(`${toIso.slice(0, 10)}T12:00:00`)
+  if (Number.isNaN(cur.getTime()) || Number.isNaN(end.getTime())) return out
+  while (cur <= end) {
+    const y = cur.getFullYear()
+    const m = String(cur.getMonth() + 1).padStart(2, '0')
+    const d = String(cur.getDate()).padStart(2, '0')
+    out.push(`${y}-${m}-${d}`)
+    cur.setDate(cur.getDate() + 1)
+  }
+  return out
 }
 
 function loadLinks(): ControlLink[] {
@@ -98,6 +128,7 @@ export function getOrCreateControlLink(opts: {
     ) {
       saveLinks(list.map((l) => (l.token === found.token ? updated : l)))
     }
+    void syncControlLinkRemote(updated)
     return updated
   }
   const link: ControlLink = {
@@ -109,7 +140,15 @@ export function getOrCreateControlLink(opts: {
   }
   list.push(link)
   saveLinks(list)
+  void syncControlLinkRemote(link)
   return link
+}
+
+function syncControlLinkRemote(link: ControlLink) {
+  if (!isObjectReportsApiConfigured()) return
+  return postControlLinkRemote(link).catch((e) => {
+    console.warn('control-link sync failed', e)
+  })
 }
 
 export type ControlSelection = { clientId: string; objectId: string }
@@ -143,8 +182,40 @@ function saveAllReports(list: ObjectDailyReport[]) {
   localStorage.setItem(REPORTS_KEY, JSON.stringify(list))
 }
 
+function mergeReports(
+  local: ObjectDailyReport[],
+  remote: ObjectDailyReport[],
+): ObjectDailyReport[] {
+  const map = new Map<string, ObjectDailyReport>()
+  for (const r of local) map.set(`${r.token}|${r.date}`, r)
+  for (const r of remote) {
+    const key = `${r.token}|${r.date}`
+    const prev = map.get(key)
+    if (!prev || Date.parse(r.createdAt) >= Date.parse(prev.createdAt)) {
+      map.set(key, r)
+    }
+  }
+  return [...map.values()]
+}
+
 export function getReportsForToken(token: string): ObjectDailyReport[] {
   return loadAllReports().filter((r) => r.token === token)
+}
+
+/** Локально + при API — подтянуть remote и смержить в localStorage. */
+export async function hydrateReportsForToken(token: string): Promise<ObjectDailyReport[]> {
+  const local = getReportsForToken(token)
+  if (!isObjectReportsApiConfigured()) return local
+  try {
+    const remote = await fetchObjectReportsRemote(token)
+    const merged = mergeReports(local, remote)
+    const others = loadAllReports().filter((r) => r.token !== token)
+    saveAllReports([...others, ...merged.filter((r) => r.token === token)])
+    return merged.filter((r) => r.token === token)
+  } catch (e) {
+    console.warn('hydrate object-reports failed', e)
+    return local
+  }
 }
 
 export function getReportForDate(token: string, date: string): ObjectDailyReport | undefined {
@@ -177,7 +248,32 @@ export function saveDailyReport(
     list.push(row)
   }
   saveAllReports(list)
+  if (isObjectReportsApiConfigured()) {
+    void postObjectReportRemote(row).catch((e) => {
+      console.warn('object-report sync failed', e)
+    })
+  }
   return row
+}
+
+/** Сохранить локально и дождаться API (для публичной формы). */
+export async function saveDailyReportAsync(
+  report: Omit<ObjectDailyReport, 'id' | 'createdAt'> & { id?: string },
+): Promise<{ row: ObjectDailyReport; synced: boolean; error?: string }> {
+  const row = saveDailyReport(report)
+  if (!isObjectReportsApiConfigured()) {
+    return { row, synced: false }
+  }
+  try {
+    const remote = await postObjectReportRemote(row)
+    return { row: remote ?? row, synced: true }
+  } catch (e) {
+    return {
+      row,
+      synced: false,
+      error: e instanceof Error ? e.message : 'sync error',
+    }
+  }
 }
 
 export function resolveControlLink(token: string): ControlLink | null {
@@ -191,6 +287,36 @@ export function resolveControlLink(token: string): ControlLink | null {
     objectTitle: 'Объект',
     objectAddress: 'Адрес уточняется',
   }
+}
+
+/** Локально + remote (если API настроен). */
+export async function resolveControlLinkAsync(token: string): Promise<ControlLink> {
+  const local = loadLinks().find((l) => l.token === token)
+  if (local) return local
+  if (isObjectReportsApiConfigured()) {
+    try {
+      const remote = await fetchControlLinkRemote(token)
+      if (remote) {
+        const list = loadLinks()
+        if (!list.some((l) => l.token === remote.token)) {
+          list.push(remote)
+          saveLinks(list)
+        }
+        return remote
+      }
+    } catch (e) {
+      console.warn('resolve control-link failed', e)
+    }
+  }
+  return (
+    resolveControlLink(token) ?? {
+      token,
+      clientId: '',
+      objectId: '',
+      objectTitle: 'Объект',
+      objectAddress: 'Адрес уточняется',
+    }
+  )
 }
 
 export { todayIso }

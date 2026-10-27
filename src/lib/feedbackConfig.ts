@@ -21,15 +21,22 @@ export type FeedbackEmailConfig = {
 }
 
 export function loadFeedbackApiConfig(): FeedbackApiConfig {
-  const fromEnvUrl = (import.meta.env.VITE_FEEDBACK_API_URL as string | undefined)?.trim() ?? ''
-  const fromEnvToken = (import.meta.env.VITE_FEEDBACK_API_TOKEN as string | undefined)?.trim() ?? ''
+  // VITE_API_URL — alias для local pro-stack (тот же REST: feedback + object reports)
+  const fromEnvUrl =
+    (import.meta.env.VITE_FEEDBACK_API_URL as string | undefined)?.trim() ||
+    (import.meta.env.VITE_API_URL as string | undefined)?.trim() ||
+    ''
+  const fromEnvToken =
+    (import.meta.env.VITE_FEEDBACK_API_TOKEN as string | undefined)?.trim() ||
+    (import.meta.env.VITE_API_TOKEN as string | undefined)?.trim() ||
+    ''
   try {
     const raw = localStorage.getItem(API_KEY)
     if (raw) {
       const parsed = JSON.parse(raw) as Partial<FeedbackApiConfig>
       return {
-        baseUrl: (parsed.baseUrl ?? fromEnvUrl).replace(/\/$/, ''),
-        token: parsed.token ?? fromEnvToken,
+        baseUrl: (parsed.baseUrl || fromEnvUrl).replace(/\/$/, ''),
+        token: parsed.token || fromEnvToken,
       }
     }
   } catch {

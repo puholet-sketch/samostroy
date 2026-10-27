@@ -1,10 +1,15 @@
-# СамоСтрой — локальное durable-хранилище (фаза B foundation).
-# Postgres для feedback; REST остаётся в bots/feedback-bot (DATABASE_URL).
+# СамоСтрой — локальный pro-stack (всё на этом ПК).
 #
 #   docker compose up -d
-#   # затем в bots/feedback-bot/.env:
-#   DATABASE_URL=postgres://samostroy:samostroy@127.0.0.1:5432/samostroy
-#   npm start
+#   # API: http://127.0.0.1:8787/health
+#   # Postgres: localhost:5433
+#
+# CRM (Vite): в .env или Настройки → Замечания / API
+#   VITE_FEEDBACK_API_URL=http://127.0.0.1:8787
+#   VITE_FEEDBACK_API_TOKEN=local-dev-token
+#
+# GitHub Pages → этот API с интернета НЕ достучится (localhost). Нужен туннель
+# или API на сервере. Telegram/Web3Forms — опциональный notify.
 
 services:
   postgres:
@@ -27,6 +32,25 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+
+  api:
+    build: ./bots/feedback-bot
+    container_name: samostroy-api
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - '8787:8787'
+    environment:
+      PORT: '8787'
+      FEEDBACK_TOKEN: ${FEEDBACK_TOKEN:-local-dev-token}
+      DATABASE_URL: postgres://samostroy:samostroy@postgres:5432/samostroy
+      FEEDBACK_IMAGES_DIR: /data/images
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+      TELEGRAM_CHAT_ID: ${TELEGRAM_CHAT_ID:-}
+    volumes:
+      - feedback_images:/data/images
 
 volumes:
   pgdata:

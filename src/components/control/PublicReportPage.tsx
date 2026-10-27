@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { RiAttachment2 } from '@remixicon/react'
 import {
@@ -9,9 +9,12 @@ import {
 } from '../../lib/mediaStore'
 import {
   getReportForDate,
+  hydrateReportsForToken,
   resolveControlLink,
-  saveDailyReport,
+  resolveControlLinkAsync,
+  saveDailyReportAsync,
   todayIso,
+  type ControlLink,
   type ReportMediaMeta,
 } from '../../lib/objectReports'
 import { BrandLogo } from '../common/BrandLogo'
@@ -35,7 +38,9 @@ function parseReportDate(raw: string | null): string {
 export default function PublicReportPage() {
   const { token = '' } = useParams<{ token: string }>()
   const [searchParams, setSearchParams] = useSearchParams()
-  const link = useMemo(() => (token ? resolveControlLink(token) : null), [token])
+  const [link, setLink] = useState<ControlLink | null>(() =>
+    token ? resolveControlLink(token) : null,
+  )
   const date = parseReportDate(searchParams.get('date'))
   const fileRef = useRef<HTMLInputElement>(null)
 
@@ -47,6 +52,22 @@ export default function PublicReportPage() {
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState('')
   const [sent, setSent] = useState(false)
+
+  useEffect(() => {
+    if (!token) {
+      setLink(null)
+      return
+    }
+    let cancelled = false
+    ;(async () => {
+      const resolved = await resolveControlLinkAsync(token)
+      if (!cancelled) setLink(resolved)
+      await hydrateReportsForToken(token)
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [token])
 
   const address =
     link?.objectAddress?.trim() ||
@@ -70,13 +91,21 @@ export default function PublicReportPage() {
 
   useEffect(() => {
     if (!token) return
-    const existing = getReportForDate(token, date)
-    setWorkerName(existing?.workerName ?? '')
-    setWorkDone(existing?.workDone ?? '')
-    setProblems(existing?.problems ?? '')
-    setMedia(existing?.media ?? [])
-    setSent(Boolean(existing))
-    setMsg('')
+    let cancelled = false
+    ;(async () => {
+      await hydrateReportsForToken(token)
+      if (cancelled) return
+      const existing = getReportForDate(token, date)
+      setWorkerName(existing?.workerName ?? '')
+      setWorkDone(existing?.workDone ?? '')
+      setProblems(existing?.problems ?? '')
+      setMedia(existing?.media ?? [])
+      setSent(Boolean(existing))
+      setMsg('')
+    })()
+    return () => {
+      cancelled = true
+    }
   }, [token, date])
 
   useEffect(() => {
@@ -170,7 +199,7 @@ export default function PublicReportPage() {
     setBusy(true)
     setMsg('')
     try {
-      saveDailyReport({
+      const { synced, error } = await saveDailyReportAsync({
         token,
         date,
         workerName: workerName.trim(),
@@ -179,7 +208,9 @@ export default function PublicReportPage() {
         media,
       })
       setSent(true)
-      setMsg('Отчёт сохранён')
+      if (synced) setMsg('Отчёт сохранён в общую базу')
+      else if (error) setMsg(`Сохранено локально (API: ${error})`)
+      else setMsg('Отчёт сохранён (только в этом браузере — API не настроен)')
     } catch {
       setMsg('Не удалось сохранить')
     } finally {

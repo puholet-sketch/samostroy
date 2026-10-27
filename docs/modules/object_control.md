@@ -24,12 +24,34 @@
 
 | Что | Где |
 |-----|-----|
-| Ссылки контроля | localStorage (`objectReports.ts`, ключи `samostroy:control_links_*`) |
-| Дневные отчёты | localStorage + медиа в IndexedDB (`mediaStore`) |
-| Seed (демо) | `data/daily_reports.json` |
+| Ссылки контроля | localStorage + при API → таблица `control_links` |
+| Дневные отчёты (мета) | localStorage + при API → `object_reports` |
+| Медиа вложений | IndexedDB (`mediaStore`) — **пока только браузер** |
+| Seed (демо pipeline) | `data/daily_reports.json` (отдельный stub UI) |
+
+### Local pro-stack
+
+При `VITE_FEEDBACK_API_URL` / `VITE_API_URL` + token (тот же REST, что feedback):
+
+| Метод | Путь |
+|-------|------|
+| GET | `/api/object-reports?token=` |
+| POST | `/api/object-reports` |
+| GET | `/api/control-links/:token` |
+| POST | `/api/control-links` |
+
+Заголовок: `X-Feedback-Token`. Схема: `docker/postgres/init/002_object_reports.sql`.
+
+```bash
+docker compose up -d
+# если volume уже был без 002_*:
+Get-Content docker/postgres/migrations/002_object_reports.sql | docker compose exec -T postgres psql -U samostroy -d samostroy
+```
+
+Без API отчёт остаётся в браузере отправителя. Pages → localhost API с интернета не работает.
 
 ## Связанный код
 
 - `src/components/control/ObjectControlPage.tsx`
 - `src/components/control/PublicReportPage.tsx`
-- `src/lib/objectReports.ts`
+- `src/lib/objectReports.ts`, `src/lib/objectReportsApi.ts`

@@ -14,6 +14,20 @@ npm run dev
 
 Откройте http://localhost:5174
 
+### Local pro-stack (Postgres + API на этом ПК)
+
+```bash
+docker compose up -d
+# API http://127.0.0.1:8787  ·  Postgres localhost:5433
+cp .env.example .env
+# VITE_FEEDBACK_API_URL=http://127.0.0.1:8787
+# VITE_FEEDBACK_API_TOKEN=local-dev-token
+npm run dev
+```
+
+Замечания и дневные отчёты по объекту уходят в общую БД (не только localStorage).  
+Pages с интернета к localhost API не достучится — см. [bots/feedback-bot/README.md](bots/feedback-bot/README.md).
+
 Сборка:
 
 ```bash

@@ -1,5 +1,40 @@
 [
   {
+    "id": "2026-10-27-a",
+    "at": "2026-10-27T17:35:00+03:00",
+    "title": "Pro: Amo, клиенты, сводный отчёт, Docker API",
+    "items": [
+      {
+        "section": "Клиенты",
+        "text": "Ссылка на AmoCRM с кнопкой «Открыть»; убраны чекбоксы «Доступ: Ремонт/Дизайн»"
+      },
+      {
+        "section": "Клиенты",
+        "text": "Список: по 10 на страницу, новые сверху, пагинация"
+      },
+      {
+        "section": "Контроль объекта",
+        "text": "Сводный отчёт за период по всем объектам — HTML / печать в PDF"
+      },
+      {
+        "section": "Контроль объекта",
+        "text": "Дневные отчёты и ссылки прораба синхронизируются с Docker API при настроенном URL"
+      },
+      {
+        "section": "Инфраструктура",
+        "text": "docker compose: Postgres + API :8787; миграции object_reports; README / .env.example"
+      }
+    ],
+    "docs": [
+      { "label": "Релиз 2026-10-27-a", "href": "/updates/2026-10-27-a", "kind": "app" },
+      { "label": "Клиенты", "href": "/clients", "kind": "app" },
+      { "label": "Контроль объекта", "href": "/control", "kind": "app" },
+      { "label": "Модуль контроля", "href": "docs/modules/object_control.md", "kind": "repo" },
+      { "label": "Feedback / API bot", "href": "bots/feedback-bot/README.md", "kind": "repo" },
+      { "label": "Релиз 2026-10-26-g", "href": "/updates/2026-10-26-g", "kind": "app" }
+    ]
+  },
+  {
     "id": "2026-10-26-g",
     "at": "2026-10-26T19:35:00+03:00",
     "title": "Калькулятор: один ряд тулбара навсегда",

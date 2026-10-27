@@ -29,9 +29,8 @@ export type ClientCard = {
   source: string
   /** Канал привлечения: соцсети, маркетолог и т.д. */
   channel: string
+  /** Ссылка на карточку/сделку в AmoCRM */
   amo_link: string
-  client_access_remont: boolean
-  client_access_design: boolean
   objects_note: string
   /** Объекты клиента (адреса / договоры) */
   objects: ClientObject[]
@@ -61,6 +60,8 @@ export type ClientCard = {
   dogovor_design: string
   smeta: string
   dogovor_otdelka: string
+  /** Момент создания (для сортировки «недавно добавленные») */
+  createdAt: string
   updatedAt: string
 }
 
@@ -81,8 +82,6 @@ export const emptyClient = (partial?: Partial<ClientCard>): ClientCard => ({
   source: '',
   channel: '',
   amo_link: '',
-  client_access_remont: false,
-  client_access_design: false,
   objects_note: '',
   objects: [],
   dob: '',
@@ -108,9 +107,24 @@ export const emptyClient = (partial?: Partial<ClientCard>): ClientCard => ({
   dogovor_design: '',
   smeta: '',
   dogovor_otdelka: '',
+  createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
   ...partial,
 })
+
+/** Извлечь ISO createdAt: явного поле → timestamp из id `c…` → updatedAt → epoch */
+export function inferClientCreatedAt(c: Partial<ClientCard> & { id?: string }): string {
+  if (c.createdAt && !Number.isNaN(Date.parse(c.createdAt))) return c.createdAt
+  const id = c.id || ''
+  const m = /^c(\d{10,13})$/.exec(id)
+  if (m) {
+    const n = Number(m[1])
+    if (n > 1e11) return new Date(n).toISOString()
+    if (n > 1e9) return new Date(n * 1000).toISOString()
+  }
+  if (c.updatedAt && !Number.isNaN(Date.parse(c.updatedAt))) return c.updatedAt
+  return new Date(0).toISOString()
+}
 
 /**
  * v4: localStorage с вашей локальной базой не перезаписываем извне.
@@ -153,8 +167,34 @@ function ensureObjects(c: ClientCard): ClientObject[] {
 
 function normalizeList(list: ClientCard[]): ClientCard[] {
   return list.map((c) => {
-    const base = { ...emptyClient({ id: c.id }), ...c }
-    return { ...base, objects: ensureObjects(base), channel: base.channel || base.source || '' }
+    const raw = c as ClientCard & {
+      client_access_remont?: boolean
+      client_access_design?: boolean
+    }
+    // убрать нерабочие portal-поля из локальной копии
+    const { client_access_remont: _r, client_access_design: _d, ...rest } = raw
+    void _r
+    void _d
+    const base = { ...emptyClient({ id: rest.id }), ...rest }
+    const createdAt = inferClientCreatedAt(base)
+    return {
+      ...base,
+      objects: ensureObjects(base),
+      channel: base.channel || base.source || '',
+      createdAt,
+      updatedAt: base.updatedAt || createdAt,
+      amo_link: base.amo_link || '',
+    }
+  })
+}
+
+/** Сортировка: недавно добавленные сверху */
+export function sortClientsRecentFirst(list: ClientCard[]): ClientCard[] {
+  return [...list].sort((a, b) => {
+    const tb = Date.parse(inferClientCreatedAt(b)) || 0
+    const ta = Date.parse(inferClientCreatedAt(a)) || 0
+    if (tb !== ta) return tb - ta
+    return (b.id || '').localeCompare(a.id || '')
   })
 }
 

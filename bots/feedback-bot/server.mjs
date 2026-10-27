@@ -1,7 +1,7 @@
 /**
- * СамоСтрой Feedback API + Telegram notify.
+ * СамоСтрой local API: feedback + object daily reports + Telegram notify.
  * JSON-файл по умолчанию; Postgres при DATABASE_URL (Docker).
- * Контракт совместим с будущим Supabase-бэкендом.
+ * Контракт совместим с будущим облачным бэкендом.
  */
 import http from 'node:http'
 import fs from 'node:fs'
@@ -178,7 +178,11 @@ const server = http.createServer(async (req, res) => {
     const pathname = url.pathname
 
     if (pathname === '/health') {
-      return sendJson(res, 200, { ok: true, store: store.mode })
+      return sendJson(res, 200, {
+        ok: true,
+        store: store.mode,
+        services: ['feedback', 'object-reports', 'control-links'],
+      })
     }
 
     if (pathname === '/telegram/webhook' && req.method === 'POST') {
@@ -276,6 +280,55 @@ const server = http.createServer(async (req, res) => {
       }
     }
 
+    // --- Object daily reports (контроль объекта) ---
+    if (pathname === '/api/object-reports' && req.method === 'GET') {
+      const token = url.searchParams.get('token') || ''
+      return sendJson(res, 200, await store.listObjectReports(token || null))
+    }
+
+    if (pathname === '/api/object-reports' && req.method === 'POST') {
+      const raw = await readBody(req)
+      const body = JSON.parse(raw.toString('utf8') || '{}')
+      if (!body.token || !body.date) {
+        return sendJson(res, 400, { error: 'token+date required' })
+      }
+      const report = {
+        id: body.id || `rep-${Date.now()}`,
+        token: String(body.token),
+        date: String(body.date).slice(0, 10),
+        workDone: body.workDone ?? '',
+        problems: body.problems ?? '',
+        workerName: body.workerName ?? '',
+        media: Array.isArray(body.media) ? body.media : [],
+        createdAt: body.createdAt,
+      }
+      const saved = await store.upsertObjectReport(report)
+      return sendJson(res, 201, saved)
+    }
+
+    // --- Control links ---
+    const linkOne = pathname.match(/^\/api\/control-links\/([^/]+)$/)
+    if (linkOne && req.method === 'GET') {
+      const token = decodeURIComponent(linkOne[1])
+      const link = await store.getControlLink(token)
+      if (!link) return sendJson(res, 404, { error: 'not found' })
+      return sendJson(res, 200, link)
+    }
+
+    if (pathname === '/api/control-links' && req.method === 'POST') {
+      const raw = await readBody(req)
+      const body = JSON.parse(raw.toString('utf8') || '{}')
+      if (!body.token) return sendJson(res, 400, { error: 'token required' })
+      const link = await store.upsertControlLink({
+        token: String(body.token),
+        clientId: body.clientId ?? '',
+        objectId: body.objectId ?? '',
+        objectTitle: body.objectTitle ?? '',
+        objectAddress: body.objectAddress ?? '',
+      })
+      return sendJson(res, 201, link)
+    }
+
     sendJson(res, 404, { error: 'not found' })
   } catch (e) {
     console.error(e)
@@ -288,8 +341,8 @@ await store.ready().catch((e) => {
   process.exit(1)
 })
 
-server.listen(PORT, () => {
-  console.log(`feedback-bot on :${PORT} (store=${store.mode})`)
+server.listen(PORT, '0.0.0.0', () => {
+  console.log(`samostroy-api on :${PORT} (store=${store.mode})`)
   if (!TOKEN) console.warn('WARN: FEEDBACK_TOKEN empty')
   if (!TG_TOKEN) console.warn('WARN: TELEGRAM_BOT_TOKEN empty — notify disabled')
 })
