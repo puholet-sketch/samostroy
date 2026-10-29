@@ -2,16 +2,16 @@
   "v": 4,
   "updated": "2026-10-29",
   "status": "active",
-  "goal": "Sprint 2026-10-29-b: versions + weekly pack + notify + inWork → Pages",
-  "next": "После CDN: проверить версии, weekly-pack, дедлайны (email/TG), фильтр клиентов",
+  "goal": "Feedback viewport-only capture → Pages 2026-10-29-c",
+  "next": "После CDN: проскроллить длинную страницу → Замечание → проверить кадр = viewport",
   "blockers": [
     "TG notify needs Docker API + TELEGRAM_* + ngrok"
   ],
   "hot_files": [
-    "src/lib/calcVersions.ts",
-    "src/components/control/WeeklyPackPage.tsx",
-    "src/lib/deadlineNotify.ts",
+    "src/components/feedback/FeedbackCapture.tsx",
     "data/changelog.json",
-    "docs/customer-calls/2026-10-29-sprint-decisions.md"
+    "data/releases/2026-10-29-c.md",
+    "src/lib/buildStamp.ts",
+    "docs/modules/feedback.md"
   ]
 }

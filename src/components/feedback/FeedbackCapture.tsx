@@ -46,8 +46,6 @@ type Props = {
 }
 
 const MIN_DRAG_PCT = 1.2
-/** Верхняя граница высоты кадра (canvas OOM на длинных страницах / mobile). */
-const MAX_CAPTURE_HEIGHT = 14_000
 
 /** Visible image box inside an object-contain <img> (may be letterboxed). */
 function objectContainContentRect(img: HTMLImageElement): DOMRect {
@@ -162,23 +160,11 @@ export function FeedbackCapture({ open, onClose, onSubmitted }: Props) {
     try {
       await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)))
 
-      // Полный scrollable документ / #root — иначе html-to-image берёт только viewport
-      const root = document.getElementById('root')
-      const node = (root ?? document.documentElement) as HTMLElement
-      const width = Math.max(
-        node.scrollWidth,
-        document.documentElement.scrollWidth,
-        document.body?.scrollWidth ?? 0,
-        window.innerWidth,
-      )
-      const fullHeight = Math.max(
-        node.scrollHeight,
-        document.documentElement.scrollHeight,
-        document.body?.scrollHeight ?? 0,
-        window.innerHeight,
-      )
-      const height = Math.min(fullHeight, MAX_CAPTURE_HEIGHT)
-      const pixelRatio = Math.min(1.5, window.devicePixelRatio || 1)
+      // Только видимый viewport (то, что на экране), с учётом текущего скролла
+      const node = document.documentElement
+      const width = window.innerWidth
+      const height = window.innerHeight
+      const pixelRatio = Math.min(2, window.devicePixelRatio || 1)
 
       const dataUrl = await toPng(node, {
         cacheBust: true,
@@ -186,10 +172,7 @@ export function FeedbackCapture({ open, onClose, onSubmitted }: Props) {
         width,
         height,
         style: {
-          width: `${width}px`,
-          height: `${height}px`,
-          transform: 'none',
-          overflow: 'visible',
+          transform: `translate(${-scrollX}px, ${-scrollY}px)`,
         },
         filter: (el) => {
           if (!(el instanceof HTMLElement)) return true
@@ -202,9 +185,6 @@ export function FeedbackCapture({ open, onClose, onSubmitted }: Props) {
       setShotBlob(blob)
       setShotUrl(url)
       setStep('mark')
-      if (fullHeight > MAX_CAPTURE_HEIGHT) {
-        setMsg('Снимок обрезан по высоте (очень длинная страница)')
-      }
     } catch {
       setMsg('Не удалось сделать снимок экрана')
       setStep('shot')
