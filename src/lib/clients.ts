@@ -8,6 +8,12 @@ export type ClientObject = {
   address: string
   title: string
   contractNumber: string
+  /** Площадь объекта, м² — для автозаполнения договоров/сметы */
+  areaM2: number
+  /** Дата начала работ на объекте */
+  startDate: string
+  /** Статус «в работе» */
+  inWork: boolean
 }
 
 export const CHANNEL_OPTIONS = ['Соцсети', 'Маркетолог', 'Рекомендация', 'Сайт', 'Другое'] as const
@@ -150,6 +156,9 @@ function ensureObjects(c: ClientCard): ClientObject[] {
       address: o.address || '',
       title: o.title || o.address || 'Объект',
       contractNumber: o.contractNumber || '',
+      areaM2: Number(o.areaM2) || 0,
+      startDate: o.startDate || '',
+      inWork: Boolean(o.inWork),
     }))
   }
   // миграция: objects_note / address → один объект
@@ -161,6 +170,9 @@ function ensureObjects(c: ClientCard): ClientObject[] {
       address: addr,
       title: addr.length > 40 ? `${addr.slice(0, 40)}…` : addr,
       contractNumber: c.dogovor_otdelka || c.dogovor_design || '',
+      areaM2: 0,
+      startDate: '',
+      inWork: false,
     },
   ]
 }

@@ -12,6 +12,7 @@ import {
   hydrateReportsForToken,
   resolveControlLink,
   resolveControlLinkAsync,
+  saveDailyReport,
   saveDailyReportAsync,
   todayIso,
   type ControlLink,
@@ -92,16 +93,24 @@ export default function PublicReportPage() {
   useEffect(() => {
     if (!token) return
     let cancelled = false
-    ;(async () => {
-      await hydrateReportsForToken(token)
-      if (cancelled) return
+
+    function applyLocal() {
       const existing = getReportForDate(token, date)
       setWorkerName(existing?.workerName ?? '')
       setWorkDone(existing?.workDone ?? '')
       setProblems(existing?.problems ?? '')
       setMedia(existing?.media ?? [])
       setSent(Boolean(existing))
-      setMsg('')
+    }
+
+    // Сразу из localStorage — не ждать API (иначе форма пустая / «пропал» отчёт)
+    applyLocal()
+    setMsg('')
+
+    ;(async () => {
+      await hydrateReportsForToken(token)
+      if (cancelled) return
+      applyLocal()
     })()
     return () => {
       cancelled = true
@@ -208,11 +217,29 @@ export default function PublicReportPage() {
         media,
       })
       setSent(true)
+      // media мог получить remote:true после upload
+      const latest = getReportForDate(token, date)
+      if (latest?.media) setMedia(latest.media)
       if (synced) setMsg('Отчёт сохранён в общую базу')
       else if (error) setMsg(`Сохранено локально (API: ${error})`)
       else setMsg('Отчёт сохранён (только в этом браузере — API не настроен)')
-    } catch {
-      setMsg('Не удалось сохранить')
+    } catch (e) {
+      try {
+        saveDailyReport({
+          token,
+          date,
+          workerName: workerName.trim(),
+          workDone: workDone.trim(),
+          problems: problems.trim(),
+          media,
+        })
+        setSent(true)
+        setMsg(
+          `Сохранено локально (${e instanceof Error ? e.message : 'ошибка сети'})`,
+        )
+      } catch {
+        setMsg('Не удалось сохранить')
+      }
     } finally {
       setBusy(false)
     }

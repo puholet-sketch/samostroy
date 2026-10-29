@@ -1,7 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { RiCalculatorFill } from '@remixicon/react'
 import { Link } from 'react-router-dom'
-import { loadCalcTransfer, saveCalcTransfer } from '../../lib/calcTransfer'
+import { loadCalcTransfer, saveCalcTransfer, type CalcSmetaLine } from '../../lib/calcTransfer'
+import {
+  agreeCalcVersion,
+  getAgreedCalcVersion,
+  listCalcVersions,
+  saveCalcVersionFromTransfer,
+  type CalcVersion,
+} from '../../lib/calcVersions'
 import { loadClients, type ClientCard, type ClientObject } from '../../lib/clients'
 import { CONTRACTOR, DESIGN_RATE_PER_M2 } from '../../lib/contractor'
 import {
@@ -107,6 +114,7 @@ export default function DocumentsPage() {
     date: todayIso(),
     city: 'Москва',
     objectAddress: '',
+    areaM2: 0,
     totalSum: 0,
     workDays: 80,
   })
@@ -146,6 +154,11 @@ export default function DocumentsPage() {
   })
   const [executorName, setExecutorName] = useState<string>(CONTRACTOR.name)
   const [calcTransfer, setCalcTransfer] = useState(() => loadCalcTransfer())
+  /** Индексы строк калькулятора, включённые в текущий акт */
+  const [aktSelected, setAktSelected] = useState<Record<number, boolean>>({})
+  const [aktStageIdx, setAktStageIdx] = useState(0)
+  const [calcVersions, setCalcVersions] = useState<CalcVersion[]>([])
+  const [versionMsg, setVersionMsg] = useState('')
 
   useEffect(() => {
     document.title = 'Договоры и акты — СамоСтрой'
@@ -160,7 +173,7 @@ export default function DocumentsPage() {
       const objs = c.objects ?? []
       if (objs.length === 1) {
         setObjectId(objs[0].id)
-        applyObjectToForms(objs[0], c.city || 'Москва')
+        applyObjectToForms(objs[0], c.city || 'Москва', c.id)
       } else if (objs.length === 0) {
         const fallback = (c.objects_note || c.address || '').trim()
         setRemont((f) => ({ ...f, city: c.city || f.city, objectAddress: fallback }))
@@ -209,23 +222,30 @@ export default function DocumentsPage() {
   const clientObjects = client?.objects ?? []
   const selectedObject = clientObjects.find((o) => o.id === objectId) ?? null
 
-  function applyObjectToForms(obj: ClientObject, cityFallback: string) {
+  function applyObjectToForms(
+    obj: ClientObject,
+    cityFallback: string,
+    forClientId?: string,
+  ) {
     const addr = obj.address?.trim() || ''
     const title = obj.title?.trim() || ''
     const num = obj.contractNumber?.trim() || ''
     const city = cityFallback || 'Москва'
+    const area = Number(obj.areaM2) || 0
 
     setRemont((f) => ({
       ...f,
       city: city || f.city,
       objectAddress: addr,
       number: num || f.number,
+      areaM2: area || f.areaM2,
     }))
     setDesign((f) => ({
       ...f,
       city: city || f.city,
       objectAddress: addr,
       number: num || f.number,
+      areaM2: area || f.areaM2,
     }))
     setAkt((f) => ({
       ...f,
@@ -239,7 +259,36 @@ export default function DocumentsPage() {
       objectAddress: addr,
       objectTitle: title,
       number: num || f.number,
+      areaM2: area || f.areaM2,
     }))
+
+    const cid = forClientId || clientId
+    const agreed = cid ? getAgreedCalcVersion(cid, obj.id) : undefined
+    if (agreed && agreed.lines.length > 0) {
+      setCalcTransfer((t) => ({
+        ...t,
+        transferToRemont: true,
+        withDetails: true,
+        total: agreed.total,
+        baseTotal: agreed.baseTotal,
+        discountPct: agreed.discountPct,
+        lines: agreed.lines,
+        updatedAt: agreed.updatedAt,
+      }))
+      setRemont((f) => ({ ...f, totalSum: agreed.total }))
+      setSmeta((f) => ({
+        ...f,
+        discountPct: agreed.discountPct,
+        lines: agreed.lines.map((l) => ({
+          name: l.name,
+          unit: l.unit,
+          qty: l.qty,
+          price: l.price,
+          section: l.section || 'Прочее',
+        })),
+        fromCalc: true,
+      }))
+    }
   }
 
   function pickClient(c: ClientCard) {
@@ -249,7 +298,7 @@ export default function DocumentsPage() {
     const objs = c.objects ?? []
     if (objs.length === 1) {
       setObjectId(objs[0].id)
-      applyObjectToForms(objs[0], c.city || 'Москва')
+      applyObjectToForms(objs[0], c.city || 'Москва', c.id)
     } else if (objs.length > 1) {
       setObjectId('')
       setRemont((f) => ({ ...f, city: c.city || f.city, objectAddress: '' }))
@@ -285,7 +334,78 @@ export default function DocumentsPage() {
     setObjectId(id)
     if (!client || !id) return
     const obj = clientObjects.find((o) => o.id === id)
-    if (obj) applyObjectToForms(obj, client.city || 'Москва')
+    if (obj) applyObjectToForms(obj, client.city || 'Москва', client.id)
+  }
+
+  const calcStages = useMemo(() => {
+    const lines = calcTransfer.lines
+    const seen: string[] = []
+    for (const l of lines) {
+      const s = (l.section || 'Прочее').trim() || 'Прочее'
+      if (!seen.includes(s)) seen.push(s)
+    }
+    return seen
+  }, [calcTransfer.lines])
+
+  useEffect(() => {
+    if (!clientId || !objectId) {
+      setCalcVersions([])
+      return
+    }
+    setCalcVersions(listCalcVersions(clientId, objectId))
+  }, [clientId, objectId, versionMsg])
+
+  useEffect(() => {
+    if (kind !== 'akt') return
+    const t = loadCalcTransfer()
+    setCalcTransfer(t)
+    if (t.lines.length === 0) return
+    // по умолчанию — все строки выбранного этапа (первого раздела)
+    const stages: string[] = []
+    for (const l of t.lines) {
+      const s = (l.section || 'Прочее').trim() || 'Прочее'
+      if (!stages.includes(s)) stages.push(s)
+    }
+    const stage = stages[aktStageIdx] || stages[0] || 'Прочее'
+    const sel: Record<number, boolean> = {}
+    t.lines.forEach((l, i) => {
+      const s = (l.section || 'Прочее').trim() || 'Прочее'
+      sel[i] = s === stage
+    })
+    setAktSelected(sel)
+    setAkt((f) => ({
+      ...f,
+      stageName: `Этап ${Math.min(aktStageIdx, stages.length - 1) + 1} — ${stage}`,
+      lines: t.lines
+        .filter((_, i) => sel[i])
+        .map((l) => ({
+          name: l.name,
+          unit: l.unit,
+          qty: l.qty,
+          price: l.price,
+        })),
+    }))
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- sync when tab/stage/calc changes
+  }, [kind, aktStageIdx, calcTransfer.updatedAt])
+
+  function applyAktSelection(lines: CalcSmetaLine[], selected: Record<number, boolean>, stageName: string) {
+    setAkt((f) => ({
+      ...f,
+      stageName,
+      lines: lines
+        .filter((_, i) => selected[i])
+        .map((l) => ({
+          name: l.name,
+          unit: l.unit,
+          qty: l.qty,
+          price: l.price,
+        })),
+    }))
+  }
+
+  function refreshCalcVersions() {
+    if (!clientId || !objectId) return
+    setCalcVersions(listCalcVersions(clientId, objectId))
   }
 
   /** Подтянуть сумму / детализацию из калькулятора в договор ремонт */
@@ -412,6 +532,7 @@ export default function DocumentsPage() {
 
         await generateRemontDoc(client, {
           ...remont,
+          areaM2: remont.areaM2,
           totalSum,
           discountPct,
           baseTotal,
@@ -583,6 +704,86 @@ export default function DocumentsPage() {
             В КК не хватает: {cardGaps.join(', ')}
           </p>
         )}
+        {client && objectId && (
+          <div className="mt-2 rounded-md border border-gray-100 bg-gray-50 px-2 py-1.5">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-[11px] font-medium text-gray-500">Версии расчёта</span>
+              <button
+                type="button"
+                className="text-xs font-medium text-blue-700 hover:underline"
+                onClick={() => {
+                  saveCalcVersionFromTransfer({ clientId, objectId })
+                  setVersionMsg('Версия сохранена')
+                  refreshCalcVersions()
+                }}
+                disabled={!calcTransfer.lines.length && !calcTransfer.total}
+              >
+                Сохранить текущую
+              </button>
+              {versionMsg && (
+                <span className="text-[11px] text-emerald-700">{versionMsg}</span>
+              )}
+            </div>
+            {calcVersions.length === 0 ? (
+              <p className="mt-1 text-[11px] text-gray-400">
+                Пока нет версий. Сохраните снимок из калькулятора; одну можно пометить
+                согласованной — из неё подтянутся договор и смета.
+              </p>
+            ) : (
+              <ul className="mt-1 max-h-24 space-y-0.5 overflow-y-auto text-xs">
+                {calcVersions.map((v) => (
+                  <li key={v.id} className="flex flex-wrap items-center gap-2">
+                    <span className="min-w-0 flex-1 truncate text-gray-800">
+                      {v.label}
+                      {v.agreed ? ' · согласованная' : ''}
+                      {' · '}
+                      {formatMoney(v.total)} ₽
+                    </span>
+                    {!v.agreed && (
+                      <button
+                        type="button"
+                        className="shrink-0 text-emerald-700 hover:underline"
+                        onClick={() => {
+                          agreeCalcVersion(v.id)
+                          setVersionMsg('Версия согласована')
+                          refreshCalcVersions()
+                          const agreed = getAgreedCalcVersion(clientId, objectId)
+                          if (agreed) {
+                            setCalcTransfer((t) => ({
+                              ...t,
+                              transferToRemont: true,
+                              withDetails: true,
+                              total: agreed.total,
+                              baseTotal: agreed.baseTotal,
+                              discountPct: agreed.discountPct,
+                              lines: agreed.lines,
+                              updatedAt: agreed.updatedAt,
+                            }))
+                            setRemont((f) => ({ ...f, totalSum: agreed.total }))
+                            setSmeta((f) => ({
+                              ...f,
+                              discountPct: agreed.discountPct,
+                              lines: agreed.lines.map((l) => ({
+                                name: l.name,
+                                unit: l.unit,
+                                qty: l.qty,
+                                price: l.price,
+                                section: l.section || 'Прочее',
+                              })),
+                              fromCalc: true,
+                            }))
+                          }
+                        }}
+                      >
+                        Согласовать
+                      </button>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="flex flex-wrap gap-0.5 border-b border-gray-200">
@@ -642,6 +843,16 @@ export default function DocumentsPage() {
                 className={inputCls}
                 value={remont.objectAddress}
                 onChange={(e) => setRemont({ ...remont, objectAddress: e.target.value })}
+              />
+            </Field>
+            <Field label="Площадь, м²" hint="С объекта клиента">
+              <input
+                type="number"
+                min={0}
+                step="0.1"
+                className={inputCls}
+                value={remont.areaM2 || ''}
+                onChange={(e) => setRemont({ ...remont, areaM2: Number(e.target.value) || 0 })}
               />
             </Field>
             <Field
@@ -817,15 +1028,44 @@ export default function DocumentsPage() {
                 onChange={(e) => setAkt({ ...akt, city: e.target.value })}
               />
             </Field>
-            <Field label="Этап">
+            <Field
+              label="Этап договора"
+              hint={
+                calcStages.length
+                  ? 'Нумерация по разделам калькулятора / договора'
+                  : 'Сначала перенесите смету из калькулятора'
+              }
+            >
+              {calcStages.length > 0 ? (
+                <select
+                  className={inputCls}
+                  value={aktStageIdx}
+                  onChange={(e) => setAktStageIdx(Number(e.target.value) || 0)}
+                >
+                  {calcStages.map((s, i) => (
+                    <option key={s} value={i}>
+                      Этап {i + 1} — {s}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <input
+                  className={inputCls}
+                  value={akt.stageName}
+                  onChange={(e) => setAkt({ ...akt, stageName: e.target.value })}
+                  placeholder="Монтаж…"
+                />
+              )}
+            </Field>
+            <Field label="Название этапа (в акте)" className="col-span-2 lg:col-span-2">
               <input
                 className={inputCls}
                 value={akt.stageName}
                 onChange={(e) => setAkt({ ...akt, stageName: e.target.value })}
-                placeholder="Монтаж…"
+                placeholder="Этап 1 — …"
               />
             </Field>
-            <Field label="Адрес объекта" className="col-span-2 lg:col-span-4">
+            <Field label="Адрес объекта" className="col-span-2 lg:col-span-2">
               <input
                 className={inputCls}
                 value={akt.objectAddress}
@@ -833,6 +1073,84 @@ export default function DocumentsPage() {
               />
             </Field>
           </div>
+
+          {calcTransfer.lines.length > 0 && (
+            <div className="mt-2 rounded-md border border-violet-100 bg-violet-50/60 p-2">
+              <p className="mb-1.5 text-[11px] font-medium text-violet-800">
+                Работы из калькулятора — отметьте, что входит в этот акт
+              </p>
+              <ul className="max-h-40 space-y-1 overflow-y-auto text-sm">
+                {calcTransfer.lines.map((l, i) => {
+                  const section = (l.section || 'Прочее').trim() || 'Прочее'
+                  return (
+                    <li key={`${l.name}-${i}`} className="flex items-start gap-2">
+                      <input
+                        type="checkbox"
+                        className="mt-1"
+                        checked={Boolean(aktSelected[i])}
+                        onChange={(e) => {
+                          const next = { ...aktSelected, [i]: e.target.checked }
+                          setAktSelected(next)
+                          const stage =
+                            calcStages[aktStageIdx] ||
+                            calcStages[0] ||
+                            section
+                          applyAktSelection(
+                            calcTransfer.lines,
+                            next,
+                            akt.stageName ||
+                              `Этап ${aktStageIdx + 1} — ${stage}`,
+                          )
+                        }}
+                      />
+                      <span className="min-w-0 flex-1">
+                        <span className="font-medium text-gray-900">{l.name}</span>
+                        <span className="ml-1 text-[11px] text-gray-500">
+                          · {section} · {l.qty} {l.unit} × {formatMoney(l.price)}
+                        </span>
+                      </span>
+                    </li>
+                  )
+                })}
+              </ul>
+              <div className="mt-1.5 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  className="text-xs font-medium text-violet-800 hover:underline"
+                  onClick={() => {
+                    const stage = calcStages[aktStageIdx] || calcStages[0]
+                    const next: Record<number, boolean> = {}
+                    calcTransfer.lines.forEach((l, i) => {
+                      const s = (l.section || 'Прочее').trim() || 'Прочее'
+                      next[i] = s === stage
+                    })
+                    setAktSelected(next)
+                    applyAktSelection(
+                      calcTransfer.lines,
+                      next,
+                      `Этап ${aktStageIdx + 1} — ${stage}`,
+                    )
+                  }}
+                >
+                  Только этот этап
+                </button>
+                <button
+                  type="button"
+                  className="text-xs font-medium text-violet-800 hover:underline"
+                  onClick={() => {
+                    const next: Record<number, boolean> = {}
+                    calcTransfer.lines.forEach((_, i) => {
+                      next[i] = true
+                    })
+                    setAktSelected(next)
+                    applyAktSelection(calcTransfer.lines, next, akt.stageName)
+                  }}
+                >
+                  Выбрать все
+                </button>
+              </div>
+            </div>
+          )}
 
           <div className="mt-2 max-h-36 overflow-auto rounded-md border border-gray-200">
             <table className="min-w-full divide-y divide-gray-200 text-sm">

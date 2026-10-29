@@ -156,6 +156,9 @@ export default function ClientCardPage() {
       address: '',
       title: 'Новый объект',
       contractNumber: '',
+      areaM2: 0,
+      startDate: '',
+      inWork: false,
     }
     patch({ objects: [...client.objects, o] })
   }
@@ -342,6 +345,33 @@ export default function ClientCardPage() {
                       ×
                     </button>
                   </div>
+                  <input
+                    type="number"
+                    min={0}
+                    step="0.1"
+                    className={inputCls}
+                    placeholder="Площадь, м²"
+                    title="Площадь — подставляется в договоры и смету"
+                    value={o.areaM2 || ''}
+                    onChange={(e) =>
+                      patchObject(o.id, { areaM2: Number(e.target.value) || 0 })
+                    }
+                  />
+                  <input
+                    type="date"
+                    className={inputCls}
+                    title="Дата начала работ"
+                    value={o.startDate || ''}
+                    onChange={(e) => patchObject(o.id, { startDate: e.target.value })}
+                  />
+                  <label className="flex items-center gap-2 text-xs text-gray-700">
+                    <input
+                      type="checkbox"
+                      checked={Boolean(o.inWork)}
+                      onChange={(e) => patchObject(o.id, { inWork: e.target.checked })}
+                    />
+                    В работе
+                  </label>
                 </div>
               ))}
             </div>

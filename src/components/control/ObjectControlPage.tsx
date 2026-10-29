@@ -13,11 +13,14 @@ import {
   getOrCreateControlLink,
   hydrateReportsForToken,
   loadControlSelection,
+  REPORTS_CHANGED_EVENT,
   saveControlSelection,
   todayIso,
   type ControlLink,
 } from '../../lib/objectReports'
 import { defaultPeriodRange } from '../../lib/periodReport'
+import { computeWeekReportKpi } from '../../lib/weekRange'
+import { usePageHeaderMeta } from '../../contexts/PageHeaderContext'
 import { PhoneActions } from '../ui/PhoneActions'
 
 type DayCell = { date: string; hasReport: boolean; future: boolean; today: boolean }
@@ -139,6 +142,30 @@ export default function ObjectControlPage() {
   const [periodFrom, setPeriodFrom] = useState(periodDefaults.from)
   const [periodTo, setPeriodTo] = useState(periodDefaults.to)
 
+  const bump = () => setTick((t) => t + 1)
+
+  const weekKpi = useMemo(() => {
+    void tick
+    return computeWeekReportKpi()
+  }, [tick])
+
+  const headerMeta = useMemo(
+    () => (
+      <span className="text-xs tabular-nums text-gray-600">
+        Неделя сб–пт:{' '}
+        <strong className="text-emerald-700">{weekKpi.filled}</strong>
+        {' / '}
+        <strong className="text-rose-600">{weekKpi.missing}</strong>
+        <span className="hidden text-gray-400 sm:inline">
+          {' '}
+          · {weekKpi.objects} об.
+        </span>
+      </span>
+    ),
+    [weekKpi],
+  )
+  usePageHeaderMeta(headerMeta)
+
   const filteredClients = useMemo(
     () =>
       clients.filter((c) =>
@@ -166,14 +193,45 @@ export default function ObjectControlPage() {
   }, [clientId, objectId])
 
   useEffect(() => {
-    if (!link?.token) return
+    if (!link?.token) {
+      bump()
+      return
+    }
     let cancelled = false
     ;(async () => {
+      // сначала локальный календарь, потом API
+      bump()
       await hydrateReportsForToken(link.token)
-      if (!cancelled) setTick((t) => t + 1)
+      if (!cancelled) bump()
     })()
     return () => {
       cancelled = true
+    }
+  }, [link?.token])
+
+  // возврат с формы отчёта / другая вкладка / storage
+  useEffect(() => {
+    const onFocus = () => {
+      bump()
+      if (link?.token) void hydrateReportsForToken(link.token).then(bump)
+    }
+    const onVis = () => {
+      if (document.visibilityState === 'visible') onFocus()
+    }
+    const onReports = (ev: Event) => {
+      const detail = (ev as CustomEvent<{ token?: string }>).detail
+      if (!link?.token || !detail?.token || detail.token === link.token) bump()
+    }
+    const onPageShow = () => onFocus()
+    window.addEventListener('focus', onFocus)
+    window.addEventListener('pageshow', onPageShow)
+    document.addEventListener('visibilitychange', onVis)
+    window.addEventListener(REPORTS_CHANGED_EVENT, onReports)
+    return () => {
+      window.removeEventListener('focus', onFocus)
+      window.removeEventListener('pageshow', onPageShow)
+      document.removeEventListener('visibilitychange', onVis)
+      window.removeEventListener(REPORTS_CHANGED_EVENT, onReports)
     }
   }, [link?.token])
 
@@ -238,12 +296,6 @@ export default function ObjectControlPage() {
   }, [])
 
   useEffect(() => {
-    const onFocus = () => setTick((t) => t + 1)
-    window.addEventListener('focus', onFocus)
-    return () => window.removeEventListener('focus', onFocus)
-  }, [])
-
-  useEffect(() => {
     if (!client) return
     if (objects.length === 1 && objectId !== objects[0].id) {
       setObjectId(objects[0].id)
@@ -297,7 +349,7 @@ export default function ObjectControlPage() {
           </button>
         </div>
         <p className="mt-1.5 text-[11px] text-gray-500">
-          Таблица по всем адресам за период → печать или PDF в браузере.
+          Таблица по всем адресам за период → печать или PDF в браузере. KPI недели (сб–пт) — в шапке.
         </p>
       </div>
 
@@ -399,6 +451,7 @@ export default function ObjectControlPage() {
                 <option key={o.id} value={o.id}>
                   {o.address || o.title}
                   {o.contractNumber ? ` · дог. ${o.contractNumber}` : ''}
+                  {o.inWork ? ' · в работе' : ''}
                 </option>
               ))}
             </select>
@@ -408,7 +461,6 @@ export default function ObjectControlPage() {
 
       {link && object && (
         <>
-          {/* Одна строка: без отчёта + ссылка без карточки */}
           <div className="flex h-8 flex-wrap items-center gap-x-3 gap-y-1 text-sm">
             <span className="shrink-0 text-xs text-gray-500">
               Без отчёта:{' '}

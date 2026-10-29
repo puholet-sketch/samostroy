@@ -43,8 +43,18 @@ const TG_TOKEN = process.env.TELEGRAM_BOT_TOKEN || ''
 const TG_CHAT = process.env.TELEGRAM_CHAT_ID || ''
 
 fs.mkdirSync(IMG_DIR, { recursive: true })
+const REPORT_MEDIA_DIR = path.join(IMG_DIR, 'report-media')
+fs.mkdirSync(REPORT_MEDIA_DIR, { recursive: true })
 
 const store = createStore({ dataDir: DATA_DIR, imgDir: IMG_DIR, dbFile: DB_FILE })
+
+function reportMediaPaths(id) {
+  const safe = String(id).replace(/[^a-zA-Z0-9._-]/g, '_')
+  return {
+    bin: path.join(REPORT_MEDIA_DIR, `${safe}.bin`),
+    meta: path.join(REPORT_MEDIA_DIR, `${safe}.json`),
+  }
+}
 
 function auth(req) {
   const h = req.headers['x-feedback-token']
@@ -183,7 +193,7 @@ const server = http.createServer(async (req, res) => {
       return sendJson(res, 200, {
         ok: true,
         store: store.mode,
-        services: ['feedback', 'object-reports', 'control-links'],
+        services: ['feedback', 'object-reports', 'control-links', 'object-report-media'],
       })
     }
 
@@ -306,6 +316,73 @@ const server = http.createServer(async (req, res) => {
       }
       const saved = await store.upsertObjectReport(report)
       return sendJson(res, 201, saved)
+    }
+
+    // --- Report media blobs (фото/видео sync) ---
+    if (pathname === '/api/object-report-media' && req.method === 'POST') {
+      const bb = Busboy({ headers: req.headers, limits: { fileSize: 6 * 1024 * 1024 } })
+      const fields = {}
+      let fileBuf = null
+      await new Promise((resolve, reject) => {
+        bb.on('file', (_name, stream) => {
+          const chunks = []
+          stream.on('data', (c) => chunks.push(c))
+          stream.on('limit', () => reject(new Error('file too large')))
+          stream.on('end', () => {
+            fileBuf = Buffer.concat(chunks)
+          })
+        })
+        bb.on('field', (name, val) => {
+          fields[name] = val
+        })
+        bb.on('error', reject)
+        bb.on('finish', resolve)
+        req.pipe(bb)
+      })
+      const id = fields.id
+      if (!id || !fileBuf) {
+        return sendJson(res, 400, { error: 'id+file required' })
+      }
+      const paths = reportMediaPaths(id)
+      fs.writeFileSync(paths.bin, fileBuf)
+      fs.writeFileSync(
+        paths.meta,
+        JSON.stringify({
+          id,
+          name: fields.name || id,
+          mime: fields.mime || 'application/octet-stream',
+          kind: fields.kind || 'file',
+          size: fileBuf.length,
+        }),
+      )
+      return sendJson(res, 201, { id, ok: true, size: fileBuf.length })
+    }
+
+    const mediaOne = pathname.match(/^\/api\/object-report-media\/([^/]+)$/)
+    if (mediaOne && req.method === 'GET') {
+      const id = decodeURIComponent(mediaOne[1])
+      const paths = reportMediaPaths(id)
+      if (!fs.existsSync(paths.bin)) return sendJson(res, 404, { error: 'not found' })
+      let mime = 'application/octet-stream'
+      try {
+        if (fs.existsSync(paths.meta)) {
+          const meta = JSON.parse(fs.readFileSync(paths.meta, 'utf8'))
+          if (meta.mime) mime = meta.mime
+        }
+      } catch {
+        /* ignore */
+      }
+      const buf = fs.readFileSync(paths.bin)
+      res.writeHead(200, {
+        'Content-Type': mime,
+        'Content-Length': buf.length,
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers':
+          'Content-Type, X-Feedback-Token, ngrok-skip-browser-warning',
+        'Cache-Control': 'private, max-age=3600',
+      })
+      res.end(buf)
+      return
     }
 
     // --- Control links ---

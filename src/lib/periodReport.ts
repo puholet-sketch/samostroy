@@ -125,11 +125,23 @@ function rowFromReport(
   }
 }
 
+export type BuildPeriodReportOpts = {
+  clientId?: string
+  objectId?: string
+  /** '' | 'has' | 'missing' */
+  reportPresence?: '' | 'has' | 'missing'
+  onlyInWork?: boolean
+}
+
 /**
  * Строки: каждый объект × каждый день периода (до сегодня включительно).
  * Будущие даты в диапазоне отбрасываются — как в календаре контроля.
  */
-export function buildPeriodReportRows(from: string, to: string): PeriodReportRow[] {
+export function buildPeriodReportRows(
+  from: string,
+  to: string,
+  opts: BuildPeriodReportOpts = {},
+): PeriodReportRow[] {
   const today = todayIso()
   let fromIso = from
   let toIso = to
@@ -142,13 +154,36 @@ export function buildPeriodReportRows(from: string, to: string): PeriodReportRow
   if (fromIso > today) return []
 
   const dates = enumerateIsoDates(fromIso, toIso)
-  const objects = collectPeriodObjects()
+  const clients = loadClients()
+  const inWorkKeys = new Set<string>()
+  if (opts.onlyInWork) {
+    for (const c of clients) {
+      for (const o of c.objects ?? []) {
+        if (o.inWork) inWorkKeys.add(`${c.id}:${o.id}`)
+      }
+    }
+  }
+
+  let objects = collectPeriodObjects()
+  if (opts.clientId) {
+    objects = objects.filter((o) => o.clientId === opts.clientId)
+  }
+  if (opts.objectId) {
+    objects = objects.filter((o) => o.objectId === opts.objectId)
+  }
+  if (opts.onlyInWork) {
+    objects = objects.filter((o) => inWorkKeys.has(`${o.clientId}:${o.objectId}`))
+  }
+
   const rows: PeriodReportRow[] = []
 
   for (const obj of objects) {
     for (const date of dates) {
       const report = obj.token ? getReportForDate(obj.token, date) : undefined
-      rows.push(rowFromReport(obj, date, report))
+      const row = rowFromReport(obj, date, report)
+      if (opts.reportPresence === 'has' && row.status !== 'есть') continue
+      if (opts.reportPresence === 'missing' && row.status !== 'нет отчёта') continue
+      rows.push(row)
     }
   }
 

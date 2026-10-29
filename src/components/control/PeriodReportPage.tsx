@@ -1,10 +1,16 @@
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
+import { loadClients } from '../../lib/clients'
 import {
   buildPeriodReportRows,
   defaultPeriodRange,
   type PeriodReportRow,
 } from '../../lib/periodReport'
+import {
+  loadPeriodFilters,
+  savePeriodFilters,
+  type PeriodReportFilters,
+} from '../../lib/periodReportFilters'
 import { todayIso } from '../../lib/objectReports'
 
 function parseIso(raw: string | null, fallback: string): string {
@@ -45,7 +51,27 @@ export default function PeriodReportPage() {
   const from = parseIso(params.get('from'), defaults.from)
   const to = parseIso(params.get('to'), defaults.to)
 
-  const rows = useMemo(() => buildPeriodReportRows(from, to), [from, to])
+  const [filters, setFilters] = useState<PeriodReportFilters>(() => loadPeriodFilters())
+  const clients = useMemo(() => loadClients(), [])
+  const objects = useMemo(() => {
+    const c = clients.find((x) => x.id === filters.clientId)
+    return c?.objects ?? []
+  }, [clients, filters.clientId])
+
+  useEffect(() => {
+    savePeriodFilters(filters)
+  }, [filters])
+
+  const rows = useMemo(
+    () =>
+      buildPeriodReportRows(from, to, {
+        clientId: filters.clientId || undefined,
+        objectId: filters.objectId || undefined,
+        reportPresence: filters.reportPresence,
+        onlyInWork: filters.onlyInWork,
+      }),
+    [from, to, filters],
+  )
 
   useEffect(() => {
     document.title = `Сводный отчёт ${formatRuDate(from)}–${formatRuDate(to)} — СамоСтрой`
@@ -106,6 +132,30 @@ export default function PeriodReportPage() {
           background: #1d4ed8;
           border-color: #1d4ed8;
           color: #fff;
+        }
+        .period-filters {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 0.5rem;
+          margin-bottom: 0.75rem;
+          align-items: end;
+        }
+        .period-filters label {
+          font-size: 0.7rem;
+          color: var(--muted);
+          display: flex;
+          flex-direction: column;
+          gap: 0.15rem;
+        }
+        .period-filters select,
+        .period-filters input[type="checkbox"] {
+          font-size: 0.8rem;
+        }
+        .period-filters select {
+          border: 1px solid #cbd5e1;
+          border-radius: 4px;
+          padding: 0.3rem 0.4rem;
+          min-width: 9rem;
         }
         .period-meta {
           margin: 0 0 0.75rem;
@@ -217,12 +267,73 @@ export default function PeriodReportPage() {
         </div>
       </div>
 
+      <div className="period-filters no-print">
+        <label>
+          Клиент
+          <select
+            value={filters.clientId}
+            onChange={(e) =>
+              setFilters((f) => ({
+                ...f,
+                clientId: e.target.value,
+                objectId: '',
+              }))
+            }
+          >
+            <option value="">Все</option>
+            {clients.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name || c.id}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          Объект
+          <select
+            value={filters.objectId}
+            onChange={(e) => setFilters((f) => ({ ...f, objectId: e.target.value }))}
+            disabled={!filters.clientId}
+          >
+            <option value="">Все</option>
+            {objects.map((o) => (
+              <option key={o.id} value={o.id}>
+                {o.address || o.title}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          Отчёт
+          <select
+            value={filters.reportPresence}
+            onChange={(e) =>
+              setFilters((f) => ({
+                ...f,
+                reportPresence: e.target.value as PeriodReportFilters['reportPresence'],
+              }))
+            }
+          >
+            <option value="">Все дни</option>
+            <option value="has">Только с отчётом</option>
+            <option value="missing">Только без отчёта</option>
+          </select>
+        </label>
+        <label style={{ flexDirection: 'row', alignItems: 'center', gap: '0.35rem' }}>
+          <input
+            type="checkbox"
+            checked={filters.onlyInWork}
+            onChange={(e) => setFilters((f) => ({ ...f, onlyInWork: e.target.checked }))}
+          />
+          Только «в работе»
+        </label>
+      </div>
+
       <SummaryStats rows={rows} />
 
       {rows.length === 0 ? (
         <p className="period-empty">
-          Нет объектов или период пуст. Добавьте адреса в карточках клиентов или выберите другие
-          даты.
+          Нет строк по фильтрам. Снимите фильтры или выберите другие даты / объекты «в работе».
         </p>
       ) : (
         <div className="period-table-wrap">

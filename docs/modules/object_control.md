@@ -26,8 +26,9 @@
 |-----|-----|
 | Ссылки контроля | localStorage + при API → таблица `control_links` |
 | Дневные отчёты (мета) | localStorage + при API → `object_reports` |
-| Медиа вложений | IndexedDB (`mediaStore`) — **пока только браузер** |
+| Медиа вложений | IndexedDB + при API → `POST/GET /api/object-report-media` |
 | Seed (демо pipeline) | `data/daily_reports.json` (отдельный stub UI) |
+| KPI недели | сб–пт, все объекты (`src/lib/weekRange.ts`) — в шапке `/control` |
 
 ### Local pro-stack
 
@@ -37,8 +38,12 @@
 |-------|------|
 | GET | `/api/object-reports?token=` |
 | POST | `/api/object-reports` |
+| POST | `/api/object-report-media` (multipart: id, file, mime…) |
+| GET | `/api/object-report-media/:id` |
 | GET | `/api/control-links/:token` |
 | POST | `/api/control-links` |
+
+Сохранение отчёта: **сначала localStorage** (календарь сразу зелёный), затем API с таймаутом ~12–15 с; при ошибке сети форма пишет «сохранено локально».
 
 Заголовок: `X-Feedback-Token`. Схема: `docker/postgres/init/002_object_reports.sql`.
 

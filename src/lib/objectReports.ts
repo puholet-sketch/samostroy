@@ -2,12 +2,15 @@
  * Локально: localStorage. При настроенном Feedback/API URL — ещё и Postgres через REST.
  */
 
+import { getMediaBlob, putMediaBlob } from './mediaStore'
 import {
   fetchControlLinkRemote,
   fetchObjectReportsRemote,
+  fetchReportMediaRemote,
   isObjectReportsApiConfigured,
   postControlLinkRemote,
   postObjectReportRemote,
+  uploadReportMediaRemote,
 } from './objectReportsApi'
 
 export type ReportMediaMeta = {
@@ -16,6 +19,8 @@ export type ReportMediaMeta = {
   mime: string
   size: number
   kind: 'image' | 'video' | 'file'
+  /** Уже залито на API (для sync между устройствами) */
+  remote?: boolean
 }
 
 export type ObjectDailyReport = {
@@ -41,6 +46,16 @@ const LINKS_KEY = 'samostroy:control_links_v2'
 const LEGACY_LINK_KEY = 'samostroy:control_link_v1'
 const REPORTS_KEY = 'samostroy:object_reports_v1'
 const SELECT_KEY = 'samostroy:control_selection_v1'
+
+/** CustomEvent: календарь контроля / форма перечитывают localStorage. */
+export const REPORTS_CHANGED_EVENT = 'samostroy:object-reports-changed'
+
+function notifyReportsChanged(token?: string) {
+  if (typeof window === 'undefined') return
+  window.dispatchEvent(
+    new CustomEvent(REPORTS_CHANGED_EVENT, { detail: { token: token ?? '' } }),
+  )
+}
 
 function todayIso(): string {
   const d = new Date()
@@ -182,6 +197,15 @@ function saveAllReports(list: ObjectDailyReport[]) {
   localStorage.setItem(REPORTS_KEY, JSON.stringify(list))
 }
 
+function reportRichness(r: ObjectDailyReport): number {
+  return (
+    (r.workDone?.trim().length || 0) +
+    (r.problems?.trim().length || 0) +
+    (r.workerName?.trim().length || 0) +
+    (r.media?.length || 0) * 10
+  )
+}
+
 function mergeReports(
   local: ObjectDailyReport[],
   remote: ObjectDailyReport[],
@@ -191,8 +215,22 @@ function mergeReports(
   for (const r of remote) {
     const key = `${r.token}|${r.date}`
     const prev = map.get(key)
-    if (!prev || Date.parse(r.createdAt) >= Date.parse(prev.createdAt)) {
+    if (!prev) {
       map.set(key, r)
+      continue
+    }
+    const remoteTs = Date.parse(r.createdAt) || 0
+    const localTs = Date.parse(prev.createdAt) || 0
+    // Не затирать более полный локальный отчёт «пустым» remote
+    if (reportRichness(r) === 0 && reportRichness(prev) > 0) continue
+    if (remoteTs > localTs) map.set(key, r)
+    else if (remoteTs === localTs && reportRichness(r) > reportRichness(prev)) {
+      map.set(key, r)
+    } else if (remoteTs < localTs) {
+      // keep local (newer save)
+    } else {
+      // same age: prefer richer
+      if (reportRichness(r) >= reportRichness(prev)) map.set(key, r)
     }
   }
   return [...map.values()]
@@ -200,6 +238,23 @@ function mergeReports(
 
 export function getReportsForToken(token: string): ObjectDailyReport[] {
   return loadAllReports().filter((r) => r.token === token)
+}
+
+async function hydrateMediaBlobs(reports: ObjectDailyReport[]): Promise<void> {
+  if (!isObjectReportsApiConfigured()) return
+  for (const r of reports) {
+    for (const m of r.media ?? []) {
+      if (!m.remote && !m.id) continue
+      try {
+        const existing = await getMediaBlob(m.id)
+        if (existing) continue
+        const blob = await fetchReportMediaRemote(m.id)
+        if (blob) await putMediaBlob(m.id, blob)
+      } catch (e) {
+        console.warn('media hydrate failed', m.id, e)
+      }
+    }
+  }
 }
 
 /** Локально + при API — подтянуть remote и смержить в localStorage. */
@@ -210,8 +265,11 @@ export async function hydrateReportsForToken(token: string): Promise<ObjectDaily
     const remote = await fetchObjectReportsRemote(token)
     const merged = mergeReports(local, remote)
     const others = loadAllReports().filter((r) => r.token !== token)
-    saveAllReports([...others, ...merged.filter((r) => r.token === token)])
-    return merged.filter((r) => r.token === token)
+    const forToken = merged.filter((r) => r.token === token)
+    saveAllReports([...others, ...forToken])
+    notifyReportsChanged(token)
+    void hydrateMediaBlobs(forToken)
+    return forToken
   } catch (e) {
     console.warn('hydrate object-reports failed', e)
     return local
@@ -223,9 +281,14 @@ export function getReportForDate(token: string, date: string): ObjectDailyReport
 }
 
 export function datesWithReports(token: string): Set<string> {
-  return new Set(getReportsForToken(token).map((r) => r.date))
+  return new Set(
+    getReportsForToken(token)
+      .filter((r) => (r.workDone?.trim() || r.workerName?.trim() || (r.media?.length ?? 0) > 0))
+      .map((r) => r.date),
+  )
 }
 
+/** Только localStorage — без fire-and-forget API (API делает saveDailyReportAsync). */
 export function saveDailyReport(
   report: Omit<ObjectDailyReport, 'id' | 'createdAt'> & { id?: string },
 ): ObjectDailyReport {
@@ -248,25 +311,62 @@ export function saveDailyReport(
     list.push(row)
   }
   saveAllReports(list)
-  if (isObjectReportsApiConfigured()) {
-    void postObjectReportRemote(row).catch((e) => {
-      console.warn('object-report sync failed', e)
-    })
-  }
+  notifyReportsChanged(row.token)
   return row
 }
 
-/** Сохранить локально и дождаться API (для публичной формы). */
+async function syncMediaForReport(
+  media: ReportMediaMeta[],
+): Promise<ReportMediaMeta[]> {
+  if (!isObjectReportsApiConfigured() || media.length === 0) return media
+  const out: ReportMediaMeta[] = []
+  for (const m of media) {
+    if (m.remote) {
+      out.push(m)
+      continue
+    }
+    try {
+      const blob = await getMediaBlob(m.id)
+      if (!blob) {
+        out.push(m)
+        continue
+      }
+      await uploadReportMediaRemote(m, blob)
+      out.push({ ...m, remote: true })
+    } catch (e) {
+      console.warn('media upload failed', m.id, e)
+      out.push(m)
+    }
+  }
+  return out
+}
+
+/** Сохранить локально сразу; API — с таймаутом. UI никогда не должен висеть бесконечно. */
 export async function saveDailyReportAsync(
   report: Omit<ObjectDailyReport, 'id' | 'createdAt'> & { id?: string },
 ): Promise<{ row: ObjectDailyReport; synced: boolean; error?: string }> {
-  const row = saveDailyReport(report)
+  // 1) всегда локально (календарь контроля увидит сразу)
+  let row = saveDailyReport(report)
+
   if (!isObjectReportsApiConfigured()) {
     return { row, synced: false }
   }
+
   try {
+    const media = await syncMediaForReport(row.media)
+    if (media.some((m, i) => m.remote !== row.media[i]?.remote)) {
+      row = saveDailyReport({ ...row, media })
+    }
     const remote = await postObjectReportRemote(row)
-    return { row: remote ?? row, synced: true }
+    // зафиксировать ответ API в local (id/media), не теряя локальную полноту
+    const merged = mergeReports([row], [remote])[0] ?? row
+    const list = loadAllReports()
+    const idx = list.findIndex((r) => r.token === merged.token && r.date === merged.date)
+    if (idx >= 0) list[idx] = { ...merged, media: row.media }
+    else list.push({ ...merged, media: row.media })
+    saveAllReports(list)
+    notifyReportsChanged(row.token)
+    return { row: { ...merged, media: row.media }, synced: true }
   } catch (e) {
     return {
       row,
