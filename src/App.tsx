@@ -10,6 +10,7 @@ import CalculatorPage from './components/calculator/CalculatorPage'
 import DocumentsPage from './components/documents/DocumentsPage'
 import ObjectControlPage from './components/control/ObjectControlPage'
 import PeriodReportPage from './components/control/PeriodReportPage'
+import WeeklyPackPage from './components/control/WeeklyPackPage'
 import PublicReportPage from './components/control/PublicReportPage'
 import SecurityPage from './components/security/SecurityPage'
 import UpdatesPage from './components/updates/UpdatesPage'
@@ -39,6 +40,14 @@ export default function App() {
               element={
                 <ProtectedRoute module="object_control">
                   <PeriodReportPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/control/weekly-pack"
+              element={
+                <ProtectedRoute module="object_control">
+                  <WeeklyPackPage />
                 </ProtectedRoute>
               }
             />

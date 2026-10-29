@@ -193,7 +193,13 @@ const server = http.createServer(async (req, res) => {
       return sendJson(res, 200, {
         ok: true,
         store: store.mode,
-        services: ['feedback', 'object-reports', 'control-links', 'object-report-media'],
+        services: [
+          'feedback',
+          'object-reports',
+          'control-links',
+          'object-report-media',
+          'notify',
+        ],
       })
     }
 
@@ -383,6 +389,44 @@ const server = http.createServer(async (req, res) => {
       })
       res.end(buf)
       return
+    }
+
+    // --- Generic notify (email/CRM → Telegram chat; phones logged for phone-bot) ---
+    if (pathname === '/api/notify' && req.method === 'POST') {
+      const raw = await readBody(req)
+      const body = JSON.parse(raw.toString('utf8') || '{}')
+      const text = String(body.text || '').trim()
+      if (!text) return sendJson(res, 400, { error: 'text required' })
+      const phones = Array.isArray(body.phones) ? body.phones.map(String) : []
+      const kind = String(body.kind || 'generic')
+      const header = [
+        kind === 'stage_deadline' ? '⏰ Дедлайны этапов' : '📣 Уведомление',
+        phones.length ? `Тел.: ${phones.join(', ')}` : '',
+      ]
+        .filter(Boolean)
+        .join('\n')
+      const full = `${header}\n\n${text}`.slice(0, 4000)
+
+      if (!TG_TOKEN || !TG_CHAT) {
+        console.warn('notify: Telegram not configured; phones=', phones.join(', '))
+        return sendJson(res, 200, {
+          ok: true,
+          delivered: false,
+          reason: 'telegram_not_configured',
+          phones,
+        })
+      }
+      const sent = await tg('sendMessage', {
+        chat_id: TG_CHAT,
+        text: full,
+        disable_web_page_preview: true,
+      })
+      return sendJson(res, 200, {
+        ok: Boolean(sent),
+        delivered: Boolean(sent),
+        phones,
+        messageId: sent?.result?.message_id ?? null,
+      })
     }
 
     // --- Control links ---

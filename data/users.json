@@ -3,8 +3,9 @@
     "id": "u-owner",
     "login": "owner",
     "password": "owner123",
-    "name": "Владелец",
+    "name": "Даниил",
     "role": "owner",
+    "phone": "",
     "active": true,
     "allowedModules": [
       "clients",
@@ -22,6 +23,7 @@
     "password": "developer123",
     "name": "Разработчик",
     "role": "developer",
+    "phone": "",
     "active": true,
     "allowedModules": ["feedback", "updates", "object_control"]
   },
@@ -31,6 +33,7 @@
     "password": "foreman123",
     "name": "Прораб",
     "role": "foreman",
+    "phone": "",
     "active": true,
     "allowedModules": ["object_control", "updates"]
   }

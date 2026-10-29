@@ -1,7 +1,9 @@
 /** Версии расчёта по объекту: несколько снимков, одна — согласованная. */
 
 import type { CalcSmetaLine } from './calcTransfer'
-import { applyDiscount, loadCalcTransfer } from './calcTransfer'
+import { applyDiscount, loadCalcTransfer, saveCalcTransfer } from './calcTransfer'
+
+export type CalcVersionStatus = 'draft' | 'agreed'
 
 export type CalcVersion = {
   id: string
@@ -37,6 +39,14 @@ function saveAll(list: CalcVersion[]) {
   localStorage.setItem(KEY, JSON.stringify(list))
 }
 
+export function versionStatus(v: CalcVersion): CalcVersionStatus {
+  return v.agreed ? 'agreed' : 'draft'
+}
+
+export function versionStatusLabel(v: CalcVersion): string {
+  return v.agreed ? 'согласованный' : 'расчёт'
+}
+
 export function listCalcVersions(clientId: string, objectId: string): CalcVersion[] {
   return loadAll()
     .filter((v) => v.clientId === clientId && v.objectId === objectId)
@@ -48,6 +58,10 @@ export function getAgreedCalcVersion(
   objectId: string,
 ): CalcVersion | undefined {
   return listCalcVersions(clientId, objectId).find((v) => v.agreed)
+}
+
+export function getCalcVersion(id: string): CalcVersion | undefined {
+  return loadAll().find((v) => v.id === id)
 }
 
 /** Сохранить текущий calcTransfer как новую (или обновлённую) версию. */
@@ -93,5 +107,51 @@ export function agreeCalcVersion(id: string): CalcVersion | null {
     return { ...v, agreed: false }
   })
   saveAll(next)
-  return next.find((v) => v.id === id) ?? null
+  const agreed = next.find((v) => v.id === id) ?? null
+  if (agreed) applyVersionToTransfer(agreed)
+  return agreed
+}
+
+/** Снять согласование (все версии объекта снова «расчёт»). */
+export function clearAgreedCalcVersion(clientId: string, objectId: string): void {
+  const now = new Date().toISOString()
+  const next = loadAll().map((v) => {
+    if (v.clientId !== clientId || v.objectId !== objectId || !v.agreed) return v
+    return { ...v, agreed: false, updatedAt: now }
+  })
+  saveAll(next)
+}
+
+export function renameCalcVersion(id: string, label: string): CalcVersion | null {
+  const list = loadAll()
+  const idx = list.findIndex((v) => v.id === id)
+  if (idx < 0) return null
+  const nextLabel = label.trim()
+  if (!nextLabel) return list[idx]
+  list[idx] = { ...list[idx], label: nextLabel, updatedAt: new Date().toISOString() }
+  saveAll(list)
+  return list[idx]
+}
+
+export function deleteCalcVersion(id: string): boolean {
+  const list = loadAll()
+  const next = list.filter((v) => v.id !== id)
+  if (next.length === list.length) return false
+  saveAll(next)
+  return true
+}
+
+/** Подставить версию в calcTransfer (калькулятор / договоры). */
+export function applyVersionToTransfer(v: CalcVersion): void {
+  const prev = loadCalcTransfer()
+  saveCalcTransfer({
+    ...prev,
+    transferToRemont: true,
+    withDetails: true,
+    total: v.total,
+    baseTotal: v.baseTotal,
+    discountPct: v.discountPct,
+    lines: v.lines,
+    updatedAt: new Date().toISOString(),
+  })
 }

@@ -39,12 +39,34 @@ function save<T>(key: string, value: T): void {
 
 export class JsonRepository implements IRepository {
   async getUsers(): Promise<User[]> {
-    // v3: seed includes developer demo account
-    return load('users_v3', usersSeed as User[])
+    // v4: phone on users for TG / deadline notify
+    const seed = usersSeed as User[]
+    try {
+      const rawV4 = localStorage.getItem(PREFIX + 'users_v4')
+      if (rawV4) {
+        const parsed = JSON.parse(rawV4) as User[]
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed.map((u) => ({
+            ...u,
+            phone: typeof u.phone === 'string' ? u.phone : '',
+          }))
+        }
+      }
+    } catch {
+      /* ignore */
+    }
+    const legacy = load('users_v3', seed)
+    const migrated = (Array.isArray(legacy) ? legacy : seed).map((u) => ({
+      ...u,
+      phone: typeof (u as User).phone === 'string' ? (u as User).phone : '',
+      name: u.id === 'u-owner' && (!u.name || u.name === 'Владелец') ? 'Даниил' : u.name,
+    }))
+    save('users_v4', migrated)
+    return migrated
   }
 
   async saveUsers(users: User[]): Promise<void> {
-    save('users_v3', users)
+    save('users_v4', users)
   }
 
   async getPermissions(): Promise<PermissionsData> {

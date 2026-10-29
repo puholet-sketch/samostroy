@@ -7,18 +7,40 @@ function toIso(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
-/** Текущая неделя Sat–Fri, обрезанная по «сегодня» (будущие дни не считаем). */
-export function currentWeekSatFri(ref = new Date()): { from: string; to: string } {
+/** Суббота начала недели Sat–Fri, содержащей ref. */
+export function weekSatContaining(ref = new Date()): Date {
   const today = new Date(ref.getFullYear(), ref.getMonth(), ref.getDate())
   const dow = today.getDay() // 0=Sun … 6=Sat
-  // Суббота начала недели: если сегодня сб (6) — сегодня; иначе назад до сб
   const daysSinceSat = (dow + 1) % 7
   const sat = new Date(today)
   sat.setDate(today.getDate() - daysSinceSat)
+  return sat
+}
+
+/** Полная неделя сб→пт (без обрезки по сегодня). День отчёта клиенту — пятница. */
+export function fullWeekSatFri(ref = new Date()): { from: string; to: string } {
+  const sat = weekSatContaining(ref)
   const fri = new Date(sat)
   fri.setDate(sat.getDate() + 6)
+  return { from: toIso(sat), to: toIso(fri) }
+}
+
+/** Сдвиг недели на delta недель (отриц. = назад). */
+export function shiftWeekSatFri(
+  fromIso: string,
+  deltaWeeks: number,
+): { from: string; to: string } {
+  const sat = new Date(`${fromIso.slice(0, 10)}T12:00:00`)
+  sat.setDate(sat.getDate() + deltaWeeks * 7)
+  return fullWeekSatFri(sat)
+}
+
+/** Текущая неделя Sat–Fri, обрезанная по «сегодня» (будущие дни не считаем). */
+export function currentWeekSatFri(ref = new Date()): { from: string; to: string } {
+  const { from, to: fri } = fullWeekSatFri(ref)
+  const today = toIso(new Date(ref.getFullYear(), ref.getMonth(), ref.getDate()))
   const to = fri > today ? today : fri
-  return { from: toIso(sat), to: toIso(to) }
+  return { from, to }
 }
 
 export type WeekKpi = {

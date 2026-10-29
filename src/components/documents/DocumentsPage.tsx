@@ -4,9 +4,14 @@ import { Link } from 'react-router-dom'
 import { loadCalcTransfer, saveCalcTransfer, type CalcSmetaLine } from '../../lib/calcTransfer'
 import {
   agreeCalcVersion,
+  applyVersionToTransfer,
+  clearAgreedCalcVersion,
+  deleteCalcVersion,
   getAgreedCalcVersion,
   listCalcVersions,
+  renameCalcVersion,
   saveCalcVersionFromTransfer,
+  versionStatusLabel,
   type CalcVersion,
 } from '../../lib/calcVersions'
 import { loadClients, type ClientCard, type ClientObject } from '../../lib/clients'
@@ -408,6 +413,38 @@ export default function DocumentsPage() {
     setCalcVersions(listCalcVersions(clientId, objectId))
   }
 
+  /** Подтянуть версию в договор ремонта + смету (по умолчанию после согласования). */
+  function applyVersionToDocs(v: CalcVersion, switchTabs = true) {
+    applyVersionToTransfer(v)
+    setCalcTransfer({
+      ...loadCalcTransfer(),
+      transferToRemont: true,
+      withDetails: true,
+      total: v.total,
+      baseTotal: v.baseTotal,
+      discountPct: v.discountPct,
+      lines: v.lines,
+      updatedAt: v.updatedAt,
+    })
+    setRemont((f) => ({ ...f, totalSum: v.total }))
+    setSmeta((f) => ({
+      ...f,
+      discountPct: v.discountPct,
+      lines: v.lines.map((l) => ({
+        name: l.name,
+        unit: l.unit,
+        qty: l.qty,
+        price: l.price,
+        section: l.section || 'Прочее',
+      })),
+      fromCalc: true,
+    }))
+    if (switchTabs) {
+      setKind('remont')
+      setVersionMsg('Согласовано → договор и смета заполнены. Сгенерируйте оба документа.')
+    }
+  }
+
   /** Подтянуть сумму / детализацию из калькулятора в договор ремонт */
   function takeFromCalculator(mode: 'summary' | 'details') {
     const t = loadCalcTransfer()
@@ -705,79 +742,146 @@ export default function DocumentsPage() {
           </p>
         )}
         {client && objectId && (
-          <div className="mt-2 rounded-md border border-gray-100 bg-gray-50 px-2 py-1.5">
+          <div className="mt-2 rounded-md border border-indigo-100 bg-indigo-50/40 px-2.5 py-2">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-[11px] font-medium text-gray-500">Версии расчёта</span>
+              <span className="text-[11px] font-semibold uppercase tracking-wide text-indigo-800">
+                Версии расчёта
+              </span>
               <button
                 type="button"
-                className="text-xs font-medium text-blue-700 hover:underline"
+                className="rounded border border-indigo-200 bg-white px-2 py-0.5 text-xs font-medium text-indigo-800 hover:bg-indigo-50 disabled:opacity-40"
                 onClick={() => {
-                  saveCalcVersionFromTransfer({ clientId, objectId })
-                  setVersionMsg('Версия сохранена')
+                  const label = window.prompt(
+                    'Название версии',
+                    `Версия ${new Date().toLocaleString('ru-RU')}`,
+                  )
+                  if (label === null) return
+                  saveCalcVersionFromTransfer({
+                    clientId,
+                    objectId,
+                    label: label.trim() || undefined,
+                  })
+                  setVersionMsg('Версия сохранена со статусом «расчёт»')
                   refreshCalcVersions()
                 }}
                 disabled={!calcTransfer.lines.length && !calcTransfer.total}
               >
-                Сохранить текущую
+                Сохранить снимок
               </button>
+              {getAgreedCalcVersion(clientId, objectId) && (
+                <button
+                  type="button"
+                  className="rounded border border-emerald-300 bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-800 hover:bg-emerald-100"
+                  onClick={() => {
+                    const agreed = getAgreedCalcVersion(clientId, objectId)
+                    if (!agreed) return
+                    applyVersionToDocs(agreed, true)
+                    setVersionMsg(
+                      'Договор ремонта и смета заполнены из согласованной — сгенерируйте оба документа (вкладки)',
+                    )
+                  }}
+                >
+                  Договор + смета из согласованной
+                </button>
+              )}
               {versionMsg && (
-                <span className="text-[11px] text-emerald-700">{versionMsg}</span>
+                <span className="text-[11px] text-emerald-800">{versionMsg}</span>
               )}
             </div>
+            <p className="mt-1 text-[11px] text-gray-500">
+              Несколько версий на объект. Статус «расчёт» или «согласованный» (только одна).
+              Из согласованной по умолчанию — договор ремонта и смета (не акт).
+            </p>
             {calcVersions.length === 0 ? (
               <p className="mt-1 text-[11px] text-gray-400">
-                Пока нет версий. Сохраните снимок из калькулятора; одну можно пометить
-                согласованной — из неё подтянутся договор и смета.
+                Пока нет версий — заполните калькулятор и сохраните снимок.
               </p>
             ) : (
-              <ul className="mt-1 max-h-24 space-y-0.5 overflow-y-auto text-xs">
+              <ul className="mt-1.5 max-h-40 space-y-1 overflow-y-auto text-xs">
                 {calcVersions.map((v) => (
-                  <li key={v.id} className="flex flex-wrap items-center gap-2">
-                    <span className="min-w-0 flex-1 truncate text-gray-800">
-                      {v.label}
-                      {v.agreed ? ' · согласованная' : ''}
-                      {' · '}
-                      {formatMoney(v.total)} ₽
+                  <li
+                    key={v.id}
+                    className={`flex flex-wrap items-center gap-1.5 rounded border px-2 py-1 ${
+                      v.agreed
+                        ? 'border-emerald-300 bg-emerald-50'
+                        : 'border-gray-200 bg-white'
+                    }`}
+                  >
+                    <span
+                      className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase ${
+                        v.agreed
+                          ? 'bg-emerald-600 text-white'
+                          : 'bg-gray-200 text-gray-700'
+                      }`}
+                    >
+                      {versionStatusLabel(v)}
                     </span>
-                    {!v.agreed && (
+                    <span className="min-w-0 flex-1 truncate font-medium text-gray-900">
+                      {v.label}
+                    </span>
+                    <span className="tabular-nums text-gray-600">
+                      {formatMoney(v.total)} ₽
+                      {v.discountPct > 0 ? ` (−${v.discountPct}%)` : ''}
+                    </span>
+                    <button
+                      type="button"
+                      className="text-blue-700 hover:underline"
+                      title="Подставить в формы"
+                      onClick={() => {
+                        applyVersionToDocs(v, false)
+                        setVersionMsg(`Загружена: ${v.label}`)
+                      }}
+                    >
+                      Загрузить
+                    </button>
+                    {!v.agreed ? (
                       <button
                         type="button"
-                        className="shrink-0 text-emerald-700 hover:underline"
+                        className="font-medium text-emerald-700 hover:underline"
                         onClick={() => {
-                          agreeCalcVersion(v.id)
-                          setVersionMsg('Версия согласована')
+                          const agreed = agreeCalcVersion(v.id)
                           refreshCalcVersions()
-                          const agreed = getAgreedCalcVersion(clientId, objectId)
-                          if (agreed) {
-                            setCalcTransfer((t) => ({
-                              ...t,
-                              transferToRemont: true,
-                              withDetails: true,
-                              total: agreed.total,
-                              baseTotal: agreed.baseTotal,
-                              discountPct: agreed.discountPct,
-                              lines: agreed.lines,
-                              updatedAt: agreed.updatedAt,
-                            }))
-                            setRemont((f) => ({ ...f, totalSum: agreed.total }))
-                            setSmeta((f) => ({
-                              ...f,
-                              discountPct: agreed.discountPct,
-                              lines: agreed.lines.map((l) => ({
-                                name: l.name,
-                                unit: l.unit,
-                                qty: l.qty,
-                                price: l.price,
-                                section: l.section || 'Прочее',
-                              })),
-                              fromCalc: true,
-                            }))
-                          }
+                          if (agreed) applyVersionToDocs(agreed, true)
                         }}
                       >
                         Согласовать
                       </button>
+                    ) : (
+                      <button
+                        type="button"
+                        className="text-amber-800 hover:underline"
+                        onClick={() => {
+                          clearAgreedCalcVersion(clientId, objectId)
+                          setVersionMsg('Согласование снято')
+                          refreshCalcVersions()
+                        }}
+                      >
+                        Снять
+                      </button>
                     )}
+                    <button
+                      type="button"
+                      className="text-gray-500 hover:underline"
+                      onClick={() => {
+                        const next = window.prompt('Переименовать версию', v.label)
+                        if (next === null) return
+                        renameCalcVersion(v.id, next)
+                        refreshCalcVersions()
+                      }}
+                    >
+                      Имя
+                    </button>
+                    <button
+                      type="button"
+                      className="text-rose-600 hover:underline"
+                      onClick={() => {
+                        if (!confirm('Удалить версию?')) return
+                        deleteCalcVersion(v.id)
+                        refreshCalcVersions()
+                      }}
+                    >
+                      Удал.
+                    </button>
                   </li>
                 ))}
               </ul>

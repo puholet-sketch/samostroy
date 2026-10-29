@@ -18,8 +18,9 @@ import {
   todayIso,
   type ControlLink,
 } from '../../lib/objectReports'
+import { runDeadlineNotify } from '../../lib/deadlineNotify'
 import { defaultPeriodRange } from '../../lib/periodReport'
-import { computeWeekReportKpi } from '../../lib/weekRange'
+import { computeWeekReportKpi, fullWeekSatFri } from '../../lib/weekRange'
 import { usePageHeaderMeta } from '../../contexts/PageHeaderContext'
 import { PhoneActions } from '../ui/PhoneActions'
 
@@ -291,8 +292,22 @@ export default function ObjectControlPage() {
     navigate(`/control/period-report?${qs.toString()}`)
   }
 
+  function openWeeklyPack() {
+    if (!clientId || !objectId) return
+    const { from, to } = fullWeekSatFri()
+    const qs = new URLSearchParams({ clientId, objectId, from, to })
+    navigate(`/control/weekly-pack?${qs.toString()}`)
+  }
+
   useEffect(() => {
     document.title = 'Контроль объекта — СамоСтрой'
+  }, [])
+
+  // тихая проверка дедлайнов этапов (1×/сутки, без UI-шума)
+  useEffect(() => {
+    void runDeadlineNotify({ withinDays: 3 }).catch(() => {
+      /* ignore offline / missing channels */
+    })
   }, [])
 
   useEffect(() => {
@@ -347,9 +362,19 @@ export default function ObjectControlPage() {
           >
             Выгрузить
           </button>
+          <button
+            type="button"
+            onClick={openWeeklyPack}
+            disabled={!clientId || !objectId}
+            className="inline-flex h-[34px] items-center rounded-md border border-indigo-300 bg-indigo-50 px-3 text-sm font-medium text-indigo-900 shadow-sm hover:bg-indigo-100 disabled:cursor-not-allowed disabled:opacity-50"
+            title={!clientId || !objectId ? 'Сначала выберите клиента и объект' : undefined}
+          >
+            Пакет клиенту (сб→пт)
+          </button>
         </div>
         <p className="mt-1.5 text-[11px] text-gray-500">
-          Таблица по всем адресам за период → печать или PDF в браузере. KPI недели (сб–пт) — в шапке.
+          Сводный — все адреса. «Пакет клиенту» — день за днём за неделю сб→пт (пятница = день
+          отчёта) с фото. KPI недели — в шапке.
         </p>
       </div>
 

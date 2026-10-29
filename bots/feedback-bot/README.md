@@ -47,6 +47,7 @@ Get-Content docker/postgres/migrations/002_object_reports.sql | docker compose e
 1. `@BotFather` → `TELEGRAM_BOT_TOKEN`
 2. `TELEGRAM_CHAT_ID`
 3. Webhook (опц.): `…/setWebhook?url=https://YOUR_TUNNEL/telegram/webhook`
+4. Дедлайны этапов из CRM: `POST /api/notify` `{ text, phones[], kind }` → `sendMessage` в `TELEGRAM_CHAT_ID` (нужны `TELEGRAM_BOT_TOKEN` + chat). Без токена ответ `delivered: false`.
 
 Без webhook кнопки в Telegram не обновят API (статус — из инбокса CRM).
 

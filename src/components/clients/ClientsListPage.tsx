@@ -35,6 +35,8 @@ export default function ClientsListPage() {
   const [qName, setQName] = useState('')
   const [qPhone, setQPhone] = useState('')
   const [qChannel, setQChannel] = useState('')
+  /** Клиенты с ≥1 объектом «в работе» */
+  const [onlyInWork, setOnlyInWork] = useState(false)
   const [page, setPage] = useState(1)
 
   useEffect(() => {
@@ -85,18 +87,24 @@ export default function ClientsListPage() {
   usePageHeaderActions(headerBtn)
 
   const filtered = useMemo(() => {
-    const matched = clients.filter((c) =>
-      matchClientFilters(c, { name: qName, phone: qPhone, channel: qChannel }),
-    )
+    const matched = clients.filter((c) => {
+      if (!matchClientFilters(c, { name: qName, phone: qPhone, channel: qChannel })) {
+        return false
+      }
+      if (onlyInWork) {
+        return (c.objects ?? []).some((o) => o.inWork)
+      }
+      return true
+    })
     return sortClientsRecentFirst(matched)
-  }, [clients, qName, qPhone, qChannel])
+  }, [clients, qName, qPhone, qChannel, onlyInWork])
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
   const safePage = Math.min(page, totalPages)
 
   useEffect(() => {
     setPage(1)
-  }, [qName, qPhone, qChannel])
+  }, [qName, qPhone, qChannel, onlyInWork])
 
   useEffect(() => {
     if (page > totalPages) setPage(totalPages)
@@ -109,15 +117,17 @@ export default function ClientsListPage() {
 
   const leads = clients.filter(isLead).length
   const contracts = clients.filter(isContract).length
+  const inWorkClients = clients.filter((c) => (c.objects ?? []).some((o) => o.inWork)).length
   const from = filtered.length === 0 ? 0 : (safePage - 1) * PAGE_SIZE + 1
   const to = Math.min(safePage * PAGE_SIZE, filtered.length)
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <Kpi label="Всего" value={clients.length} accent="blue" />
         <Kpi label="Лиды" value={leads} accent="amber" />
         <Kpi label="Договоры" value={contracts} accent="emerald" />
+        <Kpi label="В работе" value={inWorkClients} accent="blue" />
       </div>
 
       <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm sm:p-5">
@@ -147,6 +157,14 @@ export default function ClientsListPage() {
               </option>
             ))}
           </select>
+          <label className="inline-flex items-center gap-1.5 rounded-md border border-gray-300 bg-white px-2.5 py-1.5 text-sm text-gray-800 shadow-sm">
+            <input
+              type="checkbox"
+              checked={onlyInWork}
+              onChange={(e) => setOnlyInWork(e.target.checked)}
+            />
+            Объект в работе
+          </label>
         </div>
         <div className="overflow-x-auto rounded-md border border-gray-200">
           <table className="min-w-full divide-y divide-gray-200 text-sm">
@@ -158,18 +176,21 @@ export default function ClientsListPage() {
                 <th className="whitespace-nowrap px-4 py-3 font-medium">Город</th>
                 <th className="whitespace-nowrap px-4 py-3 font-medium">Менеджер</th>
                 <th className="whitespace-nowrap px-4 py-3 font-medium">Тег</th>
+                <th className="whitespace-nowrap px-4 py-3 font-medium">В работе</th>
                 <th className="whitespace-nowrap px-4 py-3 font-medium">Тип</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 bg-white">
               {pageRows.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="px-4 py-8 text-center text-gray-500">
+                  <td colSpan={8} className="px-4 py-8 text-center text-gray-500">
                     Ничего не найдено
                   </td>
                 </tr>
               )}
-              {pageRows.map((c) => (
+              {pageRows.map((c) => {
+                const inWorkCount = (c.objects ?? []).filter((o) => o.inWork).length
+                return (
                 <tr
                   key={c.id}
                   className="cursor-pointer hover:bg-blue-50/60"
@@ -198,6 +219,15 @@ export default function ClientsListPage() {
                     </span>
                   </td>
                   <td className="whitespace-nowrap px-4 py-3">
+                    {inWorkCount > 0 ? (
+                      <span className="inline-flex rounded-md bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-800">
+                        {inWorkCount} об.
+                      </span>
+                    ) : (
+                      <span className="text-xs text-gray-400">—</span>
+                    )}
+                  </td>
+                  <td className="whitespace-nowrap px-4 py-3">
                     <span
                       className={`inline-flex rounded-md px-2 py-0.5 text-xs font-semibold ${
                         c.fizurlico === 'ur'
@@ -209,7 +239,7 @@ export default function ClientsListPage() {
                     </span>
                   </td>
                 </tr>
-              ))}
+              )})}
             </tbody>
           </table>
         </div>

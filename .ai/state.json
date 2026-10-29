@@ -2,13 +2,15 @@
   "v": 4,
   "updated": "2026-10-29",
   "status": "active",
-  "goal": "Sprint 2026-10-29-a: control bugs + area + akt + week KPI → Pages",
-  "next": "После деплоя: проверить save/reopen отчёта; weekly pack + notify + phone roles",
-  "blockers": [],
+  "goal": "Sprint 2026-10-29-b: versions + weekly pack + notify + inWork → Pages",
+  "next": "После CDN: проверить версии, weekly-pack, дедлайны (email/TG), фильтр клиентов",
+  "blockers": [
+    "TG notify needs Docker API + TELEGRAM_* + ngrok"
+  ],
   "hot_files": [
-    "src/lib/objectReports.ts",
-    "src/components/control/ObjectControlPage.tsx",
-    "src/components/documents/DocumentsPage.tsx",
+    "src/lib/calcVersions.ts",
+    "src/components/control/WeeklyPackPage.tsx",
+    "src/lib/deadlineNotify.ts",
     "data/changelog.json",
     "docs/customer-calls/2026-10-29-sprint-decisions.md"
   ]

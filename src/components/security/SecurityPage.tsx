@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { api } from '../../services/api'
 import { useAuth } from '../../contexts/AuthContext'
+import { runDeadlineNotify, SPRINT_NOTIFY_PHONE } from '../../lib/deadlineNotify'
 import {
   DEFAULT_FEEDBACK_EMAIL_TO,
   loadFeedbackApiConfig,
@@ -8,6 +9,7 @@ import {
   saveFeedbackApiConfig,
   saveFeedbackEmailConfig,
 } from '../../lib/feedbackConfig'
+import { formatDeadlineLine } from '../../lib/stageDeadlines'
 import {
   MVP_MODULE_LABEL,
   MVP_MODULES,
@@ -57,6 +59,7 @@ const emptyForm = (): Omit<User, 'id'> & { id?: string } => ({
   login: '',
   password: '',
   name: '',
+  phone: '',
   role: 'foreman',
   active: true,
   allowedModules: ['object_control', 'updates'],
@@ -96,6 +99,7 @@ export default function SecurityPage() {
       login: u.login,
       password: u.password,
       name: u.name,
+      phone: u.phone || '',
       role,
       active: u.active,
       allowedModules: u.allowedModules?.length
@@ -146,6 +150,7 @@ export default function SecurityPage() {
         login: form.login.trim(),
         password: form.password,
         name: form.name.trim(),
+        phone: (form.phone || '').trim(),
         role,
         active: form.active,
         allowedModules: mods,
@@ -207,6 +212,7 @@ export default function SecurityPage() {
 
       {tab === 'feedback' && (
         <div className="space-y-4">
+          <DeadlineNotifyPanel />
           <FeedbackApiSettings />
           <FeedbackEmailSettings />
         </div>
@@ -244,6 +250,21 @@ export default function SecurityPage() {
                   />
                 </label>
               </div>
+              <label className="block">
+                <span className="mb-0.5 block text-xs text-gray-500">
+                  Телефон (Telegram / уведомления)
+                </span>
+                <input
+                  className={inputCls}
+                  value={form.phone || ''}
+                  onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                  placeholder="+7…"
+                  inputMode="tel"
+                />
+                <span className="mt-0.5 block text-[11px] text-gray-400">
+                  Дедлайны этапов: email + TG через API; +79773639300 всегда в рассылке.
+                </span>
+              </label>
               <label className="block">
                 <span className="mb-0.5 block text-xs text-gray-500">Роль</span>
                 <select
@@ -330,6 +351,7 @@ export default function SecurityPage() {
                     <p className="text-xs text-gray-500">
                       {roleLabel(normalizeSecurityRole(u.role))}
                       {!u.active ? ' · отключена' : ''}
+                      {u.phone ? ` · ${u.phone}` : ' · без телефона'}
                       {' · '}
                       {(u.allowedModules ?? [])
                         .map((m) => MVP_MODULE_LABEL[m as keyof typeof MVP_MODULE_LABEL] || m)
@@ -357,6 +379,74 @@ export default function SecurityPage() {
         </div>
       )}
     </div>
+  )
+}
+
+function DeadlineNotifyPanel() {
+  const [busy, setBusy] = useState(false)
+  const [log, setLog] = useState('')
+
+  async function run(force: boolean) {
+    setBusy(true)
+    setLog('')
+    try {
+      const r = await runDeadlineNotify({ withinDays: 3, force })
+      if (r.deadlines.length === 0) {
+        setLog('Ближайших дедлайнов (3 дня) нет. Нужны объекты «в работе» с датой старта.')
+        return
+      }
+      if (r.alreadySent && !force) {
+        setLog(`Уже отправляли сегодня (${r.deadlines.length} шт.). «Принудительно» — повтор.`)
+        return
+      }
+      const lines = [
+        `Дедлайнов: ${r.deadlines.length}`,
+        `Получатели: ${r.recipients.map((x) => `${x.name} ${x.phone}`).join('; ')}`,
+        `Email: ${r.email.skipped ? 'пропуск' : r.email.ok ? 'ok' : r.email.error}`,
+        `Telegram: ${r.telegram.skipped ? 'пропуск (API/туннель)' : r.telegram.ok ? 'ok' : r.telegram.error}`,
+        '',
+        ...r.deadlines.slice(0, 8).map((d) => formatDeadlineLine(d)),
+      ]
+      setLog(lines.join('\n'))
+    } catch (e) {
+      setLog(e instanceof Error ? e.message : String(e))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <Panel title="Дедлайны этапов → email + Telegram">
+      <p className="mb-2 text-sm text-gray-600">
+        От даты старта объекта считаются этапы договора (дизайн / ремонт). Рассылка на{' '}
+        <span className="font-medium tabular-nums">{SPRINT_NOTIFY_PHONE}</span>, прораба и
+        владельца (телефоны в учётках). TG — через Feedback API + бот; без Docker/ngrok/токена
+        останется email (Web3Forms).
+      </p>
+      <div className="flex flex-wrap gap-2">
+        <button
+          type="button"
+          disabled={busy}
+          onClick={() => void run(false)}
+          className="rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
+        >
+          {busy ? '…' : 'Проверить и отправить'}
+        </button>
+        <button
+          type="button"
+          disabled={busy}
+          onClick={() => void run(true)}
+          className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 hover:bg-gray-50 disabled:opacity-60"
+        >
+          Принудительно
+        </button>
+      </div>
+      {log && (
+        <pre className="mt-2 max-h-48 overflow-auto whitespace-pre-wrap rounded-md bg-gray-50 p-2 text-[11px] text-gray-700">
+          {log}
+        </pre>
+      )}
+    </Panel>
   )
 }
 

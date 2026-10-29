@@ -63,6 +63,8 @@ export type User = {
   name: string
   role: Role
   active: boolean
+  /** Телефон для Telegram / phone-bot уведомлений (+7…) */
+  phone?: string
   linkedObjectIds?: string[]
   /** Какие разделы видны этой учётке (если задано — перекрывает матрицу роли) */
   allowedModules?: ModuleKey[]
