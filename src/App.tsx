@@ -25,6 +25,13 @@ function HomeRedirect() {
   return <Navigate to={to} replace />
 }
 
+/** Сводный / пакет клиенту — не для прораба */
+function DenyForeman({ children }: { children: React.ReactNode }) {
+  const { user } = useAuth()
+  if (user?.role === 'foreman') return <Navigate to="/control" replace />
+  return <>{children}</>
+}
+
 export default function App() {
   return (
     <AuthProvider>
@@ -39,7 +46,9 @@ export default function App() {
               path="/control/period-report"
               element={
                 <ProtectedRoute module="object_control">
-                  <PeriodReportPage />
+                  <DenyForeman>
+                    <PeriodReportPage />
+                  </DenyForeman>
                 </ProtectedRoute>
               }
             />
@@ -47,7 +56,9 @@ export default function App() {
               path="/control/weekly-pack"
               element={
                 <ProtectedRoute module="object_control">
-                  <WeeklyPackPage />
+                  <DenyForeman>
+                    <WeeklyPackPage />
+                  </DenyForeman>
                 </ProtectedRoute>
               }
             />
@@ -104,6 +115,14 @@ export default function App() {
                 element={
                   <ProtectedRoute module="object_control">
                     <ObjectControlPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/control/report/:token"
+                element={
+                  <ProtectedRoute module="object_control">
+                    <PublicReportPage />
                   </ProtectedRoute>
                 }
               />

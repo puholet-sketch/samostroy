@@ -40,7 +40,7 @@ const ROLE_OPTS: { id: Role; label: string; defaultModules: ModuleKey[] }[] = [
   {
     id: 'foreman',
     label: 'Прораб',
-    defaultModules: ['object_control', 'updates'],
+    defaultModules: ['object_control'],
   },
 ]
 
@@ -62,7 +62,7 @@ const emptyForm = (): Omit<User, 'id'> & { id?: string } => ({
   phone: '',
   role: 'foreman',
   active: true,
-  allowedModules: ['object_control', 'updates'],
+  allowedModules: ['object_control'],
 })
 
 export default function SecurityPage() {

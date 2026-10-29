@@ -21,8 +21,13 @@ import {
 import { runDeadlineNotify } from '../../lib/deadlineNotify'
 import { defaultPeriodRange } from '../../lib/periodReport'
 import { computeWeekReportKpi, fullWeekSatFri } from '../../lib/weekRange'
+import { useAuth } from '../../contexts/AuthContext'
 import { usePageHeaderMeta } from '../../contexts/PageHeaderContext'
 import { PhoneActions } from '../ui/PhoneActions'
+
+function controlReportPath(token: string, date: string) {
+  return `/control/report/${token}?date=${encodeURIComponent(date)}`
+}
 
 type DayCell = { date: string; hasReport: boolean; future: boolean; today: boolean }
 
@@ -127,6 +132,8 @@ const inputCls =
 
 export default function ObjectControlPage() {
   const navigate = useNavigate()
+  const { user } = useAuth()
+  const isForeman = user?.role === 'foreman'
   const currentYear = new Date().getFullYear()
   const [clients] = useState<ClientCard[]>(() => loadClients())
   const [qName, setQName] = useState('')
@@ -261,7 +268,7 @@ export default function ObjectControlPage() {
 
   function openReport(date: string) {
     if (!link) return
-    navigate(`/report/${link.token}?date=${encodeURIComponent(date)}`)
+    navigate(controlReportPath(link.token, date))
   }
 
   function pickClient(c: ClientCard) {
@@ -323,60 +330,62 @@ export default function ObjectControlPage() {
 
   return (
     <div className="space-y-3">
-      <div className="rounded-lg border border-gray-200 bg-white p-3 shadow-sm">
-        <p className="mb-2 text-xs font-medium text-gray-500">Сводный отчёт по всем объектам</p>
-        <div className="flex flex-wrap items-end gap-2">
-          <label className="min-w-0">
-            <span className="mb-0.5 block text-[10px] text-gray-500">С</span>
-            <input
-              type="date"
-              className={`${inputCls} w-[9.5rem] tabular-nums`}
-              value={periodFrom}
-              max={todayIso()}
-              onChange={(e) => setPeriodFrom(e.target.value)}
-            />
-          </label>
-          <label className="min-w-0">
-            <span className="mb-0.5 block text-[10px] text-gray-500">По</span>
-            <input
-              type="date"
-              className={`${inputCls} w-[9.5rem] tabular-nums`}
-              value={periodTo}
-              max={todayIso()}
-              onChange={(e) => setPeriodTo(e.target.value)}
-            />
-          </label>
-          <button
-            type="button"
-            onClick={openPeriodReport}
-            disabled={!periodFrom || !periodTo}
-            className="inline-flex h-[34px] items-center rounded-md bg-emerald-600 px-3 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            Сводный отчёт
-          </button>
-          <button
-            type="button"
-            onClick={openPeriodReport}
-            disabled={!periodFrom || !periodTo}
-            className="inline-flex h-[34px] items-center rounded-md border border-gray-300 bg-white px-3 text-sm font-medium text-gray-800 shadow-sm hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            Выгрузить
-          </button>
-          <button
-            type="button"
-            onClick={openWeeklyPack}
-            disabled={!clientId || !objectId}
-            className="inline-flex h-[34px] items-center rounded-md border border-indigo-300 bg-indigo-50 px-3 text-sm font-medium text-indigo-900 shadow-sm hover:bg-indigo-100 disabled:cursor-not-allowed disabled:opacity-50"
-            title={!clientId || !objectId ? 'Сначала выберите клиента и объект' : undefined}
-          >
-            Пакет клиенту (сб→пт)
-          </button>
+      {!isForeman && (
+        <div className="rounded-lg border border-gray-200 bg-white p-3 shadow-sm">
+          <p className="mb-2 text-xs font-medium text-gray-500">Сводный отчёт по всем объектам</p>
+          <div className="flex flex-wrap items-end gap-2">
+            <label className="min-w-0">
+              <span className="mb-0.5 block text-[10px] text-gray-500">С</span>
+              <input
+                type="date"
+                className={`${inputCls} w-[9.5rem] tabular-nums`}
+                value={periodFrom}
+                max={todayIso()}
+                onChange={(e) => setPeriodFrom(e.target.value)}
+              />
+            </label>
+            <label className="min-w-0">
+              <span className="mb-0.5 block text-[10px] text-gray-500">По</span>
+              <input
+                type="date"
+                className={`${inputCls} w-[9.5rem] tabular-nums`}
+                value={periodTo}
+                max={todayIso()}
+                onChange={(e) => setPeriodTo(e.target.value)}
+              />
+            </label>
+            <button
+              type="button"
+              onClick={openPeriodReport}
+              disabled={!periodFrom || !periodTo}
+              className="inline-flex h-[34px] items-center rounded-md bg-emerald-600 px-3 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              Сводный отчёт
+            </button>
+            <button
+              type="button"
+              onClick={openPeriodReport}
+              disabled={!periodFrom || !periodTo}
+              className="inline-flex h-[34px] items-center rounded-md border border-gray-300 bg-white px-3 text-sm font-medium text-gray-800 shadow-sm hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              Выгрузить
+            </button>
+            <button
+              type="button"
+              onClick={openWeeklyPack}
+              disabled={!clientId || !objectId}
+              className="inline-flex h-[34px] items-center rounded-md border border-indigo-300 bg-indigo-50 px-3 text-sm font-medium text-indigo-900 shadow-sm hover:bg-indigo-100 disabled:cursor-not-allowed disabled:opacity-50"
+              title={!clientId || !objectId ? 'Сначала выберите клиента и объект' : undefined}
+            >
+              Пакет клиенту (сб→пт)
+            </button>
+          </div>
+          <p className="mt-1.5 text-[11px] text-gray-500">
+            Сводный — все адреса. «Пакет клиенту» — день за днём за неделю сб→пт (пятница = день
+            отчёта) с фото. KPI недели — в шапке.
+          </p>
         </div>
-        <p className="mt-1.5 text-[11px] text-gray-500">
-          Сводный — все адреса. «Пакет клиенту» — день за днём за неделю сб→пт (пятница = день
-          отчёта) с фото. KPI недели — в шапке.
-        </p>
-      </div>
+      )}
 
       <div className="rounded-lg border border-gray-200 bg-white p-3 shadow-sm">
         <p className="mb-2 text-xs font-medium text-gray-500">1. Клиент</p>
@@ -506,7 +515,7 @@ export default function ObjectControlPage() {
               {copied ? 'Скопировано' : 'Копировать'}
             </button>
             <Link
-              to={`/report/${link.token}?date=${encodeURIComponent(reportDate)}`}
+              to={controlReportPath(link.token, reportDate)}
               className="shrink-0 text-xs font-medium text-blue-700 hover:underline"
             >
               Форма →

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from 'react'
-import { Link, useParams, useSearchParams } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { RiAttachment2 } from '@remixicon/react'
+import { useAuth } from '../../contexts/AuthContext'
 import {
   attachmentKind,
   formatBytes,
@@ -38,12 +39,25 @@ function parseReportDate(raw: string | null): string {
 
 export default function PublicReportPage() {
   const { token = '' } = useParams<{ token: string }>()
+  const location = useLocation()
+  const navigate = useNavigate()
+  const { user, can, loading, permissionsReady } = useAuth()
+  const embedded = location.pathname.startsWith('/control/report/')
   const [searchParams, setSearchParams] = useSearchParams()
   const [link, setLink] = useState<ControlLink | null>(() =>
     token ? resolveControlLink(token) : null,
   )
   const date = parseReportDate(searchParams.get('date'))
   const fileRef = useRef<HTMLInputElement>(null)
+
+  // Залогиненный с доступом к контролю — форма внутри AppShell
+  useEffect(() => {
+    if (embedded || !token || loading || !permissionsReady) return
+    if (user && can('object_control')) {
+      const qs = searchParams.toString()
+      navigate(`/control/report/${token}${qs ? `?${qs}` : ''}`, { replace: true })
+    }
+  }, [embedded, token, user, can, loading, permissionsReady, navigate, searchParams])
 
   const [workerName, setWorkerName] = useState('')
   const [workDone, setWorkDone] = useState('')
@@ -245,6 +259,15 @@ export default function PublicReportPage() {
     }
   }
 
+  // Публичная страница: пока редиректим в shell — не мигать формой
+  if (!embedded && !loading && permissionsReady && user && can('object_control')) {
+    return (
+      <div className="flex min-h-[40vh] items-center justify-center bg-gray-50 px-4">
+        <p className="text-sm text-gray-500">Открываем форму в CRM…</p>
+      </div>
+    )
+  }
+
   if (!token || !link) {
     return (
       <div className="flex min-h-[40vh] items-center justify-center bg-gray-50 px-4">
@@ -255,17 +278,8 @@ export default function PublicReportPage() {
 
   const hasMedia = media.length > 0
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="border-b border-gray-200 bg-white">
-        <div className="mx-auto flex h-12 max-w-lg items-center gap-3 px-3 sm:px-4">
-          <BrandLogo to={null} size="sm" />
-          <span className="h-4 w-px shrink-0 bg-gray-200" aria-hidden />
-          <h1 className="truncate text-sm font-semibold text-gray-900">Отчёт по объекту</h1>
-        </div>
-      </header>
-
-      <main className="mx-auto max-w-lg px-3 py-3 sm:px-4">
+  const formBody = (
+    <>
         {sent && (
           <p className="mb-2 text-xs text-emerald-700">Принят · можно дополнить и отправить снова</p>
         )}
@@ -438,13 +452,34 @@ export default function PublicReportPage() {
             {busy ? '…' : sent ? 'Обновить' : 'Отправить'}
           </button>
         </form>
+    </>
+  )
 
-        <p className="mt-3 text-center text-[11px] text-gray-400">
-          <Link to="/login" className="text-blue-600 hover:underline">
-            Вход в CRM
-          </Link>
-        </p>
-      </main>
+  if (embedded) {
+    return (
+      <div className="mx-auto max-w-lg space-y-3">
+        <Link
+          to="/control"
+          className="inline-flex text-xs font-medium text-blue-700 hover:underline"
+        >
+          ← К контролю объекта
+        </Link>
+        {formBody}
+      </div>
+    )
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <header className="border-b border-gray-200 bg-white">
+        <div className="mx-auto flex h-12 max-w-lg items-center gap-3 px-3 sm:px-4">
+          <BrandLogo to={null} size="sm" />
+          <span className="h-4 w-px shrink-0 bg-gray-200" aria-hidden />
+          <h1 className="truncate text-sm font-semibold text-gray-900">Отчёт по объекту</h1>
+        </div>
+      </header>
+
+      <main className="mx-auto max-w-lg px-3 py-3 sm:px-4">{formBody}</main>
     </div>
   )
 }

@@ -41,6 +41,7 @@ export function routeTitle(pathname: string): string {
     const rel = getReleaseById(releaseMatch[1])
     return rel?.title ?? 'Обновления'
   }
+  if (pathname.startsWith('/control/report/')) return 'Отчёт по объекту'
   const hit = MVP_ROUTES.find(
     (r) => pathname === r.path || (r.path !== '/' && pathname.startsWith(`${r.path}/`)),
   )

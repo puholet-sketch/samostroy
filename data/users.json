@@ -35,6 +35,6 @@
     "role": "foreman",
     "phone": "",
     "active": true,
-    "allowedModules": ["object_control", "updates"]
+    "allowedModules": ["object_control"]
   }
 ]

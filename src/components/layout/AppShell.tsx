@@ -28,7 +28,7 @@ import { loadClients } from '../../lib/clients'
 import { BrandLogo } from '../common/BrandLogo'
 import { CLIENT_SECTIONS } from '../clients/ClientCardPage'
 import { FeedbackHost, useFeedbackOpenCount } from '../feedback/FeedbackHost'
-import { MVP_ROUTES, parseClientCardPath, routeTitle } from './routes'
+import { homePathForUser, MVP_ROUTES, parseClientCardPath, routeTitle } from './routes'
 
 type NavIcon = {
   Icon: RemixiconComponentType
@@ -197,7 +197,7 @@ function AppShellInner() {
   const sidebar = (
     <div className="flex h-full flex-col">
       <div className={`flex ${HEADER_H} shrink-0 items-center border-b border-gray-200 px-5`}>
-        <BrandLogo to="/clients" size="md" />
+        <BrandLogo to={user ? homePathForUser(user) : '/'} size="md" />
       </div>
       <div className="flex-1 overflow-y-auto py-4">
         {card ? (
