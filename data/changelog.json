@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-10-29-g",
+    "at": "2026-10-30T00:05:00+03:00",
+    "title": "GitHub Pages: refresh по deep-link без 404",
+    "items": [
+      {
+        "section": "Деплой",
+        "text": "Сборка копирует index.html → 404.html (+ .nojekyll): обновление /control, /calculator и других маршрутов на Pages снова открывает SPA"
+      }
+    ],
+    "docs": [
+      { "label": "Релиз 2026-10-29-g", "href": "/updates/2026-10-29-g", "kind": "app" },
+      { "label": "Архитектура", "href": "docs/architecture.md", "kind": "repo" }
+    ]
+  },
+  {
     "id": "2026-10-29-f",
     "at": "2026-10-29T23:55:00+03:00",
     "title": "Прораб: отчёт в CRM, без лишних разделов",

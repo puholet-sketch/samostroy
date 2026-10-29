@@ -2,15 +2,16 @@
   "v": 4,
   "updated": "2026-10-29",
   "status": "active",
-  "goal": "Weekly pack photo preview fix → Pages 2026-10-29-e",
-  "next": "После CDN: /control → пакет клиенту — фото дня целиком, не полоска",
+  "goal": "SPA 404 fallback on GH Pages → 2026-10-29-g",
+  "next": "После CDN: refresh /samostroy/control и /calculator — SPA, не GitHub 404",
   "blockers": [
     "TG notify needs Docker API + TELEGRAM_* + ngrok"
   ],
   "hot_files": [
-    "src/components/control/WeeklyPackPage.tsx",
+    "vite.config.ts",
     "data/changelog.json",
-    "data/releases/2026-10-29-e.md",
-    "src/lib/buildStamp.ts"
+    "data/releases/2026-10-29-g.md",
+    "src/lib/buildStamp.ts",
+    "public/.nojekyll"
   ]
 }

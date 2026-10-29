@@ -45,6 +45,7 @@ MVP CRM для ремонта: карточка клиента → догово�
 1. Запись в `data/changelog.json` (+ при необходимости `data/releases/<id>.md` и ссылки `docs`) + `BUILD_STAMP` в `src/lib/buildStamp.ts`.
 2. Commit → push `master`.
 3. `GITHUB_PAGES=1` build → publish `dist` на ветку `gh-pages`.
+4. SPA fallback: плагин в `vite.config.ts` копирует `index.html` → `404.html` и пишет `.nojekyll` (иначе refresh на `/control` и т.п. даёт GitHub 404).
 
 Правило: `.cursor/rules/deploy-changelog.mdc`.
 

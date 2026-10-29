@@ -1,4 +1,5 @@
-import { existsSync, readFileSync } from 'node:fs'
+import { copyFileSync, existsSync, readFileSync, writeFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { defineConfig, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 import { fileURLToPath, URL } from 'node:url'
@@ -22,10 +23,27 @@ function localCrmSeedApi(): Plugin {
   }
 }
 
+/**
+ * GitHub Pages: missing deep routes (/control, /calculator, …) must serve the SPA.
+ * Copy index.html → 404.html so Pages returns the app shell; React Router keeps the URL.
+ */
+function spaGithubPagesFallback(): Plugin {
+  return {
+    name: 'spa-github-pages-fallback',
+    closeBundle() {
+      const outDir = join(fileURLToPath(new URL('.', import.meta.url)), 'dist')
+      const indexHtml = join(outDir, 'index.html')
+      if (!existsSync(indexHtml)) return
+      copyFileSync(indexHtml, join(outDir, '404.html'))
+      writeFileSync(join(outDir, '.nojekyll'), '')
+    },
+  }
+}
+
 export default defineConfig({
   // GitHub Pages: /samostroy/ ; локально и preview: /
   base: process.env.GITHUB_PAGES === '1' ? '/samostroy/' : '/',
-  plugins: [react(), localCrmSeedApi()],
+  plugins: [react(), localCrmSeedApi(), spaGithubPagesFallback()],
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
