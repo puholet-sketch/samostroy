@@ -62,16 +62,12 @@ function DayMediaNav({ day }: { day: WeeklyPackDay }) {
   }
 
   return (
-    <div className="mt-2">
-      <div className="relative overflow-hidden rounded-md border border-gray-200 bg-gray-50">
+    <div className="day-media mt-2">
+      <div className="day-media-frame">
         {url ? (
-          <img
-            src={url}
-            alt={images[idx]?.name || 'фото'}
-            className="mx-auto max-h-64 w-full object-contain"
-          />
+          <img src={url} alt={images[idx]?.name || 'фото'} className="day-media-img" />
         ) : (
-          <div className="flex h-40 items-center justify-center text-xs text-gray-400">
+          <div className="day-media-fallback">
             Медиа недоступно в этом браузере (нужен sync API / то же устройство)
           </div>
         )}
@@ -80,7 +76,7 @@ function DayMediaNav({ day }: { day: WeeklyPackDay }) {
             <button
               type="button"
               aria-label="Предыдущее фото"
-              className="absolute left-1 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-1 shadow hover:bg-white"
+              className="day-media-nav day-media-nav--prev no-print"
               onClick={() => setIdx((i) => (i - 1 + images.length) % images.length)}
             >
               <RiArrowLeftSLine className="h-5 w-5 text-gray-800" />
@@ -88,7 +84,7 @@ function DayMediaNav({ day }: { day: WeeklyPackDay }) {
             <button
               type="button"
               aria-label="Следующее фото"
-              className="absolute right-1 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-1 shadow hover:bg-white"
+              className="day-media-nav day-media-nav--next no-print"
               onClick={() => setIdx((i) => (i + 1) % images.length)}
             >
               <RiArrowRightSLine className="h-5 w-5 text-gray-800" />
@@ -96,7 +92,7 @@ function DayMediaNav({ day }: { day: WeeklyPackDay }) {
           </>
         )}
       </div>
-      <p className="mt-1 text-center text-[11px] text-gray-500">
+      <p className="day-media-caption">
         Фото {idx + 1} / {images.length}
         {images[idx]?.name ? ` · ${images[idx].name}` : ''}
       </p>
@@ -245,9 +241,65 @@ export default function WeeklyPackPage() {
         }
         .weekly-pack .badge.ok { background: #d1fae5; color: #065f46; }
         .weekly-pack .badge.no { background: #ffe4e6; color: #9f1239; }
+        .weekly-pack .day-media-frame {
+          position: relative;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          min-height: 10rem;
+          border: 1px solid var(--line);
+          border-radius: 6px;
+          background: #f9fafb;
+        }
+        .weekly-pack .day-media-img {
+          display: block;
+          width: auto;
+          max-width: 100%;
+          height: auto;
+          max-height: 20rem;
+          object-fit: contain;
+          border-radius: 4px;
+        }
+        .weekly-pack .day-media-fallback {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          min-height: 10rem;
+          padding: 1rem;
+          font-size: 0.75rem;
+          color: #9ca3af;
+          text-align: center;
+        }
+        .weekly-pack .day-media-nav {
+          position: absolute;
+          top: 50%;
+          transform: translateY(-50%);
+          border-radius: 9999px;
+          background: rgba(255, 255, 255, 0.92);
+          padding: 0.25rem;
+          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+          border: none;
+          cursor: pointer;
+        }
+        .weekly-pack .day-media-nav:hover { background: #fff; }
+        .weekly-pack .day-media-nav--prev { left: 0.25rem; }
+        .weekly-pack .day-media-nav--next { right: 0.25rem; }
+        .weekly-pack .day-media-caption {
+          margin-top: 0.35rem;
+          text-align: center;
+          font-size: 11px;
+          color: #6b7280;
+        }
         @media print {
           .weekly-pack .no-print { display: none !important; }
           .weekly-pack { padding: 0; }
+          .weekly-pack .day-media-frame {
+            min-height: 0;
+            break-inside: avoid;
+          }
+          .weekly-pack .day-media-img {
+            max-height: 14rem;
+          }
         }
       `}</style>
 

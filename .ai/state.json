@@ -2,16 +2,15 @@
   "v": 4,
   "updated": "2026-10-29",
   "status": "active",
-  "goal": "Feedback viewport-only capture → Pages 2026-10-29-c",
-  "next": "После CDN: проскроллить длинную страницу → Замечание → проверить кадр = viewport",
+  "goal": "Weekly pack photo preview fix → Pages 2026-10-29-e",
+  "next": "После CDN: /control → пакет клиенту — фото дня целиком, не полоска",
   "blockers": [
     "TG notify needs Docker API + TELEGRAM_* + ngrok"
   ],
   "hot_files": [
-    "src/components/feedback/FeedbackCapture.tsx",
+    "src/components/control/WeeklyPackPage.tsx",
     "data/changelog.json",
-    "data/releases/2026-10-29-c.md",
-    "src/lib/buildStamp.ts",
-    "docs/modules/feedback.md"
+    "data/releases/2026-10-29-e.md",
+    "src/lib/buildStamp.ts"
   ]
 }
