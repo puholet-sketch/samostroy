@@ -272,12 +272,71 @@ export default function CalculatorPage() {
   return (
     <div className="space-y-4 pb-28">
       <Panel>
-        <input
-          className="block w-full max-w-md rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-          placeholder="Поиск по названию работы…"
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-        />
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-2 md:flex-nowrap">
+          <div
+            className="inline-flex shrink-0 rounded-lg border border-gray-200 bg-gray-100 p-0.5 text-xs"
+            role="group"
+            aria-label="Тип работ"
+          >
+            {(
+              [
+                { id: 'all', label: 'Все' },
+                { id: 'chistovye', label: 'Чистовые' },
+                { id: 'chernovye', label: 'Черновые' },
+              ] as const
+            ).map(({ id, label }) => {
+              const on = activeMode === id
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  aria-pressed={on}
+                  onClick={() => setMode(activeSection, id)}
+                  className={`rounded-md px-2.5 py-1.5 font-semibold transition-colors ${
+                    on
+                      ? 'bg-blue-600 text-white shadow-sm'
+                      : 'text-gray-500 hover:bg-white/70 hover:text-gray-800'
+                  }`}
+                >
+                  {label}
+                </button>
+              )
+            })}
+          </div>
+
+          <label className="inline-flex shrink-0 items-center gap-1.5 text-sm text-gray-600">
+            <span className="whitespace-nowrap">Скидка %</span>
+            <input
+              type="number"
+              min={0}
+              max={100}
+              step={1}
+              className={discountInputCls}
+              value={discountPct || ''}
+              placeholder="0"
+              onChange={(e) =>
+                setDiscountPct(Math.max(0, Math.min(100, Number(e.target.value) || 0)))
+              }
+            />
+          </label>
+
+          <label className="inline-flex shrink-0 items-center gap-1.5 text-sm text-gray-600">
+            <input
+              type="checkbox"
+              checked={onlyFilled}
+              onChange={(e) => setOnlyFilled(e.target.checked)}
+            />
+            <span className="whitespace-nowrap">Только с объёмом</span>
+          </label>
+
+          <button
+            type="button"
+            onClick={() => setQty({})}
+            className="shrink-0 rounded-md border border-red-200 px-2.5 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50"
+          >
+            Сбросить
+          </button>
+        </div>
         {discountPct > 0 && (
           <p className="mt-2 text-xs text-gray-500">
             База {money(baseTotal)} ₽ · скидка −{money(discountSum)} ₽ · к оплате {money(total)} ₽
@@ -287,127 +346,72 @@ export default function CalculatorPage() {
       </Panel>
 
       <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
-        {filteredSections.length === 0 ? (
-          <p className="px-4 py-10 text-center text-sm text-gray-500">Ничего не найдено</p>
-        ) : (
-          <div className="flex flex-col lg:flex-row lg:items-stretch">
-            {/* Sections: vertical list — no horizontal chip scroll */}
-            <nav
-              className="shrink-0 border-b border-gray-200 bg-gray-50 lg:w-52 lg:border-b-0 lg:border-r"
-              aria-label="Разделы сметы"
-            >
-              <p className="hidden px-3 pb-1 pt-3 text-[11px] font-semibold uppercase tracking-wide text-gray-400 lg:block">
+        <div className="flex flex-col lg:flex-row lg:items-stretch">
+          <nav
+            className="shrink-0 border-b border-gray-200 bg-gray-50 lg:w-52 lg:border-b-0 lg:border-r"
+            aria-label="Разделы сметы"
+          >
+            <div className="flex h-11 items-center border-b border-gray-200 px-3">
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">
                 Разделы
               </p>
-              <ul className="flex flex-col gap-0.5 p-2 lg:max-h-[min(70vh,36rem)] lg:overflow-y-auto">
-                {filteredNames.map((name) => {
-                  const count =
-                    filteredSections.find(([s]) => s === name)?.[1].length ?? 0
-                  const active = name === activeSection
-                  return (
-                    <li key={name}>
-                      <button
-                        type="button"
-                        onClick={() => setActiveSection(name)}
-                        className={`flex w-full items-center justify-between gap-2 rounded-md px-3 py-2 text-left text-sm font-medium transition-colors ${
-                          active
-                            ? 'bg-blue-600 text-white shadow-sm'
-                            : 'text-gray-700 hover:bg-white hover:text-gray-900'
+            </div>
+            <ul className="flex flex-col gap-0.5 p-2 lg:max-h-[min(70vh,36rem)] lg:overflow-y-auto">
+              {filteredNames.map((name) => {
+                const count =
+                  filteredSections.find(([s]) => s === name)?.[1].length ?? 0
+                const active = name === activeSection
+                return (
+                  <li key={name}>
+                    <button
+                      type="button"
+                      onClick={() => setActiveSection(name)}
+                      className={`flex w-full items-center justify-between gap-2 rounded-md px-3 py-2 text-left text-sm font-medium transition-colors ${
+                        active
+                          ? 'bg-blue-600 text-white shadow-sm'
+                          : 'text-gray-700 hover:bg-white hover:text-gray-900'
+                      }`}
+                      aria-current={active ? 'page' : undefined}
+                    >
+                      <span className="min-w-0 truncate">{prettySection(name)}</span>
+                      <span
+                        className={`shrink-0 tabular-nums text-xs ${
+                          active ? 'text-blue-100' : 'text-gray-400'
                         }`}
-                        aria-current={active ? 'page' : undefined}
                       >
-                        <span className="min-w-0 truncate">{prettySection(name)}</span>
-                        <span
-                          className={`shrink-0 tabular-nums text-xs ${
-                            active ? 'text-blue-100' : 'text-gray-400'
-                          }`}
-                        >
-                          {count}
-                        </span>
-                      </button>
-                    </li>
-                  )
-                })}
-              </ul>
-            </nav>
+                        {count}
+                      </span>
+                    </button>
+                  </li>
+                )
+              })}
+            </ul>
+          </nav>
 
-            <div className="min-w-0 flex-1">
-              {/* One toolbar row: kind | discount | volume | reset (wrap only on very narrow) */}
-              <div className="border-b border-gray-100 px-4 py-3">
-                <div className="flex flex-wrap items-center gap-x-3 gap-y-2 md:flex-nowrap">
-                  <div
-                    className="inline-flex shrink-0 rounded-lg border border-gray-200 bg-gray-100 p-0.5 text-xs"
-                    role="group"
-                    aria-label="Тип работ"
-                  >
-                    {(
-                      [
-                        { id: 'all', label: 'Все' },
-                        { id: 'chistovye', label: 'Чистовые' },
-                        { id: 'chernovye', label: 'Черновые' },
-                      ] as const
-                    ).map(({ id, label }) => {
-                      const on = activeMode === id
-                      return (
-                        <button
-                          key={id}
-                          type="button"
-                          aria-pressed={on}
-                          onClick={() => setMode(activeSection, id)}
-                          className={`rounded-md px-2.5 py-1.5 font-semibold transition-colors ${
-                            on
-                              ? 'bg-blue-600 text-white shadow-sm'
-                              : 'text-gray-500 hover:bg-white/70 hover:text-gray-800'
-                          }`}
-                        >
-                          {label}
-                        </button>
-                      )
-                    })}
-                  </div>
+          <div className="min-w-0 flex-1">
+            <div className="flex h-11 items-center justify-between gap-3 border-b border-gray-200 px-4">
+              <p className="shrink-0 text-[11px] font-semibold uppercase tracking-wide text-gray-400">
+                Работа
+              </p>
+              <input
+                className="min-w-0 max-w-md flex-1 rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 sm:max-w-xs md:max-w-sm"
+                placeholder="Поиск по названию работы…"
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                aria-label="Поиск по названию работы"
+              />
+            </div>
 
-                  <label className="inline-flex shrink-0 items-center gap-1.5 text-sm text-gray-600">
-                    <span className="whitespace-nowrap">Скидка %</span>
-                    <input
-                      type="number"
-                      min={0}
-                      max={100}
-                      step={1}
-                      className={discountInputCls}
-                      value={discountPct || ''}
-                      placeholder="0"
-                      onChange={(e) =>
-                        setDiscountPct(
-                          Math.max(0, Math.min(100, Number(e.target.value) || 0)),
-                        )
-                      }
-                    />
-                  </label>
-
-                  <label className="inline-flex shrink-0 items-center gap-1.5 text-sm text-gray-600">
-                    <input
-                      type="checkbox"
-                      checked={onlyFilled}
-                      onChange={(e) => setOnlyFilled(e.target.checked)}
-                    />
-                    <span className="whitespace-nowrap">Только с объёмом</span>
-                  </label>
-
-                  <button
-                    type="button"
-                    onClick={() => setQty({})}
-                    className="shrink-0 rounded-md border border-red-200 px-2.5 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50"
-                  >
-                    Сбросить
-                  </button>
-                </div>
-              </div>
-
+            {filteredSections.length === 0 ? (
+              <p className="px-4 py-10 text-center text-sm text-gray-500">Ничего не найдено</p>
+            ) : (
               <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200 text-sm">
                   <thead className="bg-white text-left text-xs uppercase text-gray-500">
                     <tr>
-                      <th className="px-4 py-2 font-medium">Работа</th>
+                      <th className="px-4 py-2 font-medium">
+                        <span className="sr-only">Название</span>
+                      </th>
                       <th className="whitespace-nowrap px-3 py-2 font-medium">Ед.</th>
                       <th className="whitespace-nowrap px-3 py-2 text-right font-medium">
                         Цена
@@ -458,9 +462,9 @@ export default function CalculatorPage() {
                   </tbody>
                 </table>
               </div>
-            </div>
+            )}
           </div>
-        )}
+        </div>
       </div>
 
       <div
