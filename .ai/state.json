@@ -2,16 +2,15 @@
   "v": 4,
   "updated": "2026-10-30",
   "status": "active",
-  "goal": "Multi-object weekly pack → 2026-10-30-j",
-  "next": "Idle — 2026-10-30-j live (index-CW-Oqb13.js)",
+  "goal": "Accounts layout swap → 2026-10-30-k",
+  "next": "Idle — 2026-10-30-k live (index-DXaDsr51.js)",
   "blockers": [
     "TG notify needs Docker API + TELEGRAM_* + ngrok"
   ],
   "hot_files": [
-    "src/lib/weeklyPack.ts",
-    "src/components/control/WeeklyPackPage.tsx",
-    "src/components/control/ObjectControlPage.tsx",
+    "src/components/security/SecurityPage.tsx",
     "data/changelog.json",
-    "src/lib/buildStamp.ts"
+    "src/lib/buildStamp.ts",
+    "data/releases/2026-10-30-k.md"
   ]
 }
