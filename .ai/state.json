@@ -2,15 +2,16 @@
   "v": 4,
   "updated": "2026-10-30",
   "status": "active",
-  "goal": "Calc works header one row → 2026-10-30-a",
-  "next": "CDN: /calculator — Работа+search+Ед/Цена/Объём/Сумма one line",
+  "goal": "Control calendar −1/+0 + Sat–Fri default → 2026-10-30-b",
+  "next": "CDN live after gh-pages push · verify /control months",
   "blockers": [
     "TG notify needs Docker API + TELEGRAM_* + ngrok"
   ],
   "hot_files": [
-    "src/components/calculator/CalculatorPage.tsx",
+    "src/components/control/ObjectControlPage.tsx",
+    "src/lib/periodReport.ts",
     "data/changelog.json",
-    "data/releases/2026-10-30-a.md",
+    "data/releases/2026-10-30-b.md",
     "src/lib/buildStamp.ts"
   ]
 }

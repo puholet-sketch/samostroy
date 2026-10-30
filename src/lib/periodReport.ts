@@ -198,12 +198,23 @@ export function buildPeriodReportRows(
   return rows
 }
 
-export function defaultPeriodRange(): { from: string; to: string } {
-  const to = todayIso()
-  const d = new Date(`${to}T12:00:00`)
-  d.setDate(d.getDate() - 6)
-  const y = d.getFullYear()
-  const m = String(d.getMonth() + 1).padStart(2, '0')
-  const day = String(d.getDate()).padStart(2, '0')
-  return { from: `${y}-${m}-${day}`, to }
+/**
+ * Период по умолчанию: текущая неделя сб→пт (обрезка по сегодня).
+ * Логика дублирует weekRange.currentWeekSatFri — без импорта, чтобы не
+ * замкнуть cycle periodReport ↔ weekRange.
+ */
+export function defaultPeriodRange(ref = new Date()): { from: string; to: string } {
+  const today = new Date(ref.getFullYear(), ref.getMonth(), ref.getDate())
+  const dow = today.getDay() // 0=Sun … 6=Sat
+  const daysSinceSat = (dow + 1) % 7
+  const sat = new Date(today)
+  sat.setDate(today.getDate() - daysSinceSat)
+  const fri = new Date(sat)
+  fri.setDate(sat.getDate() + 6)
+  const iso = (d: Date) =>
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+  const from = iso(sat)
+  const friIso = iso(fri)
+  const todayStr = iso(today)
+  return { from, to: friIso > todayStr ? todayStr : friIso }
 }

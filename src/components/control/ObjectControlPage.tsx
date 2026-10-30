@@ -19,8 +19,7 @@ import {
   type ControlLink,
 } from '../../lib/objectReports'
 import { runDeadlineNotify } from '../../lib/deadlineNotify'
-import { defaultPeriodRange } from '../../lib/periodReport'
-import { computeWeekReportKpi, fullWeekSatFri } from '../../lib/weekRange'
+import { computeWeekReportKpi, currentWeekSatFri, fullWeekSatFri } from '../../lib/weekRange'
 import { useAuth } from '../../contexts/AuthContext'
 import { usePageHeaderMeta } from '../../contexts/PageHeaderContext'
 import { PhoneActions } from '../ui/PhoneActions'
@@ -146,7 +145,7 @@ export default function ObjectControlPage() {
   const [reportDate, setReportDate] = useState(todayIso())
   const [tick, setTick] = useState(0)
   const [copied, setCopied] = useState(false)
-  const periodDefaults = defaultPeriodRange()
+  const periodDefaults = currentWeekSatFri()
   const [periodFrom, setPeriodFrom] = useState(periodDefaults.from)
   const [periodTo, setPeriodTo] = useState(periodDefaults.to)
 
@@ -327,6 +326,20 @@ export default function ObjectControlPage() {
   const showClientList =
     qName.trim().length > 0 || qPhone.trim().length > 0 || qChannel.trim().length > 0 || !client
   const canGoForward = viewYear < currentYear
+
+  /** Текущий год: только прошлый + текущий месяц (−1). Прошлые годы: все 12. */
+  const calendarMonths = useMemo(() => {
+    const now = new Date()
+    const cy = now.getFullYear()
+    const cm = now.getMonth()
+    if (viewYear < cy) {
+      return Array.from({ length: 12 }, (_, m) => ({ year: viewYear, month: m }))
+    }
+    if (viewYear > cy) return [] as { year: number; month: number }[]
+    const prev =
+      cm === 0 ? { year: cy - 1, month: 11 } : { year: cy, month: cm - 1 }
+    return [prev, { year: cy, month: cm }]
+  }, [viewYear])
 
   return (
     <div className="space-y-3">
@@ -558,12 +571,18 @@ export default function ObjectControlPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
-              {Array.from({ length: 12 }, (_, m) => (
+            <div
+              className={
+                calendarMonths.length <= 2
+                  ? 'grid max-w-md grid-cols-2 gap-3'
+                  : 'grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6'
+              }
+            >
+              {calendarMonths.map(({ year, month }) => (
                 <MiniMonth
-                  key={m}
-                  year={viewYear}
-                  month={m}
+                  key={`${year}-${month}`}
+                  year={year}
+                  month={month}
                   reported={reported}
                   reportDate={reportDate}
                   onPick={(date, future) => {
