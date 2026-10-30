@@ -1,17 +1,16 @@
 {
   "v": 4,
-  "updated": "2026-10-29",
+  "updated": "2026-10-30",
   "status": "active",
-  "goal": "SPA 404 fallback on GH Pages → 2026-10-29-g",
-  "next": "После CDN: refresh /samostroy/control и /calculator — SPA, не GitHub 404",
+  "goal": "Calc works header one row → 2026-10-30-a",
+  "next": "CDN: /calculator — Работа+search+Ед/Цена/Объём/Сумма one line",
   "blockers": [
     "TG notify needs Docker API + TELEGRAM_* + ngrok"
   ],
   "hot_files": [
-    "vite.config.ts",
+    "src/components/calculator/CalculatorPage.tsx",
     "data/changelog.json",
-    "data/releases/2026-10-29-g.md",
-    "src/lib/buildStamp.ts",
-    "public/.nojekyll"
+    "data/releases/2026-10-30-a.md",
+    "src/lib/buildStamp.ts"
   ]
 }

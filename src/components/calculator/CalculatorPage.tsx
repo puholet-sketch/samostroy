@@ -389,39 +389,46 @@ export default function CalculatorPage() {
           </nav>
 
           <div className="min-w-0 flex-1">
-            <div className="flex h-11 items-center justify-between gap-3 border-b border-gray-200 px-4">
-              <p className="shrink-0 text-[11px] font-semibold uppercase tracking-wide text-gray-400">
-                Работа
-              </p>
-              <input
-                className="min-w-0 max-w-md flex-1 rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 sm:max-w-xs md:max-w-sm"
-                placeholder="Поиск по названию работы…"
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-                aria-label="Поиск по названию работы"
-              />
-            </div>
-
-            {filteredSections.length === 0 ? (
-              <p className="px-4 py-10 text-center text-sm text-gray-500">Ничего не найдено</p>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200 text-sm">
-                  <thead className="bg-white text-left text-xs uppercase text-gray-500">
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200 text-sm">
+                <thead className="border-b border-gray-200 bg-white text-left text-xs uppercase text-gray-500">
+                  <tr className="h-11">
+                    <th className="px-4 py-0 font-medium">
+                      <div className="flex min-w-0 items-center gap-3">
+                        <span className="shrink-0 text-[11px] font-semibold tracking-wide text-gray-400">
+                          Работа
+                        </span>
+                        <input
+                          className="w-44 min-w-0 shrink rounded-md border border-gray-300 bg-white px-2.5 py-1 text-sm font-normal normal-case tracking-normal text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 sm:w-52"
+                          placeholder="Поиск по названию работы…"
+                          value={q}
+                          onChange={(e) => setQ(e.target.value)}
+                          aria-label="Поиск по названию работы"
+                        />
+                      </div>
+                    </th>
+                    <th className="whitespace-nowrap px-3 py-0 font-medium">Ед.</th>
+                    <th className="whitespace-nowrap px-3 py-0 text-right font-medium">
+                      Цена
+                    </th>
+                    <th className="w-40 whitespace-nowrap px-3 py-0 font-medium">Объём</th>
+                    <th className="whitespace-nowrap px-4 py-0 text-right font-medium">
+                      Сумма
+                    </th>
+                  </tr>
+                </thead>
+                {filteredSections.length === 0 ? (
+                  <tbody>
                     <tr>
-                      <th className="px-4 py-2 font-medium">
-                        <span className="sr-only">Название</span>
-                      </th>
-                      <th className="whitespace-nowrap px-3 py-2 font-medium">Ед.</th>
-                      <th className="whitespace-nowrap px-3 py-2 text-right font-medium">
-                        Цена
-                      </th>
-                      <th className="w-40 whitespace-nowrap px-3 py-2 font-medium">Объём</th>
-                      <th className="whitespace-nowrap px-4 py-2 text-right font-medium">
-                        Сумма
-                      </th>
+                      <td
+                        colSpan={5}
+                        className="px-4 py-10 text-center text-sm normal-case text-gray-500"
+                      >
+                        Ничего не найдено
+                      </td>
                     </tr>
-                  </thead>
+                  </tbody>
+                ) : (
                   <tbody className="divide-y divide-gray-100">
                     {activeRows.map(({ it, idx }) => {
                       const key = itemKey(it, idx)
@@ -460,9 +467,9 @@ export default function CalculatorPage() {
                       )
                     })}
                   </tbody>
-                </table>
-              </div>
-            )}
+                )}
+              </table>
+            </div>
           </div>
         </div>
       </div>
