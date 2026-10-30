@@ -3,7 +3,7 @@
   "updated": "2026-10-30",
   "status": "active",
   "goal": "Fix weekly pack photo flicker → 2026-10-30-h",
-  "next": "Deploy 2026-10-30-h; confirm CDN hash",
+  "next": "Idle after 2026-10-30-h (CDN index-DXWtpzi4.js)",
   "blockers": [
     "TG notify needs Docker API + TELEGRAM_* + ngrok"
   ],
