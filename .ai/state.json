@@ -3,7 +3,7 @@
   "updated": "2026-10-30",
   "status": "active",
   "goal": "Control compact + inWork list + per-object calendars → 2026-10-30-c",
-  "next": "Commit + GITHUB_PAGES deploy 2026-10-30-c",
+  "next": "CDN live: index-COBh7pAl.js · BUILD_STAMP control compact c",
   "blockers": [
     "TG notify needs Docker API + TELEGRAM_* + ngrok"
   ],
