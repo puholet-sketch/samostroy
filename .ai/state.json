@@ -2,15 +2,16 @@
   "v": 4,
   "updated": "2026-10-30",
   "status": "active",
-  "goal": "Control compact + inWork list + per-object calendars → 2026-10-30-c",
-  "next": "CDN live: index-COBh7pAl.js · BUILD_STAMP control compact c",
+  "goal": "Remove clients KPI strip → 2026-10-30-e",
+  "next": "Deploy 2026-10-30-e; confirm CDN hash",
   "blockers": [
     "TG notify needs Docker API + TELEGRAM_* + ngrok"
   ],
   "hot_files": [
-    "src/components/control/ObjectControlPage.tsx",
+    "src/components/clients/ClientsListPage.tsx",
+    "src/components/ui/Kpi.tsx",
     "data/changelog.json",
-    "data/releases/2026-10-30-c.md",
+    "data/releases/2026-10-30-e.md",
     "src/lib/buildStamp.ts"
   ]
 }

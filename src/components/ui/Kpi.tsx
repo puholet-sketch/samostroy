@@ -1,29 +1,3 @@
-type KpiProps = {
-  label: string
-  value: string | number
-  accent?: 'blue' | 'emerald' | 'amber' | 'indigo' | 'rose'
-}
-
-const ACCENT: Record<NonNullable<KpiProps['accent']>, string> = {
-  blue: 'border-l-blue-500',
-  emerald: 'border-l-emerald-500',
-  amber: 'border-l-amber-500',
-  indigo: 'border-l-indigo-500',
-  rose: 'border-l-rose-500',
-}
-
-/** Компактный KPI — единый стиль на всех разделах */
-export function Kpi({ label, value, accent = 'blue' }: KpiProps) {
-  return (
-    <div
-      className={`flex items-center justify-between gap-3 rounded-md border border-gray-200 border-l-4 bg-white px-3 py-2.5 shadow-sm ${ACCENT[accent]}`}
-    >
-      <p className="text-xs font-medium text-gray-500">{label}</p>
-      <p className="text-lg font-semibold tabular-nums tracking-tight text-gray-900">{value}</p>
-    </div>
-  )
-}
-
 export function Panel({
   title,
   action,

@@ -11,23 +11,12 @@ import {
   sortClientsRecentFirst,
   type ClientCard,
 } from '../../lib/clients'
-import { Kpi } from '../ui/Kpi'
 import { PhoneActions } from '../ui/PhoneActions'
 
 const PAGE_SIZE = 10
 
 const filterCls =
   'rounded-md border border-gray-300 bg-white px-2.5 py-1.5 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500'
-
-function isLead(c: ClientCard) {
-  const t = c.tag.toLowerCase()
-  return t.includes('лид') || t.includes('lead')
-}
-
-function isContract(c: ClientCard) {
-  const t = c.tag.toLowerCase()
-  return t.includes('договор') || t.includes('contract')
-}
 
 export default function ClientsListPage() {
   const navigate = useNavigate()
@@ -115,21 +104,11 @@ export default function ClientsListPage() {
     return filtered.slice(start, start + PAGE_SIZE)
   }, [filtered, safePage])
 
-  const leads = clients.filter(isLead).length
-  const contracts = clients.filter(isContract).length
-  const inWorkClients = clients.filter((c) => (c.objects ?? []).some((o) => o.inWork)).length
   const from = filtered.length === 0 ? 0 : (safePage - 1) * PAGE_SIZE + 1
   const to = Math.min(safePage * PAGE_SIZE, filtered.length)
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <Kpi label="Всего" value={clients.length} accent="blue" />
-        <Kpi label="Лиды" value={leads} accent="amber" />
-        <Kpi label="Договоры" value={contracts} accent="emerald" />
-        <Kpi label="В работе" value={inWorkClients} accent="blue" />
-      </div>
-
       <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm sm:p-5">
         <div className="mb-3 flex flex-wrap items-center gap-2">
           <input
