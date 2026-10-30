@@ -14,7 +14,7 @@ export const emptyPeriodFilters = (): PeriodReportFilters => ({
   clientId: '',
   objectId: '',
   reportPresence: '',
-  onlyInWork: false,
+  onlyInWork: true,
 })
 
 export function loadPeriodFilters(): PeriodReportFilters {

@@ -440,7 +440,6 @@ export default function ObjectControlPage() {
   }
 
   function openPeriodReport() {
-    if (!clientId || !objectId) return
     let from = periodFrom
     let to = periodTo
     if (from > to) {
@@ -448,7 +447,8 @@ export default function ObjectControlPage() {
       from = to
       to = t
     }
-    const qs = new URLSearchParams({ from, to, clientId, objectId })
+    // Все объекты «в работе» у клиентов с inWork — не выбранный на экране.
+    const qs = new URLSearchParams({ from, to, onlyInWork: '1' })
     navigate(`/control/period-report?${qs.toString()}`)
   }
 
@@ -470,20 +470,13 @@ export default function ObjectControlPage() {
   }, [])
 
   const canGoForward = viewYear < currentYear
-  const focusedObject =
-    inWorkObjects.find((o) => o.id === objectId) ?? inWorkObjects[0] ?? null
-  const focusedObjectLabel =
-    focusedObject?.address || focusedObject?.title || 'выбранный объект'
 
   return (
     <div className="space-y-2">
       {!isForeman && (
         <div className="rounded-lg border border-gray-200 bg-white p-2.5 shadow-sm">
           <p className="mb-1 text-xs font-medium text-gray-500">
-            Сводный отчёт по объекту
-            {clientId && objectId ? (
-              <span className="ml-1 font-normal text-gray-400">· {focusedObjectLabel}</span>
-            ) : null}
+            Сводный отчёт по всем объектам «в работе»
           </p>
           <div className="flex flex-wrap items-end gap-1.5">
             <label className="min-w-0">
@@ -509,20 +502,10 @@ export default function ObjectControlPage() {
             <button
               type="button"
               onClick={openPeriodReport}
-              disabled={!periodFrom || !periodTo || !clientId || !objectId}
+              disabled={!periodFrom || !periodTo}
               className="inline-flex h-[34px] items-center rounded-md bg-emerald-600 px-3 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
-              title={!clientId || !objectId ? 'Сначала выберите клиента и объект' : undefined}
             >
               Сводный отчёт
-            </button>
-            <button
-              type="button"
-              onClick={openPeriodReport}
-              disabled={!periodFrom || !periodTo || !clientId || !objectId}
-              className="inline-flex h-[34px] items-center rounded-md border border-gray-300 bg-white px-3 text-sm font-medium text-gray-800 shadow-sm hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
-              title={!clientId || !objectId ? 'Сначала выберите клиента и объект' : undefined}
-            >
-              Выгрузить
             </button>
             <button
               type="button"
@@ -535,8 +518,9 @@ export default function ObjectControlPage() {
             </button>
           </div>
           <p className="mt-1 text-[11px] text-gray-500">
-            Сводный / выгрузка — объект на экране (клик по карточке, если их несколько). «Пакет
-            клиенту» — неделя сб→пт. KPI — в шапке.
+            Сводный — период × все адреса с флагом «в работе» (не только выбранный клиент). «Пакет
+            клиенту» — неделя сб→пт выбранного объекта. Печать/PDF — на странице отчёта. KPI — в
+            шапке.
           </p>
         </div>
       )}

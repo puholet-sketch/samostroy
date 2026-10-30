@@ -52,14 +52,26 @@ export default function PeriodReportPage() {
   const to = parseIso(params.get('to'), defaults.to)
   const urlClientId = params.get('clientId') || ''
   const urlObjectId = params.get('objectId') || ''
+  const urlOnlyInWork =
+    params.get('onlyInWork') === '1' || params.get('onlyInWork') === 'true'
 
   const [filters, setFilters] = useState<PeriodReportFilters>(() => {
     const base = loadPeriodFilters()
+    // Сводка с /control: все inWork, без клиента/объекта из localStorage.
+    if (urlOnlyInWork && !urlClientId && !urlObjectId) {
+      return {
+        ...base,
+        clientId: '',
+        objectId: '',
+        onlyInWork: true,
+      }
+    }
     if (urlClientId || urlObjectId) {
       return {
         ...base,
         clientId: urlClientId,
         objectId: urlObjectId,
+        onlyInWork: urlOnlyInWork ? true : base.onlyInWork,
       }
     }
     return base

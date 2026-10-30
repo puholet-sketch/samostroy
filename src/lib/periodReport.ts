@@ -1,7 +1,7 @@
 /**
- * Сводный отчёт за период (все объекты или фильтр clientId/objectId).
+ * Сводный отчёт за период.
+ * С /control: onlyInWork + без clientId/objectId → все объекты «в работе».
  * Данные: localStorage control links + objectReports (как ObjectControlPage).
- * Позже: тот же контракт можно читать с Docker API, не меняя UI.
  */
 
 import { loadClients } from './clients'
