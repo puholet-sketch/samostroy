@@ -1,2 +1,2 @@
 /** Маркер сборки для UI и автомета замечаний. Обновлять при деплое. */
-export const BUILD_STAMP = '2026-10-30 · multi-object pack j'
+export const BUILD_STAMP = '2026-10-30 · accounts layout k'

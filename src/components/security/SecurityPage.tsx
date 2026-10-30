@@ -220,6 +220,44 @@ export default function SecurityPage() {
 
       {tab === 'accounts' && (
         <div className="grid gap-4 lg:grid-cols-2">
+          <Panel title="Учётные записи">
+            <ul className="divide-y divide-gray-100">
+              {users.map((u) => (
+                <li key={u.id} className="flex flex-wrap items-center gap-2 py-2.5">
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium text-gray-900">
+                      {u.name}{' '}
+                      <span className="font-normal text-gray-400">@{u.login}</span>
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {roleLabel(normalizeSecurityRole(u.role))}
+                      {!u.active ? ' · отключена' : ''}
+                      {u.phone ? ` · ${u.phone}` : ' · без телефона'}
+                      {' · '}
+                      {(u.allowedModules ?? [])
+                        .map((m) => MVP_MODULE_LABEL[m as keyof typeof MVP_MODULE_LABEL] || m)
+                        .join(', ') || 'по роли'}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    className="rounded-md border border-gray-200 px-2 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50"
+                    onClick={() => startEdit(u)}
+                  >
+                    Изменить
+                  </button>
+                  <button
+                    type="button"
+                    className="rounded-md border border-red-200 px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-50"
+                    onClick={() => void onDelete(u.id)}
+                  >
+                    Удалить
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </Panel>
+
           <Panel title={editingId ? 'Изменить учётку' : 'Новая учётная запись'}>
             <form onSubmit={onSubmit} className="space-y-3">
               <label className="block">
@@ -337,44 +375,6 @@ export default function SecurityPage() {
               </div>
               {msg && <p className="text-sm text-emerald-700">{msg}</p>}
             </form>
-          </Panel>
-
-          <Panel title="Учётные записи">
-            <ul className="divide-y divide-gray-100">
-              {users.map((u) => (
-                <li key={u.id} className="flex flex-wrap items-center gap-2 py-2.5">
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-gray-900">
-                      {u.name}{' '}
-                      <span className="font-normal text-gray-400">@{u.login}</span>
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      {roleLabel(normalizeSecurityRole(u.role))}
-                      {!u.active ? ' · отключена' : ''}
-                      {u.phone ? ` · ${u.phone}` : ' · без телефона'}
-                      {' · '}
-                      {(u.allowedModules ?? [])
-                        .map((m) => MVP_MODULE_LABEL[m as keyof typeof MVP_MODULE_LABEL] || m)
-                        .join(', ') || 'по роли'}
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    className="rounded-md border border-gray-200 px-2 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50"
-                    onClick={() => startEdit(u)}
-                  >
-                    Изменить
-                  </button>
-                  <button
-                    type="button"
-                    className="rounded-md border border-red-200 px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-50"
-                    onClick={() => void onDelete(u.id)}
-                  >
-                    Удалить
-                  </button>
-                </li>
-              ))}
-            </ul>
           </Panel>
         </div>
       )}
