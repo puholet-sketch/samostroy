@@ -269,6 +269,16 @@ export default function CalculatorPage() {
     setSectionModes((prev) => ({ ...prev, [section]: mode }))
   }
 
+  function resetCalculator() {
+    setQty({})
+    setSectionModes({})
+    setDiscountPct(0)
+    setOnlyFilled(false)
+    setQ('')
+    const first = sectionNames[0]
+    if (first) setActiveSection(first)
+  }
+
   return (
     <div className="space-y-4 pb-28">
       <Panel>
@@ -331,7 +341,7 @@ export default function CalculatorPage() {
 
           <button
             type="button"
-            onClick={() => setQty({})}
+            onClick={resetCalculator}
             className="shrink-0 rounded-md border border-red-200 px-2.5 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50"
           >
             Сбросить
