@@ -2,16 +2,15 @@
   "v": 4,
   "updated": "2026-10-30",
   "status": "active",
-  "goal": "Scope period report to focused object → 2026-10-30-f",
-  "next": "Confirm CDN hash after deploy 2026-10-30-f",
+  "goal": "Fix weekly pack photo flicker → 2026-10-30-h",
+  "next": "Deploy 2026-10-30-h; confirm CDN hash",
   "blockers": [
     "TG notify needs Docker API + TELEGRAM_* + ngrok"
   ],
   "hot_files": [
-    "src/components/control/ObjectControlPage.tsx",
-    "src/components/control/PeriodReportPage.tsx",
+    "src/components/control/WeeklyPackPage.tsx",
     "data/changelog.json",
-    "data/releases/2026-10-30-f.md",
+    "data/releases/2026-10-30-h.md",
     "src/lib/buildStamp.ts"
   ]
 }

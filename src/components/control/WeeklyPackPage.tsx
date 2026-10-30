@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { RiArrowLeftSLine, RiArrowRightSLine } from '@remixicon/react'
 import { getMediaBlob } from '../../lib/mediaStore'
@@ -17,45 +17,73 @@ function formatRuDate(iso: string): string {
   return `${d}.${m}.${y}`
 }
 
+type MediaLoadState = 'loading' | 'ready' | 'missing' | 'broken'
+
 function DayMediaNav({ day }: { day: WeeklyPackDay }) {
-  const images = day.media.filter((m) => m.kind === 'image')
+  // Stable list — do not put a freshly filtered array in effect deps (that revokes blob URLs every render).
+  const images = useMemo(
+    () => day.media.filter((m) => m.kind === 'image'),
+    [day.media],
+  )
+  const mediaKey = useMemo(() => images.map((m) => m.id).join('|'), [images])
   const [idx, setIdx] = useState(0)
   const [url, setUrl] = useState<string | null>(null)
+  const [loadState, setLoadState] = useState<MediaLoadState>('loading')
+  const objectUrlRef = useRef<string | null>(null)
 
   useEffect(() => {
     setIdx(0)
-  }, [day.date, images.length])
+  }, [day.date, mediaKey])
+
+  const safeIdx = images.length === 0 ? 0 : Math.min(idx, images.length - 1)
+  const current = images[safeIdx]
+  const currentId = current?.id ?? ''
 
   useEffect(() => {
     let cancelled = false
-    let objectUrl: string | null = null
+    if (!currentId) {
+      setUrl(null)
+      setLoadState('missing')
+      return
+    }
+    setLoadState('loading')
     ;(async () => {
-      const m = images[idx]
-      if (!m) {
-        setUrl(null)
-        return
-      }
-      let blob = await getMediaBlob(m.id)
+      let blob = await getMediaBlob(currentId)
       if (!blob && isObjectReportsApiConfigured()) {
         try {
-          blob = await fetchReportMediaRemote(m.id)
+          blob = await fetchReportMediaRemote(currentId)
         } catch {
           /* ignore */
         }
       }
       if (cancelled) return
+      if (objectUrlRef.current) {
+        URL.revokeObjectURL(objectUrlRef.current)
+        objectUrlRef.current = null
+      }
       if (blob) {
-        objectUrl = URL.createObjectURL(blob)
-        setUrl(objectUrl)
+        const next = URL.createObjectURL(blob)
+        objectUrlRef.current = next
+        setUrl(next)
+        setLoadState('ready')
       } else {
         setUrl(null)
+        setLoadState('missing')
       }
     })()
     return () => {
       cancelled = true
-      if (objectUrl) URL.revokeObjectURL(objectUrl)
     }
-  }, [images, idx])
+  }, [currentId])
+
+  useEffect(() => {
+    return () => {
+      if (objectUrlRef.current) {
+        URL.revokeObjectURL(objectUrlRef.current)
+        objectUrlRef.current = null
+      }
+    }
+  }, [])
 
   if (images.length === 0) {
     return <p className="text-xs text-gray-400">Нет фото за день</p>
@@ -64,11 +92,19 @@ function DayMediaNav({ day }: { day: WeeklyPackDay }) {
   return (
     <div className="day-media mt-2">
       <div className="day-media-frame">
-        {url ? (
-          <img src={url} alt={images[idx]?.name || 'фото'} className="day-media-img" />
+        {loadState === 'ready' && url ? (
+          <img
+            src={url}
+            alt={current?.name || 'фото'}
+            className="day-media-img"
+            onError={() => setLoadState('broken')}
+          />
         ) : (
           <div className="day-media-fallback">
-            Медиа недоступно в этом браузере (нужен sync API / то же устройство)
+            {loadState === 'loading' && 'Загрузка фото…'}
+            {loadState === 'missing' &&
+              'Медиа недоступно в этом браузере (нужен sync API / то же устройство)'}
+            {loadState === 'broken' && 'Не удалось показать фото'}
           </div>
         )}
         {images.length > 1 && (
@@ -93,8 +129,8 @@ function DayMediaNav({ day }: { day: WeeklyPackDay }) {
         )}
       </div>
       <p className="day-media-caption">
-        Фото {idx + 1} / {images.length}
-        {images[idx]?.name ? ` · ${images[idx].name}` : ''}
+        Фото {safeIdx + 1} / {images.length}
+        {current?.name ? ` · ${current.name}` : ''}
       </p>
     </div>
   )
