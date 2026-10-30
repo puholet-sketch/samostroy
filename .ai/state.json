@@ -3,7 +3,7 @@
   "updated": "2026-10-30",
   "status": "active",
   "goal": "Multi-object weekly pack → 2026-10-30-j",
-  "next": "Confirm CDN hash for 2026-10-30-j",
+  "next": "Idle — 2026-10-30-j live (index-CW-Oqb13.js)",
   "blockers": [
     "TG notify needs Docker API + TELEGRAM_* + ngrok"
   ],
