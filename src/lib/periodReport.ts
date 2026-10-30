@@ -1,5 +1,5 @@
 /**
- * Сводный отчёт по всем объектам за период.
+ * Сводный отчёт за период (все объекты или фильтр clientId/objectId).
  * Данные: localStorage control links + objectReports (как ObjectControlPage).
  * Позже: тот же контракт можно читать с Docker API, не меняя UI.
  */

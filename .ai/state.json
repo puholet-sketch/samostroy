@@ -2,16 +2,16 @@
   "v": 4,
   "updated": "2026-10-30",
   "status": "active",
-  "goal": "Remove clients KPI strip → 2026-10-30-e",
-  "next": "Deploy 2026-10-30-e; confirm CDN hash",
+  "goal": "Scope period report to focused object → 2026-10-30-f",
+  "next": "Confirm CDN hash after deploy 2026-10-30-f",
   "blockers": [
     "TG notify needs Docker API + TELEGRAM_* + ngrok"
   ],
   "hot_files": [
-    "src/components/clients/ClientsListPage.tsx",
-    "src/components/ui/Kpi.tsx",
+    "src/components/control/ObjectControlPage.tsx",
+    "src/components/control/PeriodReportPage.tsx",
     "data/changelog.json",
-    "data/releases/2026-10-30-e.md",
+    "data/releases/2026-10-30-f.md",
     "src/lib/buildStamp.ts"
   ]
 }

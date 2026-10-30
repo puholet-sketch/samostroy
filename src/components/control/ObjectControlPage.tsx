@@ -164,6 +164,8 @@ const inputCls =
 function ObjectCalendarCard({
   client,
   object,
+  focused,
+  onFocus,
   viewYear,
   reportDate,
   onReportDate,
@@ -172,6 +174,8 @@ function ObjectCalendarCard({
 }: {
   client: ClientCard
   object: ClientObject
+  focused: boolean
+  onFocus: () => void
   viewYear: number
   reportDate: string
   onReportDate: (date: string) => void
@@ -263,11 +267,21 @@ function ObjectCalendarCard({
   }
 
   return (
-    <div className="rounded-lg border border-gray-200 bg-white p-2 shadow-sm sm:p-2.5">
+    <div
+      onClick={onFocus}
+      className={`rounded-lg border bg-white p-2 shadow-sm sm:p-2.5 ${
+        focused
+          ? 'border-emerald-400 ring-1 ring-emerald-200'
+          : 'border-gray-200 hover:border-gray-300'
+      }`}
+    >
       <div className="mb-1.5 flex flex-wrap items-start justify-between gap-x-3 gap-y-1">
         <div className="min-w-0">
           <p className="truncate text-sm font-semibold text-gray-900">
             {object.address || object.title || 'Объект'}
+            {focused ? (
+              <span className="ml-1.5 text-[10px] font-medium text-emerald-700">на экране</span>
+            ) : null}
           </p>
           <p className="truncate text-[11px] text-gray-500">
             {object.contractNumber ? `дог. ${object.contractNumber}` : 'без договора'}
@@ -426,6 +440,7 @@ export default function ObjectControlPage() {
   }
 
   function openPeriodReport() {
+    if (!clientId || !objectId) return
     let from = periodFrom
     let to = periodTo
     if (from > to) {
@@ -433,7 +448,7 @@ export default function ObjectControlPage() {
       from = to
       to = t
     }
-    const qs = new URLSearchParams({ from, to })
+    const qs = new URLSearchParams({ from, to, clientId, objectId })
     navigate(`/control/period-report?${qs.toString()}`)
   }
 
@@ -455,12 +470,21 @@ export default function ObjectControlPage() {
   }, [])
 
   const canGoForward = viewYear < currentYear
+  const focusedObject =
+    inWorkObjects.find((o) => o.id === objectId) ?? inWorkObjects[0] ?? null
+  const focusedObjectLabel =
+    focusedObject?.address || focusedObject?.title || 'выбранный объект'
 
   return (
     <div className="space-y-2">
       {!isForeman && (
         <div className="rounded-lg border border-gray-200 bg-white p-2.5 shadow-sm">
-          <p className="mb-1 text-xs font-medium text-gray-500">Сводный отчёт по всем объектам</p>
+          <p className="mb-1 text-xs font-medium text-gray-500">
+            Сводный отчёт по объекту
+            {clientId && objectId ? (
+              <span className="ml-1 font-normal text-gray-400">· {focusedObjectLabel}</span>
+            ) : null}
+          </p>
           <div className="flex flex-wrap items-end gap-1.5">
             <label className="min-w-0">
               <span className="mb-0.5 block text-[10px] text-gray-500">С</span>
@@ -485,16 +509,18 @@ export default function ObjectControlPage() {
             <button
               type="button"
               onClick={openPeriodReport}
-              disabled={!periodFrom || !periodTo}
+              disabled={!periodFrom || !periodTo || !clientId || !objectId}
               className="inline-flex h-[34px] items-center rounded-md bg-emerald-600 px-3 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
+              title={!clientId || !objectId ? 'Сначала выберите клиента и объект' : undefined}
             >
               Сводный отчёт
             </button>
             <button
               type="button"
               onClick={openPeriodReport}
-              disabled={!periodFrom || !periodTo}
+              disabled={!periodFrom || !periodTo || !clientId || !objectId}
               className="inline-flex h-[34px] items-center rounded-md border border-gray-300 bg-white px-3 text-sm font-medium text-gray-800 shadow-sm hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+              title={!clientId || !objectId ? 'Сначала выберите клиента и объект' : undefined}
             >
               Выгрузить
             </button>
@@ -509,7 +535,8 @@ export default function ObjectControlPage() {
             </button>
           </div>
           <p className="mt-1 text-[11px] text-gray-500">
-            Сводный — все адреса. «Пакет клиенту» — неделя сб→пт выбранного объекта. KPI — в шапке.
+            Сводный / выгрузка — объект на экране (клик по карточке, если их несколько). «Пакет
+            клиенту» — неделя сб→пт. KPI — в шапке.
           </p>
         </div>
       )}
@@ -654,6 +681,8 @@ export default function ObjectControlPage() {
                 key={o.id}
                 client={client}
                 object={o}
+                focused={o.id === objectId}
+                onFocus={() => setObjectId(o.id)}
                 viewYear={viewYear}
                 reportDate={reportDate}
                 onReportDate={setReportDate}

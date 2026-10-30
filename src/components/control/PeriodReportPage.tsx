@@ -50,8 +50,20 @@ export default function PeriodReportPage() {
   const defaults = defaultPeriodRange()
   const from = parseIso(params.get('from'), defaults.from)
   const to = parseIso(params.get('to'), defaults.to)
+  const urlClientId = params.get('clientId') || ''
+  const urlObjectId = params.get('objectId') || ''
 
-  const [filters, setFilters] = useState<PeriodReportFilters>(() => loadPeriodFilters())
+  const [filters, setFilters] = useState<PeriodReportFilters>(() => {
+    const base = loadPeriodFilters()
+    if (urlClientId || urlObjectId) {
+      return {
+        ...base,
+        clientId: urlClientId,
+        objectId: urlObjectId,
+      }
+    }
+    return base
+  })
   const clients = useMemo(() => loadClients(), [])
   const objects = useMemo(() => {
     const c = clients.find((x) => x.id === filters.clientId)
@@ -73,9 +85,17 @@ export default function PeriodReportPage() {
     [from, to, filters],
   )
 
+  const scopedObjectLabel = useMemo(() => {
+    if (!filters.clientId || !filters.objectId) return null
+    const c = clients.find((x) => x.id === filters.clientId)
+    const o = (c?.objects ?? []).find((x) => x.id === filters.objectId)
+    return o?.address || o?.title || null
+  }, [clients, filters.clientId, filters.objectId])
+
   useEffect(() => {
-    document.title = `Сводный отчёт ${formatRuDate(from)}–${formatRuDate(to)} — СамоСтрой`
-  }, [from, to])
+    const scope = scopedObjectLabel ? ` · ${scopedObjectLabel}` : ''
+    document.title = `Сводный отчёт ${formatRuDate(from)}–${formatRuDate(to)}${scope} — СамоСтрой`
+  }, [from, to, scopedObjectLabel])
 
   const generatedAt = todayIso()
 
@@ -251,7 +271,9 @@ export default function PeriodReportPage() {
 
       <div className="period-toolbar">
         <h1>
-          Сводный отчёт · {formatRuDate(from)} — {formatRuDate(to)}
+          Сводный отчёт
+          {scopedObjectLabel ? ` · ${scopedObjectLabel}` : ''} · {formatRuDate(from)} —{' '}
+          {formatRuDate(to)}
         </h1>
         <div className="actions no-print">
           <button
