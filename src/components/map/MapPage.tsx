@@ -13,6 +13,7 @@ import {
   financeByObjectId,
 } from './mapMarkers'
 import type { ObjectStatus } from '../../services/types'
+import { suggestAddresses } from '../../lib/addressSuggest'
 
 type Suggest = { display_name: string; lat: string; lon: string }
 
@@ -100,28 +101,28 @@ export default function MapPage() {
       setSuggests([])
       return
     }
+    const ac = new AbortController()
     const t = setTimeout(() => {
       void (async () => {
         try {
-          const url = new URL('https://nominatim.openstreetmap.org/search')
-          url.searchParams.set('format', 'json')
-          url.searchParams.set('q', query)
-          url.searchParams.set('countrycodes', 'ru')
-          url.searchParams.set('viewbox', '35.5,56.8,39.5,54.8')
-          url.searchParams.set('bounded', '0')
-          url.searchParams.set('limit', '6')
-          const res = await fetch(url.toString(), {
-            headers: { Accept: 'application/json' },
-          })
-          if (!res.ok) return
-          const data = (await res.json()) as Suggest[]
-          setSuggests(data)
+          const data = await suggestAddresses(query, ac.signal)
+          if (ac.signal.aborted) return
+          setSuggests(
+            data.map((s) => ({
+              display_name: s.label,
+              lat: String(s.lat),
+              lon: String(s.lng),
+            })),
+          )
         } catch {
-          setSuggests([])
+          if (!ac.signal.aborted) setSuggests([])
         }
       })()
     }, 400)
-    return () => clearTimeout(t)
+    return () => {
+      ac.abort()
+      clearTimeout(t)
+    }
   }, [query])
 
   async function applyCoords(lat: number, lng: number, address?: string) {

@@ -11,6 +11,7 @@ import {
   type ClientObject,
 } from '../../lib/clients'
 import { formatRuPhone } from '../../lib/phoneActions'
+import { AddressInput } from '../ui/AddressInput'
 import { Panel } from '../ui/Kpi'
 import { PhoneActions } from '../ui/PhoneActions'
 
@@ -312,15 +313,14 @@ export default function ClientCardPage() {
                   key={o.id}
                   className="grid grid-cols-1 gap-2 rounded-md border border-gray-200 bg-gray-50 p-2 sm:grid-cols-3"
                 >
-                  <input
-                    className={inputCls}
+                  <AddressInput
                     placeholder="Точный адрес: улица, дом, кв."
                     title="Адрес объекта для контроля и договоров"
                     value={o.address}
-                    onChange={(e) =>
+                    onChange={(v) =>
                       patchObject(o.id, {
-                        address: e.target.value,
-                        title: o.title === o.address || !o.title ? e.target.value : o.title,
+                        address: v,
+                        title: o.title === o.address || !o.title ? v : o.title,
                       })
                     }
                   />
@@ -411,7 +411,7 @@ export default function ClientCardPage() {
               />
             </Field>
             <Field label="Адрес регистрации" className="col-span-2 xl:col-span-4">
-              <input className={inputCls} value={client.address} onChange={(e) => patch({ address: e.target.value })} />
+              <AddressInput value={client.address} onChange={(v) => patch({ address: v })} />
             </Field>
             <Field label="Скан: паспорт" className="col-span-2">
               <input className={inputCls} value={client.files_1} onChange={(e) => patch({ files_1: e.target.value })} />
@@ -439,7 +439,7 @@ export default function ClientCardPage() {
               <input className={inputCls} value={client.podpisant} onChange={(e) => patch({ podpisant: e.target.value })} />
             </Field>
             <Field label="Юр. адрес" className="col-span-2 xl:col-span-2">
-              <input className={inputCls} value={client.address_ur} onChange={(e) => patch({ address_ur: e.target.value })} />
+              <AddressInput value={client.address_ur} onChange={(v) => patch({ address_ur: v })} />
             </Field>
             <Field label="ИНН">
               <input className={inputCls} value={client.inn} onChange={(e) => patch({ inn: e.target.value })} />

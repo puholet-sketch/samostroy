@@ -4,6 +4,7 @@ import { api } from '../../services/api'
 import { useAuth } from '../../contexts/AuthContext'
 import type { RenovationObject, ObjectStage } from '../../services/types'
 import PipelinePanel from '../pipeline/PipelinePanel'
+import { AddressInput } from '../ui/AddressInput'
 
 export default function ObjectDetailPage() {
   const { id } = useParams()
@@ -120,7 +121,17 @@ export default function ObjectDetailPage() {
           <div className="card p-5">
             <h2 className="font-semibold text-gray-900 mb-4">CRM-поля</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <Field label="Адрес" value={obj.address} onChange={(v) => setObj({ ...obj, address: v })} disabled={!writable} />
+              <div>
+                <label className="label">Адрес</label>
+                <AddressInput
+                  value={obj.address}
+                  disabled={!writable}
+                  onChange={(v) => setObj({ ...obj, address: v })}
+                  onSelect={(s) =>
+                    setObj((prev) => (prev ? { ...prev, address: s.label, lat: s.lat, lng: s.lng } : prev))
+                  }
+                />
+              </div>
               <Field label="Телефон" value={obj.contacts[0]?.phone ?? ''} onChange={(v) => setObj({ ...obj, contacts: [{ ...obj.contacts[0], name: obj.contacts[0]?.name ?? '', phone: v }] })} disabled={!writable} />
               <Field label="Хобби" value={obj.crm.hobbies} onChange={(v) => updateCrm('hobbies', v)} disabled={!writable} />
               <Field label="Канал связи" value={obj.crm.preferredChannel} onChange={(v) => updateCrm('preferredChannel', v)} disabled={!writable} />

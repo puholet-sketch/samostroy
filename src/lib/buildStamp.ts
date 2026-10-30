@@ -1,2 +1,2 @@
 /** Маркер сборки для UI и автомета замечаний. Обновлять при деплое. */
-export const BUILD_STAMP = '2026-10-30 · weekly pack photos h'
+export const BUILD_STAMP = '2026-10-30 · address suggest i'

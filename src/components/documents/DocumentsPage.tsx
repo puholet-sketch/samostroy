@@ -25,6 +25,7 @@ import {
   type SmetaLine,
 } from '../../lib/generateDocs'
 import { formatMoney, rublesInWords } from '../../lib/moneyRu'
+import { AddressInput } from '../ui/AddressInput'
 import { PhoneActions } from '../ui/PhoneActions'
 
 type DocKind = 'remont' | 'design' | 'akt' | 'smeta'
@@ -943,10 +944,9 @@ export default function DocumentsPage() {
               />
             </Field>
             <Field label="Адрес объекта" className="col-span-2 lg:col-span-2">
-              <input
-                className={inputCls}
+              <AddressInput
                 value={remont.objectAddress}
-                onChange={(e) => setRemont({ ...remont, objectAddress: e.target.value })}
+                onChange={(v) => setRemont({ ...remont, objectAddress: v })}
               />
             </Field>
             <Field label="Площадь, м²" hint="С объекта клиента">
@@ -1087,10 +1087,9 @@ export default function DocumentsPage() {
               />
             </Field>
             <Field label="Адрес объекта" className="col-span-2">
-              <input
-                className={inputCls}
+              <AddressInput
                 value={design.objectAddress}
-                onChange={(e) => setDesign({ ...design, objectAddress: e.target.value })}
+                onChange={(v) => setDesign({ ...design, objectAddress: v })}
               />
             </Field>
             <Field label="Итого" className="col-span-2">
@@ -1170,10 +1169,9 @@ export default function DocumentsPage() {
               />
             </Field>
             <Field label="Адрес объекта" className="col-span-2 lg:col-span-2">
-              <input
-                className={inputCls}
+              <AddressInput
                 value={akt.objectAddress}
-                onChange={(e) => setAkt({ ...akt, objectAddress: e.target.value })}
+                onChange={(v) => setAkt({ ...akt, objectAddress: v })}
               />
             </Field>
           </div>
@@ -1429,10 +1427,9 @@ export default function DocumentsPage() {
               />
             </Field>
             <Field label="Адрес объекта" className="col-span-2 lg:col-span-3">
-              <input
-                className={inputCls}
+              <AddressInput
                 value={smeta.objectAddress}
-                onChange={(e) => setSmeta({ ...smeta, objectAddress: e.target.value })}
+                onChange={(v) => setSmeta({ ...smeta, objectAddress: v })}
               />
             </Field>
             <label className="flex items-end gap-2 pb-1 text-xs text-gray-700">
