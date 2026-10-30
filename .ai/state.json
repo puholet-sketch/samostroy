@@ -2,16 +2,15 @@
   "v": 4,
   "updated": "2026-10-30",
   "status": "active",
-  "goal": "Control calendar −1/+0 + Sat–Fri default → 2026-10-30-b",
-  "next": "CDN live after gh-pages push · verify /control months",
+  "goal": "Control compact + inWork list + per-object calendars → 2026-10-30-c",
+  "next": "Commit + GITHUB_PAGES deploy 2026-10-30-c",
   "blockers": [
     "TG notify needs Docker API + TELEGRAM_* + ngrok"
   ],
   "hot_files": [
     "src/components/control/ObjectControlPage.tsx",
-    "src/lib/periodReport.ts",
     "data/changelog.json",
-    "data/releases/2026-10-30-b.md",
+    "data/releases/2026-10-30-c.md",
     "src/lib/buildStamp.ts"
   ]
 }

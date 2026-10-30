@@ -67,6 +67,19 @@ function countMissInYear(year: number, reported: Set<string>): number {
   return miss
 }
 
+/** Текущий год: прошлый + текущий (−1/+0). Прошлые годы: все 12. */
+function monthsForViewYear(viewYear: number): { year: number; month: number }[] {
+  const now = new Date()
+  const cy = now.getFullYear()
+  const cm = now.getMonth()
+  if (viewYear < cy) {
+    return Array.from({ length: 12 }, (_, m) => ({ year: viewYear, month: m }))
+  }
+  if (viewYear > cy) return []
+  const prev = cm === 0 ? { year: cy - 1, month: 11 } : { year: cy, month: cm - 1 }
+  return [prev, { year: cy, month: cm }]
+}
+
 const WEEKDAYS = ['п', 'в', 'с', 'ч', 'п', 'с', 'в']
 
 function MiniMonth({
@@ -75,24 +88,37 @@ function MiniMonth({
   reported,
   reportDate,
   onPick,
+  size = 'sm',
 }: {
   year: number
   month: number
   reported: Set<string>
   reportDate: string
   onPick: (date: string, future: boolean) => void
+  /** sm — год (12 мес.), lg — два месяца на всю ширину */
+  size?: 'sm' | 'lg'
 }) {
   const days = useMemo(() => buildMonth(year, month, reported), [year, month, reported])
   const pad = (new Date(year, month, 1).getDay() + 6) % 7
+  const large = size === 'lg'
 
   return (
     <div className="min-w-0">
-      <p className="mb-0.5 text-center text-[10px] font-semibold capitalize leading-none text-gray-700">
+      <p
+        className={`text-center font-semibold capitalize leading-none text-gray-700 ${
+          large ? 'mb-1 text-xs sm:text-sm' : 'mb-0.5 text-[10px]'
+        }`}
+      >
         {monthShort(month)}
       </p>
-      <div className="grid grid-cols-7 gap-px">
+      <div className={`grid grid-cols-7 ${large ? 'gap-0.5 sm:gap-1' : 'gap-px'}`}>
         {WEEKDAYS.map((d, i) => (
-          <div key={`${d}-${i}`} className="text-center text-[8px] leading-none text-gray-400">
+          <div
+            key={`${d}-${i}`}
+            className={`text-center leading-none text-gray-400 ${
+              large ? 'pb-0.5 text-[10px] sm:text-xs' : 'text-[8px]'
+            }`}
+          >
             {d}
           </div>
         ))}
@@ -103,19 +129,25 @@ function MiniMonth({
           const dayNum = Number(d.date.slice(-2))
           let cls = 'bg-gray-100 text-gray-400'
           if (!d.future) {
-            cls = d.hasReport
-              ? 'bg-emerald-500 text-white'
-              : 'bg-rose-500 text-white'
+            cls = d.hasReport ? 'bg-emerald-500 text-white' : 'bg-rose-500 text-white'
           }
-          if (d.today) cls += ' ring-1 ring-blue-500'
-          if (d.date === reportDate) cls += ' outline outline-1 outline-indigo-500'
+          if (d.today) cls += large ? ' ring-2 ring-blue-500' : ' ring-1 ring-blue-500'
+          if (d.date === reportDate) {
+            cls += large
+              ? ' outline outline-2 outline-indigo-500'
+              : ' outline outline-1 outline-indigo-500'
+          }
           return (
             <button
               key={d.date}
               type="button"
               title={d.date}
               onClick={() => onPick(d.date, d.future)}
-              className={`flex h-4 w-full items-center justify-center rounded-[2px] text-[9px] font-semibold tabular-nums leading-none ${cls}`}
+              className={`flex w-full items-center justify-center font-semibold tabular-nums leading-none ${
+                large
+                  ? 'h-8 rounded text-xs sm:h-9 sm:text-sm'
+                  : 'h-4 rounded-[2px] text-[9px]'
+              } ${cls}`}
             >
               {dayNum}
             </button>
@@ -127,7 +159,179 @@ function MiniMonth({
 }
 
 const inputCls =
-  'block w-full rounded-md border border-gray-300 bg-white px-2.5 py-1.5 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500'
+  'block w-full rounded-md border border-gray-300 bg-white px-2 py-1.5 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500'
+
+function ObjectCalendarCard({
+  client,
+  object,
+  viewYear,
+  reportDate,
+  onReportDate,
+  tick,
+  onBump,
+}: {
+  client: ClientCard
+  object: ClientObject
+  viewYear: number
+  reportDate: string
+  onReportDate: (date: string) => void
+  tick: number
+  onBump: () => void
+}) {
+  const navigate = useNavigate()
+  const [copied, setCopied] = useState(false)
+
+  const link: ControlLink = useMemo(
+    () =>
+      getOrCreateControlLink({
+        clientId: client.id,
+        objectId: object.id,
+        objectTitle: object.title || object.address,
+        objectAddress: object.address,
+      }),
+    [client.id, object.id, object.title, object.address],
+  )
+
+  useEffect(() => {
+    let cancelled = false
+    ;(async () => {
+      onBump()
+      await hydrateReportsForToken(link.token)
+      if (!cancelled) onBump()
+    })()
+    return () => {
+      cancelled = true
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- bump is setState; token drives reload
+  }, [link.token])
+
+  useEffect(() => {
+    const refresh = () => {
+      onBump()
+      void hydrateReportsForToken(link.token).then(onBump)
+    }
+    const onVis = () => {
+      if (document.visibilityState === 'visible') refresh()
+    }
+    const onReports = (ev: Event) => {
+      const detail = (ev as CustomEvent<{ token?: string }>).detail
+      if (!detail?.token || detail.token === link.token) onBump()
+    }
+    window.addEventListener('focus', refresh)
+    window.addEventListener('pageshow', refresh)
+    document.addEventListener('visibilitychange', onVis)
+    window.addEventListener(REPORTS_CHANGED_EVENT, onReports)
+    return () => {
+      window.removeEventListener('focus', refresh)
+      window.removeEventListener('pageshow', refresh)
+      document.removeEventListener('visibilitychange', onVis)
+      window.removeEventListener(REPORTS_CHANGED_EVENT, onReports)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [link.token])
+
+  const reported = useMemo(() => {
+    void tick
+    return datesWithReports(link.token)
+  }, [link.token, tick])
+
+  const miss = useMemo(() => countMissInYear(viewYear, reported), [viewYear, reported])
+  const calendarMonths = useMemo(() => monthsForViewYear(viewYear), [viewYear])
+  const large = calendarMonths.length <= 2
+
+  const shareUrl =
+    typeof window !== 'undefined'
+      ? `${window.location.origin}${import.meta.env.BASE_URL.replace(/\/$/, '')}/report/${link.token}`
+      : ''
+
+  async function copyLink() {
+    if (!shareUrl) return
+    await navigator.clipboard.writeText(shareUrl)
+    setCopied(true)
+    window.setTimeout(() => setCopied(false), 1500)
+  }
+
+  function openWeeklyPack() {
+    const { from, to } = fullWeekSatFri()
+    const qs = new URLSearchParams({
+      clientId: client.id,
+      objectId: object.id,
+      from,
+      to,
+    })
+    navigate(`/control/weekly-pack?${qs.toString()}`)
+  }
+
+  return (
+    <div className="rounded-lg border border-gray-200 bg-white p-2 shadow-sm sm:p-2.5">
+      <div className="mb-1.5 flex flex-wrap items-start justify-between gap-x-3 gap-y-1">
+        <div className="min-w-0">
+          <p className="truncate text-sm font-semibold text-gray-900">
+            {object.address || object.title || 'Объект'}
+          </p>
+          <p className="truncate text-[11px] text-gray-500">
+            {object.contractNumber ? `дог. ${object.contractNumber}` : 'без договора'}
+            {' · '}
+            <span className="text-emerald-700">в работе</span>
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={openWeeklyPack}
+          className="shrink-0 rounded-md border border-indigo-300 bg-indigo-50 px-2 py-1 text-[11px] font-medium text-indigo-900 hover:bg-indigo-100"
+        >
+          Пакет сб→пт
+        </button>
+      </div>
+
+      <div className="mb-1.5 flex flex-wrap items-center gap-x-2.5 gap-y-0.5 text-xs">
+        <span className="shrink-0 text-gray-500">
+          Без отчёта: <strong className="tabular-nums text-rose-600">{miss}</strong>
+        </span>
+        <span className="hidden text-gray-300 sm:inline">·</span>
+        <span className="min-w-0 flex-1 truncate text-gray-500" title={shareUrl}>
+          Прорабу: {shareUrl}
+        </span>
+        <button
+          type="button"
+          onClick={() => void copyLink()}
+          className="shrink-0 font-semibold text-blue-700 hover:underline"
+        >
+          {copied ? 'Скопировано' : 'Копировать'}
+        </button>
+        <Link
+          to={controlReportPath(link.token, reportDate)}
+          className="shrink-0 font-medium text-blue-700 hover:underline"
+        >
+          Форма →
+        </Link>
+      </div>
+
+      <div
+        className={
+          large
+            ? 'grid w-full grid-cols-2 gap-3 sm:gap-4'
+            : 'grid grid-cols-2 gap-1.5 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6'
+        }
+      >
+        {calendarMonths.map(({ year, month }) => (
+          <MiniMonth
+            key={`${object.id}-${year}-${month}`}
+            year={year}
+            month={month}
+            reported={reported}
+            reportDate={reportDate}
+            size={large ? 'lg' : 'sm'}
+            onPick={(date, future) => {
+              onReportDate(date)
+              if (!future) navigate(controlReportPath(link.token, date))
+            }}
+          />
+        ))}
+      </div>
+    </div>
+  )
+}
 
 export default function ObjectControlPage() {
   const navigate = useNavigate()
@@ -144,7 +348,6 @@ export default function ObjectControlPage() {
   const [viewYear, setViewYear] = useState(currentYear)
   const [reportDate, setReportDate] = useState(todayIso())
   const [tick, setTick] = useState(0)
-  const [copied, setCopied] = useState(false)
   const periodDefaults = currentWeekSatFri()
   const [periodFrom, setPeriodFrom] = useState(periodDefaults.from)
   const [periodTo, setPeriodTo] = useState(periodDefaults.to)
@@ -173,89 +376,40 @@ export default function ObjectControlPage() {
   )
   usePageHeaderMeta(headerMeta)
 
+  /** Клиенты с ≥1 объектом «в работе» (ремонт в процессе). */
+  const inWorkClients = useMemo(
+    () => clients.filter((c) => (c.objects ?? []).some((o) => o.inWork)),
+    [clients],
+  )
+
   const filteredClients = useMemo(
     () =>
-      clients.filter((c) =>
+      inWorkClients.filter((c) =>
         matchClientFilters(c, { name: qName, phone: qPhone, channel: qChannel }),
       ),
-    [clients, qName, qPhone, qChannel],
+    [inWorkClients, qName, qPhone, qChannel],
   )
 
   const client = clients.find((c) => c.id === clientId) ?? null
-  const objects: ClientObject[] = client?.objects ?? []
-  const object = objects.find((o) => o.id === objectId) ?? null
-
-  const link: ControlLink | null = useMemo(() => {
-    if (!client || !object) return null
-    return getOrCreateControlLink({
-      clientId: client.id,
-      objectId: object.id,
-      objectTitle: object.title || object.address,
-      objectAddress: object.address,
-    })
-  }, [client, object])
+  const inWorkObjects: ClientObject[] = useMemo(
+    () => (client?.objects ?? []).filter((o) => o.inWork),
+    [client],
+  )
 
   useEffect(() => {
     if (clientId && objectId) saveControlSelection({ clientId, objectId })
   }, [clientId, objectId])
 
   useEffect(() => {
-    if (!link?.token) {
-      bump()
+    if (!client) return
+    if (inWorkObjects.length === 0) {
+      if (objectId) setObjectId('')
       return
     }
-    let cancelled = false
-    ;(async () => {
-      // сначала локальный календарь, потом API
-      bump()
-      await hydrateReportsForToken(link.token)
-      if (!cancelled) bump()
-    })()
-    return () => {
-      cancelled = true
+    if (!inWorkObjects.some((o) => o.id === objectId)) {
+      setObjectId(inWorkObjects[0].id)
     }
-  }, [link?.token])
-
-  // возврат с формы отчёта / другая вкладка / storage
-  useEffect(() => {
-    const onFocus = () => {
-      bump()
-      if (link?.token) void hydrateReportsForToken(link.token).then(bump)
-    }
-    const onVis = () => {
-      if (document.visibilityState === 'visible') onFocus()
-    }
-    const onReports = (ev: Event) => {
-      const detail = (ev as CustomEvent<{ token?: string }>).detail
-      if (!link?.token || !detail?.token || detail.token === link.token) bump()
-    }
-    const onPageShow = () => onFocus()
-    window.addEventListener('focus', onFocus)
-    window.addEventListener('pageshow', onPageShow)
-    document.addEventListener('visibilitychange', onVis)
-    window.addEventListener(REPORTS_CHANGED_EVENT, onReports)
-    return () => {
-      window.removeEventListener('focus', onFocus)
-      window.removeEventListener('pageshow', onPageShow)
-      document.removeEventListener('visibilitychange', onVis)
-      window.removeEventListener(REPORTS_CHANGED_EVENT, onReports)
-    }
-  }, [link?.token])
-
-  const reported = useMemo(() => {
-    void tick
-    return link ? datesWithReports(link.token) : new Set<string>()
-  }, [link?.token, tick])
-
-  const miss = useMemo(
-    () => countMissInYear(viewYear, reported),
-    [viewYear, reported],
-  )
-
-  const shareUrl =
-    link && typeof window !== 'undefined'
-      ? `${window.location.origin}${import.meta.env.BASE_URL.replace(/\/$/, '')}/report/${link.token}`
-      : ''
+  }, [client?.id, inWorkObjects, objectId])
 
   function goYear(delta: number) {
     setViewYear((y) => {
@@ -265,25 +419,10 @@ export default function ObjectControlPage() {
     })
   }
 
-  function openReport(date: string) {
-    if (!link) return
-    navigate(controlReportPath(link.token, date))
-  }
-
   function pickClient(c: ClientCard) {
     setClientId(c.id)
-    setQName('')
-    setQPhone('')
-    setQChannel('')
-    const first = c.objects[0]
-    setObjectId(first?.id ?? '')
-  }
-
-  async function copyLink() {
-    if (!shareUrl) return
-    await navigator.clipboard.writeText(shareUrl)
-    setCopied(true)
-    window.setTimeout(() => setCopied(false), 1500)
+    const firstInWork = (c.objects ?? []).find((o) => o.inWork) ?? c.objects[0]
+    setObjectId(firstInWork?.id ?? '')
   }
 
   function openPeriodReport() {
@@ -309,44 +448,20 @@ export default function ObjectControlPage() {
     document.title = 'Контроль объекта — СамоСтрой'
   }, [])
 
-  // тихая проверка дедлайнов этапов (1×/сутки, без UI-шума)
   useEffect(() => {
     void runDeadlineNotify({ withinDays: 3 }).catch(() => {
       /* ignore offline / missing channels */
     })
   }, [])
 
-  useEffect(() => {
-    if (!client) return
-    if (objects.length === 1 && objectId !== objects[0].id) {
-      setObjectId(objects[0].id)
-    }
-  }, [client?.id, objects.length])
-
-  const showClientList =
-    qName.trim().length > 0 || qPhone.trim().length > 0 || qChannel.trim().length > 0 || !client
   const canGoForward = viewYear < currentYear
 
-  /** Текущий год: только прошлый + текущий месяц (−1). Прошлые годы: все 12. */
-  const calendarMonths = useMemo(() => {
-    const now = new Date()
-    const cy = now.getFullYear()
-    const cm = now.getMonth()
-    if (viewYear < cy) {
-      return Array.from({ length: 12 }, (_, m) => ({ year: viewYear, month: m }))
-    }
-    if (viewYear > cy) return [] as { year: number; month: number }[]
-    const prev =
-      cm === 0 ? { year: cy - 1, month: 11 } : { year: cy, month: cm - 1 }
-    return [prev, { year: cy, month: cm }]
-  }, [viewYear])
-
   return (
-    <div className="space-y-3">
+    <div className="space-y-2">
       {!isForeman && (
-        <div className="rounded-lg border border-gray-200 bg-white p-3 shadow-sm">
-          <p className="mb-2 text-xs font-medium text-gray-500">Сводный отчёт по всем объектам</p>
-          <div className="flex flex-wrap items-end gap-2">
+        <div className="rounded-lg border border-gray-200 bg-white p-2.5 shadow-sm">
+          <p className="mb-1 text-xs font-medium text-gray-500">Сводный отчёт по всем объектам</p>
+          <div className="flex flex-wrap items-end gap-1.5">
             <label className="min-w-0">
               <span className="mb-0.5 block text-[10px] text-gray-500">С</span>
               <input
@@ -388,21 +503,25 @@ export default function ObjectControlPage() {
               onClick={openWeeklyPack}
               disabled={!clientId || !objectId}
               className="inline-flex h-[34px] items-center rounded-md border border-indigo-300 bg-indigo-50 px-3 text-sm font-medium text-indigo-900 shadow-sm hover:bg-indigo-100 disabled:cursor-not-allowed disabled:opacity-50"
-              title={!clientId || !objectId ? 'Сначала выберите клиента и объект' : undefined}
+              title={!clientId || !objectId ? 'Сначала выберите клиента' : undefined}
             >
               Пакет клиенту (сб→пт)
             </button>
           </div>
-          <p className="mt-1.5 text-[11px] text-gray-500">
-            Сводный — все адреса. «Пакет клиенту» — день за днём за неделю сб→пт (пятница = день
-            отчёта) с фото. KPI недели — в шапке.
+          <p className="mt-1 text-[11px] text-gray-500">
+            Сводный — все адреса. «Пакет клиенту» — неделя сб→пт выбранного объекта. KPI — в шапке.
           </p>
         </div>
       )}
 
-      <div className="rounded-lg border border-gray-200 bg-white p-3 shadow-sm">
-        <p className="mb-2 text-xs font-medium text-gray-500">1. Клиент</p>
-        <div className="flex flex-wrap items-center gap-2">
+      <div className="rounded-lg border border-gray-200 bg-white p-2.5 shadow-sm">
+        <div className="mb-1 flex flex-wrap items-baseline justify-between gap-1">
+          <p className="text-xs font-medium text-gray-500">1. Клиент · в работе</p>
+          <p className="text-[11px] tabular-nums text-gray-400">
+            {filteredClients.length} / {inWorkClients.length}
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center gap-1.5">
           <input
             className={`${inputCls} w-36 min-w-0 shrink sm:w-44`}
             placeholder="ФИО"
@@ -429,171 +548,121 @@ export default function ObjectControlPage() {
             ))}
           </select>
         </div>
-        {showClientList && (
-          <div className="mt-2 max-h-36 overflow-y-auto rounded-md border border-gray-200">
-            {filteredClients.length === 0 ? (
-              <p className="px-2 py-2 text-xs text-gray-500">Никого не найдено</p>
-            ) : (
-              <ul className="divide-y divide-gray-100">
-                {filteredClients.slice(0, 12).map((c) => (
-                  <li
-                    key={c.id}
-                    className={`flex items-center gap-2 px-2 py-1.5 text-sm ${
-                      clientId === c.id ? 'bg-blue-50' : 'hover:bg-blue-50/60'
-                    }`}
-                  >
+        <div className="mt-1.5 max-h-52 overflow-y-auto rounded-md border border-gray-200">
+          {filteredClients.length === 0 ? (
+            <p className="px-2 py-2 text-xs text-gray-500">
+              {inWorkClients.length === 0
+                ? 'Нет клиентов с объектами «в работе»'
+                : 'Никого не найдено по фильтру'}
+            </p>
+          ) : (
+            <ul className="divide-y divide-gray-100">
+              {filteredClients.map((c) => {
+                const workCount = (c.objects ?? []).filter((o) => o.inWork).length
+                const selected = clientId === c.id
+                return (
+                  <li key={c.id}>
                     <button
                       type="button"
                       onClick={() => pickClient(c)}
-                      className="min-w-0 flex-1 truncate text-left font-medium text-gray-900"
+                      className={`flex w-full items-center gap-2 px-2 py-1.5 text-left text-sm ${
+                        selected
+                          ? 'bg-emerald-50 ring-1 ring-inset ring-emerald-200'
+                          : 'hover:bg-blue-50/60'
+                      }`}
                     >
-                      {c.name || 'Без имени'}
+                      <span
+                        className={`min-w-0 flex-1 truncate font-medium ${
+                          selected ? 'text-emerald-900' : 'text-gray-900'
+                        }`}
+                      >
+                        {c.name || 'Без имени'}
+                      </span>
+                      <span className="shrink-0 rounded bg-emerald-100 px-1.5 py-0.5 text-[10px] font-medium tabular-nums text-emerald-800">
+                        {workCount} об.
+                      </span>
+                      <PhoneActions phone={c.mobile} showNumber size="sm" />
                     </button>
-                    <PhoneActions phone={c.mobile} showNumber size="sm" />
                   </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        )}
-        {client && !showClientList && (
-          <div className="mt-2 flex flex-wrap items-center gap-2 rounded-md border border-emerald-200 bg-emerald-50 px-2 py-1.5 text-sm">
-            <span className="font-medium text-emerald-900">{client.name}</span>
-            <PhoneActions phone={client.mobile} size="sm" />
-            <button
-              type="button"
-              className="ml-auto text-xs text-emerald-800 hover:underline"
-              onClick={() => {
-                setClientId('')
-                setObjectId('')
-              }}
-            >
-              Сменить
-            </button>
-          </div>
-        )}
+                )
+              })}
+            </ul>
+          )}
+        </div>
       </div>
 
       {client && (
-        <div className="rounded-lg border border-gray-200 bg-white p-3 shadow-sm">
-          <p className="mb-2 text-xs font-medium text-gray-500">2. Адрес / договор</p>
-          {objects.length === 0 ? (
-            <p className="text-sm text-amber-700">
-              У клиента нет объектов. Добавьте адрес во вкладке «Контакты» карточки клиента.
+        <div className="space-y-2">
+          <div className="flex flex-wrap items-center justify-between gap-2 px-0.5">
+            <p className="text-xs font-medium text-gray-500">
+              2. Объекты в работе
+              {inWorkObjects.length > 0 ? (
+                <span className="ml-1 font-normal text-gray-400">· {inWorkObjects.length}</span>
+              ) : null}
+            </p>
+            {inWorkObjects.length > 0 && (
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="flex items-center gap-0.5">
+                  <button
+                    type="button"
+                    aria-label="Предыдущий год"
+                    onClick={() => goYear(-1)}
+                    className="inline-flex h-6 w-6 items-center justify-center rounded border border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
+                  >
+                    <RiArrowLeftSLine className="h-4 w-4" />
+                  </button>
+                  <h2 className="min-w-[3.5rem] text-center text-sm font-semibold tabular-nums text-gray-900">
+                    {viewYear}
+                  </h2>
+                  <button
+                    type="button"
+                    aria-label="Следующий год"
+                    disabled={!canGoForward}
+                    onClick={() => goYear(1)}
+                    className="inline-flex h-6 w-6 items-center justify-center rounded border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    <RiArrowRightSLine className="h-4 w-4" />
+                  </button>
+                </div>
+                <div className="flex flex-wrap gap-1 text-[10px]">
+                  <span className="rounded bg-rose-100 px-1.5 py-0.5 font-medium text-rose-700">
+                    нет
+                  </span>
+                  <span className="rounded bg-emerald-100 px-1.5 py-0.5 font-medium text-emerald-700">
+                    есть
+                  </span>
+                  <span className="rounded bg-gray-100 px-1.5 py-0.5 font-medium text-gray-600">
+                    будущее
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
+          {inWorkObjects.length === 0 ? (
+            <div className="rounded-lg border border-amber-200 bg-amber-50 p-2.5 text-sm text-amber-800">
+              У клиента нет объектов со статусом «в работе».
               <Link
                 to={`/clients/${client.id}/main`}
                 className="ml-1 font-medium text-blue-700 hover:underline"
               >
                 Открыть карточку →
               </Link>
-            </p>
+            </div>
           ) : (
-            <select
-              className={inputCls}
-              value={objectId}
-              onChange={(e) => setObjectId(e.target.value)}
-            >
-              <option value="">Выберите объект…</option>
-              {objects.map((o) => (
-                <option key={o.id} value={o.id}>
-                  {o.address || o.title}
-                  {o.contractNumber ? ` · дог. ${o.contractNumber}` : ''}
-                  {o.inWork ? ' · в работе' : ''}
-                </option>
-              ))}
-            </select>
+            inWorkObjects.map((o) => (
+              <ObjectCalendarCard
+                key={o.id}
+                client={client}
+                object={o}
+                viewYear={viewYear}
+                reportDate={reportDate}
+                onReportDate={setReportDate}
+                tick={tick}
+                onBump={bump}
+              />
+            ))
           )}
         </div>
-      )}
-
-      {link && object && (
-        <>
-          <div className="flex h-8 flex-wrap items-center gap-x-3 gap-y-1 text-sm">
-            <span className="shrink-0 text-xs text-gray-500">
-              Без отчёта:{' '}
-              <strong className="tabular-nums text-rose-600">{miss}</strong>
-            </span>
-            <span className="hidden text-gray-300 sm:inline">·</span>
-            <span
-              className="min-w-0 flex-1 truncate text-xs text-gray-500"
-              title={`Ссылка для прораба · ${object.address || object.title} · ${shareUrl}`}
-            >
-              Прорабу: {shareUrl}
-            </span>
-            <button
-              type="button"
-              onClick={() => void copyLink()}
-              className="shrink-0 text-xs font-semibold text-blue-700 hover:underline"
-            >
-              {copied ? 'Скопировано' : 'Копировать'}
-            </button>
-            <Link
-              to={controlReportPath(link.token, reportDate)}
-              className="shrink-0 text-xs font-medium text-blue-700 hover:underline"
-            >
-              Форма →
-            </Link>
-          </div>
-
-          <div className="rounded-lg border border-gray-200 bg-white p-2 shadow-sm sm:p-2.5">
-            <div className="mb-2 flex flex-wrap items-center gap-2">
-              <div className="flex items-center gap-0.5">
-                <button
-                  type="button"
-                  aria-label="Предыдущий год"
-                  onClick={() => goYear(-1)}
-                  className="inline-flex h-7 w-7 items-center justify-center rounded border border-gray-200 text-gray-700 hover:bg-gray-50"
-                >
-                  <RiArrowLeftSLine className="h-4 w-4" />
-                </button>
-                <h2 className="min-w-[4.5rem] text-center text-sm font-semibold tabular-nums text-gray-900">
-                  {viewYear}
-                </h2>
-                <button
-                  type="button"
-                  aria-label="Следующий год"
-                  disabled={!canGoForward}
-                  onClick={() => goYear(1)}
-                  className="inline-flex h-7 w-7 items-center justify-center rounded border border-gray-200 text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
-                >
-                  <RiArrowRightSLine className="h-4 w-4" />
-                </button>
-              </div>
-
-              <div className="flex flex-wrap gap-1 text-[10px]">
-                <span className="rounded bg-rose-100 px-1.5 py-0.5 font-medium text-rose-700">нет</span>
-                <span className="rounded bg-emerald-100 px-1.5 py-0.5 font-medium text-emerald-700">
-                  есть
-                </span>
-                <span className="rounded bg-gray-100 px-1.5 py-0.5 font-medium text-gray-600">
-                  будущее
-                </span>
-              </div>
-            </div>
-
-            <div
-              className={
-                calendarMonths.length <= 2
-                  ? 'grid max-w-md grid-cols-2 gap-3'
-                  : 'grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6'
-              }
-            >
-              {calendarMonths.map(({ year, month }) => (
-                <MiniMonth
-                  key={`${year}-${month}`}
-                  year={year}
-                  month={month}
-                  reported={reported}
-                  reportDate={reportDate}
-                  onPick={(date, future) => {
-                    setReportDate(date)
-                    if (!future) openReport(date)
-                  }}
-                />
-              ))}
-            </div>
-          </div>
-        </>
       )}
     </div>
   )
