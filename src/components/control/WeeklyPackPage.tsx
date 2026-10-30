@@ -9,6 +9,7 @@ import {
   weekLabelRu,
   type WeeklyPack,
   type WeeklyPackDay,
+  type WeeklyPackObjectSection,
 } from '../../lib/weeklyPack'
 
 function formatRuDate(iso: string): string {
@@ -136,6 +137,66 @@ function DayMediaNav({ day }: { day: WeeklyPackDay }) {
   )
 }
 
+function DaySection({ day }: { day: WeeklyPackDay }) {
+  return (
+    <section className={`day${!day.report ? ' miss' : ''}`}>
+      <div className="day-head">
+        <strong>{day.weekdayRu}</strong>
+        <span className="tabular-nums text-sm text-gray-800">{formatRuDate(day.date)}</span>
+        <span className={`badge ${day.report ? 'ok' : 'no'}`}>
+          {day.report ? 'есть отчёт' : 'нет отчёта'}
+        </span>
+        {day.report?.workerName && (
+          <span className="text-xs text-gray-500">{day.report.workerName}</span>
+        )}
+      </div>
+      {day.report ? (
+        <>
+          <p className="text-sm text-gray-800">
+            <span className="text-xs font-medium text-gray-500">Сделано: </span>
+            {day.shortWork || '—'}
+          </p>
+          {day.shortProblems && (
+            <p className="mt-1 text-sm text-amber-900">
+              <span className="text-xs font-medium text-amber-700">Проблемы: </span>
+              {day.shortProblems}
+            </p>
+          )}
+          <DayMediaNav day={day} />
+        </>
+      ) : (
+        <p className="text-sm text-gray-400">Прораб не сдал дневной отчёт</p>
+      )}
+    </section>
+  )
+}
+
+function ObjectBlock({
+  section,
+  showHeading,
+}: {
+  section: WeeklyPackObjectSection
+  showHeading: boolean
+}) {
+  return (
+    <div className="object-block">
+      {showHeading && (
+        <header className="object-head">
+          <h2>{section.objectAddress || section.objectTitle}</h2>
+          <p className="object-meta">
+            Отчётов: {section.filledDays}/{section.days.length}
+            {' · '}
+            Медиа: {section.mediaTotal}
+          </p>
+        </header>
+      )}
+      {section.days.map((day) => (
+        <DaySection key={`${section.objectId}:${day.date}`} day={day} />
+      ))}
+    </div>
+  )
+}
+
 export default function WeeklyPackPage() {
   const [params, setSearchParams] = useSearchParams()
   const clientId = params.get('clientId') || ''
@@ -152,9 +213,9 @@ export default function WeeklyPackPage() {
   }, [])
 
   useEffect(() => {
-    if (!clientId || !objectId) {
+    if (!clientId) {
       setPack(null)
-      setErr('Выберите объект в Контроле и откройте «Пакет клиенту»')
+      setErr('Выберите клиента в Контроле и откройте «Пакет клиенту»')
       return
     }
     let cancelled = false
@@ -164,23 +225,23 @@ export default function WeeklyPackPage() {
       try {
         const next = await buildWeeklyPack({
           clientId,
-          objectId,
+          objectId: objectId || undefined,
           from: fromParam || undefined,
           to: toParam || undefined,
         })
         if (cancelled) return
         if (!next) {
           setPack(null)
-          setErr('Клиент или объект не найдены')
+          setErr('Клиент не найден или нет объектов для пакета')
           return
         }
         setPack(next)
-        // нормализуем URL на полную неделю
-        if (next.from !== fromParam || next.to !== toParam) {
+        const anchorId = objectId || next.objects[0]?.objectId || ''
+        if (next.from !== fromParam || next.to !== toParam || (!objectId && anchorId)) {
           setSearchParams(
             {
               clientId,
-              objectId,
+              ...(anchorId ? { objectId: anchorId } : {}),
               from: next.from,
               to: next.to,
             },
@@ -198,17 +259,28 @@ export default function WeeklyPackPage() {
     }
   }, [clientId, objectId, fromParam, toParam, setSearchParams])
 
+  const multi = (pack?.objects.length ?? 0) > 1
+  const sole = pack?.objects.length === 1 ? pack.objects[0] : null
+
   const title = useMemo(() => {
     if (!pack) return 'Еженедельный пакет клиенту'
-    return `${pack.objectAddress || pack.objectTitle} · ${weekLabelRu(pack.from, pack.to)}`
-  }, [pack])
+    const week = weekLabelRu(pack.from, pack.to)
+    if (multi) {
+      return `${pack.clientName || 'Клиент'} · ${week}`
+    }
+    if (sole) {
+      return `${sole.objectAddress || sole.objectTitle} · ${week}`
+    }
+    return `Еженедельный пакет · ${week}`
+  }, [pack, multi, sole])
 
   function shiftWeek(delta: number) {
     if (!pack) return
     const next = shiftWeekSatFri(pack.from, delta)
+    const primaryObjectId = pack.objects[0]?.objectId || objectId
     setSearchParams({
       clientId,
-      objectId,
+      ...(primaryObjectId ? { objectId: primaryObjectId } : {}),
       from: next.from,
       to: next.to,
     })
@@ -245,6 +317,28 @@ export default function WeeklyPackPage() {
           font-size: 0.8rem;
           color: var(--muted);
           margin-bottom: 1rem;
+        }
+        .weekly-pack .object-block {
+          margin-bottom: 1.5rem;
+        }
+        .weekly-pack .object-block + .object-block {
+          padding-top: 1rem;
+          border-top: 2px solid var(--ink);
+        }
+        .weekly-pack .object-head {
+          margin-bottom: 0.75rem;
+          break-after: avoid;
+        }
+        .weekly-pack .object-head h2 {
+          font-size: 1.05rem;
+          font-weight: 700;
+          color: var(--ink);
+          margin: 0 0 0.2rem;
+        }
+        .weekly-pack .object-meta {
+          font-size: 0.75rem;
+          color: var(--muted);
+          margin: 0;
         }
         .weekly-pack .day {
           border: 1px solid var(--line);
@@ -329,6 +423,11 @@ export default function WeeklyPackPage() {
         @media print {
           .weekly-pack .no-print { display: none !important; }
           .weekly-pack { padding: 0; }
+          .weekly-pack .object-block + .object-block {
+            break-before: page;
+            border-top: none;
+            padding-top: 0;
+          }
           .weekly-pack .day-media-frame {
             min-height: 0;
             break-inside: avoid;
@@ -378,8 +477,15 @@ export default function WeeklyPackPage() {
           Клиент: <strong>{pack.clientName || '—'}</strong>
           {' · '}
           Неделя сб→пт (день отчёта — пятница {formatRuDate(pack.reportDay)})
+          {multi ? (
+            <>
+              {' · '}
+              Объектов: {pack.objects.length}
+            </>
+          ) : null}
           {' · '}
-          Отчётов: {pack.filledDays}/{pack.days.length}
+          Отчётов: {pack.filledDays}/
+          {pack.objects.reduce((s, o) => s + o.days.length, 0)}
           {' · '}
           Медиа: {pack.mediaTotal}
         </p>
@@ -389,36 +495,8 @@ export default function WeeklyPackPage() {
       {err && !busy && <p className="text-sm text-rose-700">{err}</p>}
 
       {pack &&
-        pack.days.map((day) => (
-          <section key={day.date} className={`day${!day.report ? ' miss' : ''}`}>
-            <div className="day-head">
-              <strong>{day.weekdayRu}</strong>
-              <span className="tabular-nums text-sm text-gray-800">{formatRuDate(day.date)}</span>
-              <span className={`badge ${day.report ? 'ok' : 'no'}`}>
-                {day.report ? 'есть отчёт' : 'нет отчёта'}
-              </span>
-              {day.report?.workerName && (
-                <span className="text-xs text-gray-500">{day.report.workerName}</span>
-              )}
-            </div>
-            {day.report ? (
-              <>
-                <p className="text-sm text-gray-800">
-                  <span className="text-xs font-medium text-gray-500">Сделано: </span>
-                  {day.shortWork || '—'}
-                </p>
-                {day.shortProblems && (
-                  <p className="mt-1 text-sm text-amber-900">
-                    <span className="text-xs font-medium text-amber-700">Проблемы: </span>
-                    {day.shortProblems}
-                  </p>
-                )}
-                <DayMediaNav day={day} />
-              </>
-            ) : (
-              <p className="text-sm text-gray-400">Прораб не сдал дневной отчёт</p>
-            )}
-          </section>
+        pack.objects.map((section) => (
+          <ObjectBlock key={section.objectId} section={section} showHeading={multi} />
         ))}
     </div>
   )

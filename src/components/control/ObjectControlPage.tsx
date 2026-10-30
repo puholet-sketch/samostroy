@@ -257,6 +257,7 @@ function ObjectCalendarCard({
 
   function openWeeklyPack() {
     const { from, to } = fullWeekSatFri()
+    // Пакет на клиента: все inWork-адреса; objectId — якорь URL / fallback.
     const qs = new URLSearchParams({
       clientId: client.id,
       objectId: object.id,
@@ -453,9 +454,10 @@ export default function ObjectControlPage() {
   }
 
   function openWeeklyPack() {
-    if (!clientId || !objectId) return
+    if (!clientId) return
     const { from, to } = fullWeekSatFri()
-    const qs = new URLSearchParams({ clientId, objectId, from, to })
+    const qs = new URLSearchParams({ clientId, from, to })
+    if (objectId) qs.set('objectId', objectId)
     navigate(`/control/weekly-pack?${qs.toString()}`)
   }
 
@@ -510,17 +512,17 @@ export default function ObjectControlPage() {
             <button
               type="button"
               onClick={openWeeklyPack}
-              disabled={!clientId || !objectId}
+              disabled={!clientId}
               className="inline-flex h-[34px] items-center rounded-md border border-indigo-300 bg-indigo-50 px-3 text-sm font-medium text-indigo-900 shadow-sm hover:bg-indigo-100 disabled:cursor-not-allowed disabled:opacity-50"
-              title={!clientId || !objectId ? 'Сначала выберите клиента' : undefined}
+              title={!clientId ? 'Сначала выберите клиента' : undefined}
             >
               Пакет клиенту (сб→пт)
             </button>
           </div>
           <p className="mt-1 text-[11px] text-gray-500">
             Сводный — период × все адреса с флагом «в работе» (не только выбранный клиент). «Пакет
-            клиенту» — неделя сб→пт выбранного объекта. Печать/PDF — на странице отчёта. KPI — в
-            шапке.
+            клиенту» — неделя сб→пт по всем объектам «в работе» выбранного клиента (один отчёт).
+            Печать/PDF — на странице отчёта. KPI — в шапке.
           </p>
         </div>
       )}

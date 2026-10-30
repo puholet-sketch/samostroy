@@ -1,6 +1,6 @@
 /** Еженедельный пакет клиенту: сборка дневных отчётов прораба за сб→пт. */
 
-import { loadClients } from './clients'
+import { loadClients, type ClientObject } from './clients'
 import {
   enumerateIsoDates,
   getOrCreateControlLink,
@@ -20,18 +20,26 @@ export type WeeklyPackDay = {
   media: ReportMediaMeta[]
 }
 
-export type WeeklyPack = {
-  clientId: string
+/** Один объект внутри пакета клиента (сб→пт). */
+export type WeeklyPackObjectSection = {
   objectId: string
-  clientName: string
   objectTitle: string
   objectAddress: string
   token: string
+  days: WeeklyPackDay[]
+  filledDays: number
+  mediaTotal: number
+}
+
+export type WeeklyPack = {
+  clientId: string
+  clientName: string
   from: string
   to: string
   /** Пятница = день отчёта клиенту */
   reportDay: string
-  days: WeeklyPackDay[]
+  /** Все объекты «в работе» клиента (или один fallback) */
+  objects: WeeklyPackObjectSection[]
   filledDays: number
   mediaTotal: number
 }
@@ -68,21 +76,27 @@ export function resolveWeeklyRange(opts?: {
 
 export { shiftWeekSatFri, fullWeekSatFri }
 
-export async function buildWeeklyPack(opts: {
-  clientId: string
-  objectId: string
-  from?: string
-  to?: string
-}): Promise<WeeklyPack | null> {
-  const clients = loadClients()
-  const client = clients.find((c) => c.id === opts.clientId)
-  if (!client) return null
-  const object = (client.objects ?? []).find((o) => o.id === opts.objectId)
-  if (!object) return null
+function pickPackObjects(
+  all: ClientObject[],
+  preferredObjectId?: string,
+): ClientObject[] {
+  const inWork = all.filter((o) => o.inWork)
+  if (inWork.length > 0) return inWork
+  if (preferredObjectId) {
+    const one = all.find((o) => o.id === preferredObjectId)
+    if (one) return [one]
+  }
+  return all.slice(0, 1).filter(Boolean)
+}
 
-  const { from, to } = resolveWeeklyRange({ from: opts.from, to: opts.to })
+async function buildObjectSection(
+  clientId: string,
+  object: ClientObject,
+  from: string,
+  to: string,
+): Promise<WeeklyPackObjectSection> {
   const link = getOrCreateControlLink({
-    clientId: client.id,
+    clientId,
     objectId: object.id,
     objectTitle: object.title || object.address,
     objectAddress: object.address,
@@ -104,17 +118,47 @@ export async function buildWeeklyPack(opts: {
   })
 
   return {
-    clientId: client.id,
     objectId: object.id,
-    clientName: client.name || '',
     objectTitle: object.title || object.address || 'Объект',
     objectAddress: object.address || object.title || '',
     token: link.token,
-    from,
-    to,
-    reportDay: to,
     days,
     filledDays: days.filter((d) => d.report).length,
     mediaTotal: days.reduce((s, d) => s + d.media.length, 0),
+  }
+}
+
+/**
+ * Пакет за неделю сб→пт по клиенту: все объекты «в работе».
+ * `objectId` — только fallback, если у клиента нет inWork (старые ссылки).
+ */
+export async function buildWeeklyPack(opts: {
+  clientId: string
+  objectId?: string
+  from?: string
+  to?: string
+}): Promise<WeeklyPack | null> {
+  const clients = loadClients()
+  const client = clients.find((c) => c.id === opts.clientId)
+  if (!client) return null
+
+  const targets = pickPackObjects(client.objects ?? [], opts.objectId)
+  if (targets.length === 0) return null
+
+  const { from, to } = resolveWeeklyRange({ from: opts.from, to: opts.to })
+  const objects: WeeklyPackObjectSection[] = []
+  for (const object of targets) {
+    objects.push(await buildObjectSection(client.id, object, from, to))
+  }
+
+  return {
+    clientId: client.id,
+    clientName: client.name || '',
+    from,
+    to,
+    reportDay: to,
+    objects,
+    filledDays: objects.reduce((s, o) => s + o.filledDays, 0),
+    mediaTotal: objects.reduce((s, o) => s + o.mediaTotal, 0),
   }
 }
