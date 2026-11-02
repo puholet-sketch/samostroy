@@ -1,7 +1,7 @@
 {
-  "source": "price_list_march.pdf",
-  "updated": "2026-03-14",
-  "imported_at": "2026-10-26",
+  "source": "price_list_kind_markup 3.numbers",
+  "updated": "2026-11-02",
+  "imported_at": "2026-11-02",
   "section_order": [
     "ДЕМОНТАЖНЫЕ РАБОТЫ",
     "ПОЛЫ",
@@ -843,7 +843,7 @@
       "name": "Черновая подрезка керамогранита",
       "unit": "м.п.",
       "price": 262.0,
-      "kind": "chernovye"
+      "kind": "chistovye"
     },
     {
       "section": "ПОЛЫ",
@@ -857,7 +857,7 @@
       "name": "Шлифование керамогранита (неректифицированная плитка, керамогранит)",
       "unit": "м.п.",
       "price": 322.0,
-      "kind": "both"
+      "kind": "chistovye"
     },
     {
       "section": "ПОЛЫ",
@@ -934,7 +934,7 @@
       "name": "Подбор рисунка керамогранита с предварительной раскладкой, маркировкой и согласованием с заказчиком",
       "unit": "м2",
       "price": 1000.0,
-      "kind": "both"
+      "kind": "chistovye"
     },
     {
       "section": "ПОЛЫ",
@@ -997,21 +997,21 @@
       "name": "Шлифование бетона",
       "unit": "м2+м.п.",
       "price": 450.0,
-      "kind": "both"
+      "kind": "chernovye"
     },
     {
       "section": "ПОЛЫ",
       "name": "Обеспыливание пола",
       "unit": "м2+м.п.",
       "price": 170.0,
-      "kind": "both"
+      "kind": "chernovye"
     },
     {
       "section": "ПОЛЫ",
       "name": "Обработка пола антиплесенью",
       "unit": "м2+м.п.",
       "price": 180.0,
-      "kind": "both"
+      "kind": "chernovye"
     },
     {
       "section": "ПОЛЫ",
@@ -1088,7 +1088,7 @@
       "name": "Настил фанеры с проклейкой или креплением к черновому полу",
       "unit": "м2",
       "price": 740.0,
-      "kind": "both"
+      "kind": "chistovye"
     },
     {
       "section": "ПОЛЫ",
@@ -1158,14 +1158,14 @@
       "name": "Монтаж порожка | прижимной Т-образный или на шурупах",
       "unit": "м.п.",
       "price": 520.0,
-      "kind": "both"
+      "kind": "chistovye"
     },
     {
       "section": "ПОЛЫ",
       "name": "Монтаж пробкового компенсатора",
       "unit": "м.п.",
       "price": 750.0,
-      "kind": "both"
+      "kind": "chistovye"
     },
     {
       "section": "ПОЛЫ",
@@ -1179,7 +1179,7 @@
       "name": "Монтаж стыковочного профиля",
       "unit": "м.п.",
       "price": 470.0,
-      "kind": "both"
+      "kind": "chistovye"
     },
     {
       "section": "ПОЛЫ",
@@ -1193,7 +1193,7 @@
       "name": "Монтаж пробкового компенсатора",
       "unit": "м.п.",
       "price": 620.0,
-      "kind": "both"
+      "kind": "chistovye"
     },
     {
       "section": "ПОЛЫ",
@@ -1270,7 +1270,7 @@
       "name": "Установка маяков для штукатурки",
       "unit": "м2+м.п.",
       "price": 100.0,
-      "kind": "chistovye"
+      "kind": "chernovye"
     },
     {
       "section": "СТЕНЫ",
@@ -1305,14 +1305,14 @@
       "name": "Армирование стен при кладке блоков",
       "unit": "м2+м.п.",
       "price": 220.0,
-      "kind": "both"
+      "kind": "chernovye"
     },
     {
       "section": "СТЕНЫ",
       "name": "Установка маяков для цементной штукатурки",
       "unit": "м.п.",
       "price": 100.0,
-      "kind": "chistovye"
+      "kind": "chernovye"
     },
     {
       "section": "СТЕНЫ",
@@ -1333,7 +1333,7 @@
       "name": "Армирование дверного проема",
       "unit": "ед.",
       "price": 2500.0,
-      "kind": "both"
+      "kind": "chernovye"
     },
     {
       "section": "СТЕНЫ",
@@ -1368,7 +1368,7 @@
       "name": "Пропенивание вертикальных стыков стен",
       "unit": "м2",
       "price": 120.0,
-      "kind": "both"
+      "kind": "chernovye"
     },
     {
       "section": "СТЕНЫ",
@@ -1480,7 +1480,7 @@
       "name": "Монтаж перфорированного уголка",
       "unit": "м.п.",
       "price": 310.0,
-      "kind": "both"
+      "kind": "chernovye"
     },
     {
       "section": "СТЕНЫ",
@@ -1508,28 +1508,28 @@
       "name": "Черновая подрезка керамогранита",
       "unit": "м.п.",
       "price": 262.0,
-      "kind": "chernovye"
+      "kind": "chistovye"
     },
     {
       "section": "СТЕНЫ",
       "name": "Нанесение бетоноконтакта",
       "unit": "м2+м.п.",
       "price": 136.0,
-      "kind": "both"
+      "kind": "chernovye"
     },
     {
       "section": "СТЕНЫ",
       "name": "Армирование стыка разнородных материалов в один слой (СП 71.13330.2017 п.7.2.7)",
       "unit": "м.п.",
       "price": 250.0,
-      "kind": "both"
+      "kind": "chernovye"
     },
     {
       "section": "СТЕНЫ",
       "name": "Монтаж полочек из керамогранита",
       "unit": "ед.",
       "price": 14200.0,
-      "kind": "both"
+      "kind": "chistovye"
     },
     {
       "section": "СТЕНЫ",
@@ -1543,21 +1543,21 @@
       "name": "Тройное армирование мест примыкания разнородных материалов (Перлфикс, лента, сетка 5мм - 2шт, сетка 50 мм)",
       "unit": "м.п.",
       "price": 2000.0,
-      "kind": "both"
+      "kind": "chernovye"
     },
     {
       "section": "СТЕНЫ",
       "name": "Отверстие в плитке до 90 мм (под розетку, вывод труб ХВС, ГВС и пр.)",
       "unit": "ед.",
       "price": 800.0,
-      "kind": "chernovye"
+      "kind": "chistovye"
     },
     {
       "section": "СТЕНЫ",
       "name": "Установка пластикогового или металлического уголка",
       "unit": "м.п.",
       "price": 640.0,
-      "kind": "chistovye"
+      "kind": "chernovye"
     },
     {
       "section": "СТЕНЫ",
@@ -1592,7 +1592,7 @@
       "name": "Профиль оконного примыкающего профили с армирующей сеткой",
       "unit": "м.п.",
       "price": 980.0,
-      "kind": "both"
+      "kind": "chernovye"
     },
     {
       "section": "СТЕНЫ",
@@ -1606,28 +1606,28 @@
       "name": "Монтаж откоса из ГКЛ",
       "unit": "м.п.",
       "price": 1320.0,
-      "kind": "both"
+      "kind": "chernovye"
     },
     {
       "section": "СТЕНЫ",
       "name": "Монтаж отксоса из сэндвич панели (Руспанель или аналог)",
       "unit": "м.п.",
       "price": 1900.0,
-      "kind": "both"
+      "kind": "chernovye"
     },
     {
       "section": "СТЕНЫ",
       "name": "Монтаж теневого профиля на внутренние углы, премыкания",
       "unit": "м.п.",
       "price": 2400.0,
-      "kind": "both"
+      "kind": "chernovye"
     },
     {
       "section": "СТЕНЫ",
       "name": "Проклейка углов углоформирующей лентой",
       "unit": "м.п.",
       "price": 460.0,
-      "kind": "both"
+      "kind": "chernovye"
     },
     {
       "section": "СТЕНЫ",
@@ -1641,49 +1641,49 @@
       "name": "Монтаж подоконника ПВХ",
       "unit": "м.п.",
       "price": 1420.0,
-      "kind": "both"
+      "kind": "chistovye"
     },
     {
       "section": "СТЕНЫ",
       "name": "Базовое шпатлевание стен первый слой",
       "unit": "м2+м.п.",
       "price": 290.0,
-      "kind": "chernovye"
+      "kind": "chistovye"
     },
     {
       "section": "СТЕНЫ",
       "name": "Грунтование стен",
       "unit": "м2+м.п.",
       "price": 120.0,
-      "kind": "chernovye"
+      "kind": "chistovye"
     },
     {
       "section": "СТЕНЫ",
       "name": "Базовое шпатлевание и шлифование стен",
       "unit": "м2+м.п.",
       "price": 350.0,
-      "kind": "chernovye"
+      "kind": "chistovye"
     },
     {
       "section": "СТЕНЫ",
       "name": "Шпатлевания стен от застройщика по старому основанию в один слой с ошкуриванием (К3)",
       "unit": "м2+м.п.",
       "price": 750.0,
-      "kind": "chernovye"
+      "kind": "chistovye"
     },
     {
       "section": "СТЕНЫ",
       "name": "Дополнительный слой шпаклевания стены с ошкуриванием",
       "unit": "м2+м.п.",
       "price": 330.0,
-      "kind": "chernovye"
+      "kind": "chistovye"
     },
     {
       "section": "СТЕНЫ",
       "name": "Грунтование стен перед оклейкой флизелином, стеклохолстом, обоями",
       "unit": "м2+м.п.",
       "price": 120.0,
-      "kind": "chernovye"
+      "kind": "chistovye"
     },
     {
       "section": "СТЕНЫ",
@@ -1704,28 +1704,28 @@
       "name": "Шпатлевание стеклохолста в один слой",
       "unit": "м2+м.п.",
       "price": 330.0,
-      "kind": "chernovye"
+      "kind": "chistovye"
     },
     {
       "section": "СТЕНЫ",
       "name": "Финишное шпатлевание и шлифование стеклохолста",
       "unit": "м2+м.п.",
       "price": 330.0,
-      "kind": "chernovye"
+      "kind": "chistovye"
     },
     {
       "section": "СТЕНЫ",
       "name": "Шпаклевка стен комплексная, под категорию К4",
       "unit": "м2+м.п.",
       "price": 5100.0,
-      "kind": "chernovye"
+      "kind": "chistovye"
     },
     {
       "section": "СТЕНЫ",
       "name": "Ошкуривание поверхности стен",
       "unit": "м2+м.п.",
       "price": 120.0,
-      "kind": "both"
+      "kind": "chistovye"
     },
     {
       "section": "СТЕНЫ",
@@ -1774,7 +1774,7 @@
       "name": "Покрытие стен лаком",
       "unit": "м2+м.п.",
       "price": 670.0,
-      "kind": "both"
+      "kind": "chistovye"
     },
     {
       "section": "СТЕНЫ",
@@ -1795,21 +1795,21 @@
       "name": "Монтаж гипсовых 3d панелей размером 600*600 мм",
       "unit": "м2+м.п.",
       "price": 2600.0,
-      "kind": "both"
+      "kind": "chistovye"
     },
     {
       "section": "СТЕНЫ",
       "name": "Монтаж молдинга | шириной до 40 мм",
       "unit": "м.п.",
       "price": 590.0,
-      "kind": "both"
+      "kind": "chistovye"
     },
     {
       "section": "СТЕНЫ",
       "name": "Шпатлевание молдинга | шириной до 40 мм",
       "unit": "м.п.",
       "price": 380.0,
-      "kind": "chernovye"
+      "kind": "chistovye"
     },
     {
       "section": "СТЕНЫ",
@@ -1823,7 +1823,7 @@
       "name": "Монтаж гипсовых 3d панелей размером шириной от 200 мм и высотой от 2 метров",
       "unit": "м2+м.п.",
       "price": 3800.0,
-      "kind": "both"
+      "kind": "chistovye"
     },
     {
       "section": "СТЕНЫ",
@@ -1907,7 +1907,7 @@
       "name": "Монтаж пластиковых панелей",
       "unit": "м2",
       "price": 450.0,
-      "kind": "both"
+      "kind": "chistovye"
     },
     {
       "section": "СТЕНЫ",
@@ -1963,14 +1963,14 @@
       "name": "Обеспыливание поверхности",
       "unit": "м2",
       "price": 75.0,
-      "kind": "both"
+      "kind": "chistovye"
     },
     {
       "section": "СТЕНЫ",
       "name": "Грунтование стен перед окрашиванием",
       "unit": "м2+м.п.",
       "price": 280.0,
-      "kind": "chernovye"
+      "kind": "chistovye"
     },
     {
       "section": "СТЕНЫ",
@@ -1991,14 +1991,14 @@
       "name": "Шпаклевание откоса под покраску",
       "unit": "м.п.",
       "price": 1610.0,
-      "kind": "chernovye"
+      "kind": "chistovye"
     },
     {
       "section": "СТЕНЫ",
       "name": "Грунтование откосов перед покраской",
       "unit": "м.п.",
       "price": 260.0,
-      "kind": "chernovye"
+      "kind": "chistovye"
     },
     {
       "section": "СТЕНЫ",
@@ -2026,7 +2026,7 @@
       "name": "Шпаклевание стыков флизилина (комплекс -грунтование, ошкуривание)",
       "unit": "м.п.",
       "price": 660.0,
-      "kind": "chernovye"
+      "kind": "chistovye"
     },
     {
       "section": "СТЕНЫ",
@@ -2040,7 +2040,7 @@
       "name": "Подбор рисунка керамогранита с предварительной раскладкой, маркировкой и согласованием с заказчиком",
       "unit": "м2",
       "price": 1000.0,
-      "kind": "both"
+      "kind": "chistovye"
     },
     {
       "section": "ПОТОЛКИ",
@@ -2061,7 +2061,7 @@
       "name": "Монтаж прямых граней из ГКЛ",
       "unit": "м.п.",
       "price": 2230.0,
-      "kind": "both"
+      "kind": "chernovye"
     },
     {
       "section": "ПОТОЛКИ",
@@ -2089,21 +2089,21 @@
       "name": "Грунтование потолка перед шпатлеванием",
       "unit": "м2+м.п.",
       "price": 120.0,
-      "kind": "chernovye"
+      "kind": "chistovye"
     },
     {
       "section": "ПОТОЛКИ",
       "name": "Грунтование потолка перед оклейкой стеклохолстом",
       "unit": "м2+м.п.",
       "price": 120.0,
-      "kind": "chernovye"
+      "kind": "chistovye"
     },
     {
       "section": "ПОТОЛКИ",
       "name": "Грунтование потолка при подготовке стеклохолста",
       "unit": "м2",
       "price": 120.0,
-      "kind": "chernovye"
+      "kind": "chistovye"
     },
     {
       "section": "ПОТОЛКИ",
@@ -2145,14 +2145,14 @@
       "name": "Базовое шпатлевание потолка",
       "unit": "м2+м.п.",
       "price": 290.0,
-      "kind": "chernovye"
+      "kind": "chistovye"
     },
     {
       "section": "ПОТОЛКИ",
       "name": "Базовое шпатлевание и шлифование потолка",
       "unit": "м2+м.п.",
       "price": 310.0,
-      "kind": "chernovye"
+      "kind": "chistovye"
     },
     {
       "section": "ПОТОЛКИ",
@@ -2166,21 +2166,21 @@
       "name": "Шпатлевание стеклохолста в один слой",
       "unit": "м2+м.п.",
       "price": 300.0,
-      "kind": "chernovye"
+      "kind": "chistovye"
     },
     {
       "section": "ПОТОЛКИ",
       "name": "Финишное шпатлевание и шлифование стеклохолста",
       "unit": "м2+м.п.",
       "price": 330.0,
-      "kind": "chernovye"
+      "kind": "chistovye"
     },
     {
       "section": "ПОТОЛКИ",
       "name": "Дополнительный слой шпаклевания потолка с ошкуриванием",
       "unit": "м2+м.п.",
       "price": 330.0,
-      "kind": "chernovye"
+      "kind": "chistovye"
     },
     {
       "section": "ПОТОЛКИ",
@@ -2194,14 +2194,14 @@
       "name": "Ошкуривание поверхности потолка",
       "unit": "м2+м.п.",
       "price": 120.0,
-      "kind": "both"
+      "kind": "chernovye"
     },
     {
       "section": "ПОТОЛКИ",
       "name": "Монтаж перфорированного уголка",
       "unit": "м.п.",
       "price": 340.0,
-      "kind": "both"
+      "kind": "chernovye"
     },
     {
       "section": "ПОТОЛКИ",
@@ -2222,42 +2222,42 @@
       "name": "Монтаж потолочного молдинга | шириной до 40 мм",
       "unit": "м.п.",
       "price": 590.0,
-      "kind": "both"
+      "kind": "chistovye"
     },
     {
       "section": "ПОТОЛКИ",
       "name": "Монтаж потолочного молдинга | шириной 41-100 мм",
       "unit": "м.п.",
       "price": 670.0,
-      "kind": "both"
+      "kind": "chistovye"
     },
     {
       "section": "ПОТОЛКИ",
       "name": "Монтаж потолочного молдинга | шириной более 101 мм",
       "unit": "м.п.",
       "price": 750.0,
-      "kind": "both"
+      "kind": "chistovye"
     },
     {
       "section": "ПОТОЛКИ",
       "name": "Шпатлевание потолочного молдинга | шириной до 40 мм",
       "unit": "м.п.",
       "price": 380.0,
-      "kind": "chernovye"
+      "kind": "chistovye"
     },
     {
       "section": "ПОТОЛКИ",
       "name": "Шпатлевание потолочного молдинга | шириной 41-100 мм",
       "unit": "м.п.",
       "price": 410.0,
-      "kind": "chernovye"
+      "kind": "chistovye"
     },
     {
       "section": "ПОТОЛКИ",
       "name": "Шпатлевание потолочного молдинга | шириной более 101 мм",
       "unit": "м.п.",
       "price": 440.0,
-      "kind": "chernovye"
+      "kind": "chistovye"
     },
     {
       "section": "ПОТОЛКИ",
@@ -2334,7 +2334,7 @@
       "name": "Обеспыливание поверхности",
       "unit": "м2",
       "price": 75.0,
-      "kind": "both"
+      "kind": "chistovye"
     },
     {
       "section": "ПОТОЛКИ",
@@ -2355,14 +2355,14 @@
       "name": "Монтаж парящего профиля",
       "unit": "м.п.",
       "price": 1100.0,
-      "kind": "both"
+      "kind": "chistovye"
     },
     {
       "section": "ЭЛЕКТРИКА",
       "name": "Диагностика электропроводки",
       "unit": "м2",
       "price": 320.0,
-      "kind": "both"
+      "kind": "chernovye"
     },
     {
       "section": "ЭЛЕКТРИКА",
@@ -2383,14 +2383,14 @@
       "name": "Вывод группы кабелей для проходного выключателя",
       "unit": "ед.",
       "price": 1500.0,
-      "kind": "both"
+      "kind": "chernovye"
     },
     {
       "section": "ЭЛЕКТРИКА",
       "name": "Вывод группы кабелей для перекрестного выключателя",
       "unit": "ед.",
       "price": 2500.0,
-      "kind": "both"
+      "kind": "chernovye"
     },
     {
       "section": "ЭЛЕКТРИКА",
@@ -2404,105 +2404,105 @@
       "name": "Вывод силового кабеля (сечением 4 мм2 - для варочной панели, духового шкафа и пр.)",
       "unit": "ед.",
       "price": 1500.0,
-      "kind": "both"
+      "kind": "chernovye"
     },
     {
       "section": "ЭЛЕКТРИКА",
       "name": "Вывод слаботочного кабеля",
       "unit": "ед.",
       "price": 586.56,
-      "kind": "both"
+      "kind": "chernovye"
     },
     {
       "section": "ЭЛЕКТРИКА",
       "name": "Вывод силового кабеля (сечением 1,5-2,5 мм2) либо слаботочного кабеля",
       "unit": "ед.",
       "price": 590.0,
-      "kind": "both"
+      "kind": "chernovye"
     },
     {
       "section": "ЭЛЕКТРИКА",
       "name": "Монтаж системы \"Мастер-кнопка\" (включая реле управления и коммутацию в электрощите)",
       "unit": "ед.",
       "price": 9900.0,
-      "kind": "both"
+      "kind": "chistovye"
     },
     {
       "section": "ЭЛЕКТРИКА",
       "name": "Установка подрозетника | в кирпич, пеноблок, ГКЛ (с учетом отверстия)",
       "unit": "ед.",
       "price": 540.0,
-      "kind": "chistovye"
+      "kind": "chernovye"
     },
     {
       "section": "ЭЛЕКТРИКА",
       "name": "Установка подрозетника | в бетонную стену (с учетом отверстия)",
       "unit": "ед.",
       "price": 800.0,
-      "kind": "chistovye"
+      "kind": "chernovye"
     },
     {
       "section": "ЭЛЕКТРИКА",
       "name": "Установка глубокого подрозетника | в кирпич, пеноблок (с учетом отверстия)",
       "unit": "ед.",
       "price": 810.0,
-      "kind": "chistovye"
+      "kind": "chernovye"
     },
     {
       "section": "ЭЛЕКТРИКА",
       "name": "Установка глубокого подрозетника | в бетонную стену (с учетом отверстия)",
       "unit": "ед.",
       "price": 1200.0,
-      "kind": "chistovye"
+      "kind": "chernovye"
     },
     {
       "section": "ЭЛЕКТРИКА",
       "name": "Соединение медных проводов | сварка/гильзы +термоусадка",
       "unit": "ед.",
       "price": 450.0,
-      "kind": "both"
+      "kind": "chernovye"
     },
     {
       "section": "ЭЛЕКТРИКА",
       "name": "Соединение медных проводов | клеммами Wago",
       "unit": "ед.",
       "price": 150.0,
-      "kind": "both"
+      "kind": "chernovye"
     },
     {
       "section": "ЭЛЕКТРИКА",
       "name": "Изоляция фазного проводника, установка заглушки в подрозетник",
       "unit": "ед.",
       "price": 150.0,
-      "kind": "chistovye"
+      "kind": "chernovye"
     },
     {
       "section": "ЭЛЕКТРИКА",
       "name": "Монтаж распаячной коробки",
       "unit": "ед.",
       "price": 590.0,
-      "kind": "both"
+      "kind": "chernovye"
     },
     {
       "section": "ЭЛЕКТРИКА",
       "name": "Сквозное сверление стен (пеноблок, ПГП) Ø 16-22 мм",
       "unit": "ед.",
       "price": 380.0,
-      "kind": "both"
+      "kind": "chernovye"
     },
     {
       "section": "ЭЛЕКТРИКА",
       "name": "Сквозное сверление стен (кирпич) Ø 16-22 мм",
       "unit": "ед.",
       "price": 560.0,
-      "kind": "both"
+      "kind": "chernovye"
     },
     {
       "section": "ЭЛЕКТРИКА",
       "name": "Сквозное сверление стен (бетон) Ø 16-20 мм",
       "unit": "ед.",
       "price": 990.0,
-      "kind": "both"
+      "kind": "chernovye"
     },
     {
       "section": "ЭЛЕКТРИКА",
@@ -2565,35 +2565,35 @@
       "name": "Установка распределительного щита | навесного | до 24 модулей",
       "unit": "ед.",
       "price": 1770.0,
-      "kind": "chistovye"
+      "kind": "chernovye"
     },
     {
       "section": "ЭЛЕКТРИКА",
       "name": "Установка распределительного щита | навесного | до 36 модулей",
       "unit": "ед.",
       "price": 3500.0,
-      "kind": "chistovye"
+      "kind": "chernovye"
     },
     {
       "section": "ЭЛЕКТРИКА",
       "name": "Установка распределительного щита | навесного | до 48 модулей",
       "unit": "ед.",
       "price": 3500.0,
-      "kind": "chistovye"
+      "kind": "chernovye"
     },
     {
       "section": "ЭЛЕКТРИКА",
       "name": "Подключение к вводному щиту",
       "unit": "ед.",
       "price": 3240.0,
-      "kind": "chistovye"
+      "kind": "chernovye"
     },
     {
       "section": "ЭЛЕКТРИКА",
       "name": "Установка распределительного щита | навесного | до 60 модулей",
       "unit": "ед.",
       "price": 4500.0,
-      "kind": "chistovye"
+      "kind": "chernovye"
     },
     {
       "section": "ЭЛЕКТРИКА",
@@ -2607,7 +2607,7 @@
       "name": "Монтаж встраиваемого распределительного щита в подготовленную нишу | до 12 модулей",
       "unit": "ед.",
       "price": 3100.0,
-      "kind": "both"
+      "kind": "chernovye"
     },
     {
       "section": "ЭЛЕКТРИКА",
@@ -2621,7 +2621,7 @@
       "name": "Монтаж встраиваемого распределительного щита в подготовленную нишу | до 24 модулей",
       "unit": "ед.",
       "price": 3300.0,
-      "kind": "both"
+      "kind": "chernovye"
     },
     {
       "section": "ЭЛЕКТРИКА",
@@ -2635,7 +2635,7 @@
       "name": "Монтаж встраиваемого распределительного щита в подготовленную нишу | до 36 модулей",
       "unit": "ед.",
       "price": 3500.0,
-      "kind": "both"
+      "kind": "chernovye"
     },
     {
       "section": "ЭЛЕКТРИКА",
@@ -2649,7 +2649,7 @@
       "name": "Монтаж встраиваемого распределительного щита в подготовленную нишу | до 48 модулей",
       "unit": "ед.",
       "price": 3700.0,
-      "kind": "both"
+      "kind": "chernovye"
     },
     {
       "section": "ЭЛЕКТРИКА",
@@ -2663,7 +2663,7 @@
       "name": "Установка распределительного щита | встраиваемого | до 60 модулей",
       "unit": "ед.",
       "price": 4900.0,
-      "kind": "chistovye"
+      "kind": "chernovye"
     },
     {
       "section": "ЭЛЕКТРИКА",
@@ -2677,14 +2677,14 @@
       "name": "Подключение к вводному щиту | 1 фазному",
       "unit": "ед.",
       "price": 1900.0,
-      "kind": "chistovye"
+      "kind": "chernovye"
     },
     {
       "section": "ЭЛЕКТРИКА",
       "name": "Подключение к вводному щиту | 3 фазному",
       "unit": "ед.",
       "price": 2070.0,
-      "kind": "chistovye"
+      "kind": "chernovye"
     },
     {
       "section": "ЭЛЕКТРИКА",
@@ -2698,28 +2698,28 @@
       "name": "Наращивание вводного кабеля 1 фазного соединительными муфтами под пресс",
       "unit": "ед.",
       "price": 10000.0,
-      "kind": "both"
+      "kind": "chernovye"
     },
     {
       "section": "ЭЛЕКТРИКА",
       "name": "Наращивание вводного кабеля 3 фазного соединительными муфтами под пресс",
       "unit": "ед.",
       "price": 15000.0,
-      "kind": "both"
+      "kind": "chernovye"
     },
     {
       "section": "ЭЛЕКТРИКА",
       "name": "Установка вводного автомата | 1 фазного",
       "unit": "ед.",
       "price": 1400.0,
-      "kind": "chistovye"
+      "kind": "chernovye"
     },
     {
       "section": "ЭЛЕКТРИКА",
       "name": "Установка вводного автомата | 3 фазного",
       "unit": "ед.",
       "price": 2400.0,
-      "kind": "chistovye"
+      "kind": "chernovye"
     },
     {
       "section": "ЭЛЕКТРИКА",
@@ -2733,126 +2733,126 @@
       "name": "Установка реле защиты напряжения | 1 фазного",
       "unit": "ед.",
       "price": 1380.0,
-      "kind": "chistovye"
+      "kind": "chernovye"
     },
     {
       "section": "ЭЛЕКТРИКА",
       "name": "Установка реле защиты напряжения | 3 фазного",
       "unit": "ед.",
       "price": 4200.0,
-      "kind": "chistovye"
+      "kind": "chernovye"
     },
     {
       "section": "ЭЛЕКТРИКА",
       "name": "Монтаж светодиодной ленты",
       "unit": "м.п.",
       "price": 540.0,
-      "kind": "both"
+      "kind": "chistovye"
     },
     {
       "section": "ЭЛЕКТРИКА",
       "name": "Установка противопожарного УЗО 300 мА | 1 фазного",
       "unit": "м2",
       "price": 2900.0,
-      "kind": "chistovye"
+      "kind": "chernovye"
     },
     {
       "section": "ЭЛЕКТРИКА",
       "name": "Установка противопожарного УЗО 300 мА | 3 фазного",
       "unit": "ед.",
       "price": 5500.0,
-      "kind": "chistovye"
+      "kind": "chernovye"
     },
     {
       "section": "ЭЛЕКТРИКА",
       "name": "Установка УЗО | 1 фазного",
       "unit": "ед.",
       "price": 1280.0,
-      "kind": "chistovye"
+      "kind": "chernovye"
     },
     {
       "section": "ЭЛЕКТРИКА",
       "name": "Монтаж профиля для светодиодной ленты",
       "unit": "м.п.",
       "price": 530.0,
-      "kind": "both"
+      "kind": "chernovye"
     },
     {
       "section": "ЭЛЕКТРИКА",
       "name": "Установка УЗО | 3 фазного",
       "unit": "ед.",
       "price": 2890.0,
-      "kind": "chistovye"
+      "kind": "chernovye"
     },
     {
       "section": "ЭЛЕКТРИКА",
       "name": "Установка кросс модуля",
       "unit": "ед.",
       "price": 1500.0,
-      "kind": "chistovye"
+      "kind": "chernovye"
     },
     {
       "section": "ЭЛЕКТРИКА",
       "name": "Установка автоматического выключателя | 1 постового",
       "unit": "ед.",
       "price": 590.0,
-      "kind": "chistovye"
+      "kind": "chernovye"
     },
     {
       "section": "ЭЛЕКТРИКА",
       "name": "Установка автоматического выключателя | 2 постового",
       "unit": "ед.",
       "price": 1180.0,
-      "kind": "chistovye"
+      "kind": "chernovye"
     },
     {
       "section": "ЭЛЕКТРИКА",
       "name": "Монтаж электрического полотенцесушителя",
       "unit": "ед.",
       "price": 3889.6,
-      "kind": "both"
+      "kind": "chistovye"
     },
     {
       "section": "ЭЛЕКТРИКА",
       "name": "Установка автоматического выключателя | 3 постового",
       "unit": "ед.",
       "price": 1770.0,
-      "kind": "chistovye"
+      "kind": "chernovye"
     },
     {
       "section": "ЭЛЕКТРИКА",
       "name": "Установка автоматического выключателя | 4 постового",
       "unit": "ед.",
       "price": 2360.0,
-      "kind": "chistovye"
+      "kind": "chernovye"
     },
     {
       "section": "ЭЛЕКТРИКА",
       "name": "Теплый пол | укладка матов",
       "unit": "м2",
       "price": 1150.0,
-      "kind": "chistovye"
+      "kind": "chernovye"
     },
     {
       "section": "ЭЛЕКТРИКА",
       "name": "Теплый пол | монтаж блока управления",
       "unit": "ед.",
       "price": 1550.0,
-      "kind": "both"
+      "kind": "chistovye"
     },
     {
       "section": "ЭЛЕКТРИКА",
       "name": "Установка диффавтомата | 1 фазного",
       "unit": "ед.",
       "price": 1290.0,
-      "kind": "chistovye"
+      "kind": "chernovye"
     },
     {
       "section": "ЭЛЕКТРИКА",
       "name": "Установка диффавтомата | 3 фазного",
       "unit": "ед.",
       "price": 4870.0,
-      "kind": "chistovye"
+      "kind": "chernovye"
     },
     {
       "section": "ЭЛЕКТРИКА",
@@ -2873,7 +2873,7 @@
       "name": "Установка 2-уровневой клеммы в щит",
       "unit": "ед.",
       "price": 550.0,
-      "kind": "chistovye"
+      "kind": "chernovye"
     },
     {
       "section": "ЭЛЕКТРИКА",
@@ -2887,7 +2887,7 @@
       "name": "Коммутация электроточки",
       "unit": "ед.",
       "price": 220.0,
-      "kind": "both"
+      "kind": "chernovye"
     },
     {
       "section": "ЭЛЕКТРИКА",
@@ -2908,21 +2908,21 @@
       "name": "Прозвонка электрических точек (по площади квартиры)",
       "unit": "м2",
       "price": 410.0,
-      "kind": "both"
+      "kind": "chernovye"
     },
     {
       "section": "ЭЛЕКТРИКА",
       "name": "Перенос электро точки комплекс (не более 2х метров)",
       "unit": "ед.",
       "price": 2540.0,
-      "kind": "both"
+      "kind": "chernovye"
     },
     {
       "section": "ЭЛЕКТРИКА",
       "name": "Маркировка электрического щита (наклейки на группы самоклеящиеся, индивидально под проект). Цена за 1 пост.",
       "unit": "ед.",
       "price": 100.0,
-      "kind": "both"
+      "kind": "chistovye"
     },
     {
       "section": "ЭЛЕКТРИКА",
@@ -2943,21 +2943,21 @@
       "name": "Монтаж точки вывода трубы водоснабжения | за 1 трубу | полипропилен",
       "unit": "ед.",
       "price": 1500.0,
-      "kind": "both"
+      "kind": "chernovye"
     },
     {
       "section": "САНТЕХНИКА",
       "name": "Монтаж точки вывода трубы водоснабжения | за 1 трубу | Rehau",
       "unit": "ед.",
       "price": 1800.0,
-      "kind": "both"
+      "kind": "chernovye"
     },
     {
       "section": "САНТЕХНИКА",
       "name": "Монтаж точки вывода трубы канализации",
       "unit": "ед.",
       "price": 2040.0,
-      "kind": "both"
+      "kind": "chernovye"
     },
     {
       "section": "САНТЕХНИКА",
@@ -2999,49 +2999,49 @@
       "name": "Установка шарового крана",
       "unit": "м2",
       "price": 800.0,
-      "kind": "chistovye"
+      "kind": "chernovye"
     },
     {
       "section": "САНТЕХНИКА",
       "name": "Установка фильтра очистки воды",
       "unit": "ед.",
       "price": 1920.0,
-      "kind": "chistovye"
+      "kind": "chernovye"
     },
     {
       "section": "САНТЕХНИКА",
       "name": "Установка обратного клапана",
       "unit": "ед.",
       "price": 1920.0,
-      "kind": "chistovye"
+      "kind": "chernovye"
     },
     {
       "section": "САНТЕХНИКА",
       "name": "Установка фильтра очистки воды с промывкой",
       "unit": "ед.",
       "price": 2760.0,
-      "kind": "chistovye"
+      "kind": "chernovye"
     },
     {
       "section": "САНТЕХНИКА",
       "name": "Установка магистрального фильтра",
       "unit": "ед.",
       "price": 2450.0,
-      "kind": "chistovye"
+      "kind": "chernovye"
     },
     {
       "section": "САНТЕХНИКА",
       "name": "Установка шарового крана с дренажом (для пожарного шланга)",
       "unit": "м2",
       "price": 900.0,
-      "kind": "chistovye"
+      "kind": "chernovye"
     },
     {
       "section": "САНТЕХНИКА",
       "name": "Установка редуктора давления",
       "unit": "ед.",
       "price": 2580.0,
-      "kind": "chistovye"
+      "kind": "chernovye"
     },
     {
       "section": "САНТЕХНИКА",
@@ -3055,7 +3055,7 @@
       "name": "Добавление секции на радиатор отопления",
       "unit": "ед.",
       "price": 840.0,
-      "kind": "both"
+      "kind": "chernovye"
     },
     {
       "section": "САНТЕХНИКА",
@@ -3069,42 +3069,42 @@
       "name": "Монтаж металлического щита за узлом водоразбора",
       "unit": "м2",
       "price": 1000.0,
-      "kind": "both"
+      "kind": "chernovye"
     },
     {
       "section": "САНТЕХНИКА",
       "name": "Установка водяного счетчика",
       "unit": "ед.",
       "price": 2280.0,
-      "kind": "chistovye"
+      "kind": "chernovye"
     },
     {
       "section": "САНТЕХНИКА",
       "name": "Установка компенсатора гидроудара",
       "unit": "м2",
       "price": 2400.0,
-      "kind": "chistovye"
+      "kind": "chernovye"
     },
     {
       "section": "САНТЕХНИКА",
       "name": "Установка скрытой инсталляции для навесной сантехники",
       "unit": "ед.",
       "price": 5040.0,
-      "kind": "chistovye"
+      "kind": "chernovye"
     },
     {
       "section": "САНТЕХНИКА",
       "name": "Монтаж/замена радиатора отопления | с подводкой труб из пола",
       "unit": "ед.",
       "price": 5400.0,
-      "kind": "both"
+      "kind": "chernovye"
     },
     {
       "section": "САНТЕХНИКА",
       "name": "Монтаж/замена радиатора отопления | с подводкой труб из стены",
       "unit": "ед.",
       "price": 6600.0,
-      "kind": "both"
+      "kind": "chernovye"
     },
     {
       "section": "САНТЕХНИКА",
@@ -3125,14 +3125,14 @@
       "name": "Переделка стояка водоснабжения",
       "unit": "ед.",
       "price": 7740.0,
-      "kind": "both"
+      "kind": "chernovye"
     },
     {
       "section": "САНТЕХНИКА",
       "name": "Протяжка в гофру труб водоснабжения, отопления",
       "unit": "м.п.",
       "price": 90.0,
-      "kind": "both"
+      "kind": "chernovye"
     },
     {
       "section": "САНТЕХНИКА",
@@ -3146,21 +3146,21 @@
       "name": "Установка скрытого ревизионного люка от 200*200 до 500*500 мм",
       "unit": "ед.",
       "price": 4300.0,
-      "kind": "chistovye"
+      "kind": "chernovye"
     },
     {
       "section": "САНТЕХНИКА",
       "name": "Переделка стояка канализации",
       "unit": "ед.",
       "price": 6000.0,
-      "kind": "both"
+      "kind": "chernovye"
     },
     {
       "section": "САНТЕХНИКА",
       "name": "Устройство плоского душевого поддона в строительном исполнении под обкладку плиткой высотой до 100 мм",
       "unit": "м2",
       "price": 9500.0,
-      "kind": "both"
+      "kind": "chernovye"
     },
     {
       "section": "САНТЕХНИКА",
@@ -3195,7 +3195,7 @@
       "name": "Установка внутрипольного душевого трапа",
       "unit": "ед.",
       "price": 4900.0,
-      "kind": "chistovye"
+      "kind": "chernovye"
     },
     {
       "section": "САНТЕХНИКА",
@@ -3230,7 +3230,7 @@
       "name": "Защита от протечек | монтаж крана с сервоприводом",
       "unit": "ед.",
       "price": 2800.0,
-      "kind": "both"
+      "kind": "chernovye"
     },
     {
       "section": "САНТЕХНИКА",
@@ -3265,28 +3265,28 @@
       "name": "Монтаж внутренней части встраиваемого смесителя",
       "unit": "ед.",
       "price": 6000.0,
-      "kind": "both"
+      "kind": "chernovye"
     },
     {
       "section": "САНТЕХНИКА",
       "name": "Монтаж внешней части встраиваемого смесителя",
       "unit": "ед.",
       "price": 2300.0,
-      "kind": "both"
+      "kind": "chistovye"
     },
     {
       "section": "САНТЕХНИКА",
       "name": "Защита от протечек | монтаж датчика протечки",
       "unit": "ед.",
       "price": 1200.0,
-      "kind": "both"
+      "kind": "chernovye"
     },
     {
       "section": "САНТЕХНИКА",
       "name": "Защита от протечек | монтаж монтаж панели управления",
       "unit": "ед.",
       "price": 4500.0,
-      "kind": "both"
+      "kind": "chernovye"
     },
     {
       "section": "САНТЕХНИКА",
@@ -3307,7 +3307,7 @@
       "name": "Установка накладного металлического или пластикового люка от 200*200 до 600*600 мм",
       "unit": "ед.",
       "price": 1500.0,
-      "kind": "chistovye"
+      "kind": "chernovye"
     },
     {
       "section": "САНТЕХНИКА",
@@ -3321,7 +3321,7 @@
       "name": "Монтаж навесного зеркала",
       "unit": "ед.",
       "price": 2500.0,
-      "kind": "both"
+      "kind": "chistovye"
     },
     {
       "section": "САНТЕХНИКА",
@@ -3335,7 +3335,7 @@
       "name": "Монтаж навесной фурнитуры для ванной",
       "unit": "ед.",
       "price": 1000.0,
-      "kind": "both"
+      "kind": "chistovye"
     },
     {
       "section": "САНТЕХНИКА",
@@ -3356,7 +3356,7 @@
       "name": "Монтаж вентиляционной решетки",
       "unit": "ед.",
       "price": 1000.0,
-      "kind": "both"
+      "kind": "chistovye"
     },
     {
       "section": "САНТЕХНИКА",
@@ -3370,35 +3370,35 @@
       "name": "Установка американки",
       "unit": "ед.",
       "price": 990.0,
-      "kind": "chistovye"
+      "kind": "chernovye"
     },
     {
       "section": "САНТЕХНИКА",
       "name": "Опрессовка системы водоснабжения, отопления",
       "unit": "ед.",
       "price": 9800.0,
-      "kind": "both"
+      "kind": "chernovye"
     },
     {
       "section": "САНТЕХНИКА",
       "name": "Установка сервопривода для автоматического поддержания температуры в помещении",
       "unit": "ед.",
       "price": 2500.0,
-      "kind": "chistovye"
+      "kind": "chernovye"
     },
     {
       "section": "САНТЕХНИКА",
       "name": "Установка датчика для автоматического поддержания температуры в помещении",
       "unit": "ед.",
       "price": 2500.0,
-      "kind": "chistovye"
+      "kind": "chernovye"
     },
     {
       "section": "САНТЕХНИКА",
       "name": "Монтаж КУП (коробки уравнивания потенциалов) без протяжки кабеля",
       "unit": "ед.",
       "price": 2500.0,
-      "kind": "both"
+      "kind": "chernovye"
     },
     {
       "section": "САНТЕХНИКА",
@@ -3470,5 +3470,13 @@
       "price": 500.0,
       "kind": "both"
     }
-  ]
+  ],
+  "kind_source": {
+    "file": "price_list_kind_markup 3.numbers",
+    "sheet": "Прайс",
+    "customer_col_filled": 0,
+    "system_col_fallback": 494,
+    "empty": 0,
+    "note": "Предпочтение: столбец «вид_работ». Если пуст — fallback на «kind_системы». Нестандартные метки не меняют kind (см. ambiguous в отчёте)."
+  }
 }

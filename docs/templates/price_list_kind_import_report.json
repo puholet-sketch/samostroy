@@ -1,0 +1,308 @@
+{
+  "input": "c:\\Users\\user\\Downloads\\price_list_kind_markup 3.numbers",
+  "rows": 494,
+  "source_col_stats": {
+    "system_col_fallback": 494
+  },
+  "counts_imported": {
+    "chernovye": 305,
+    "chistovye": 179,
+    "both": 0,
+    "ambiguous_unchanged": 10
+  },
+  "final_json_counts": {
+    "chernovye": 306,
+    "chistovye": 179,
+    "both": 9
+  },
+  "kind_changes": 165,
+  "ambiguous": [
+    {
+      "id": "PL-0168",
+      "section": "ПОЛЫ",
+      "name": "Временная застилка полов оргалитом",
+      "raw_mark": "Отдельный раздел - подготовительный",
+      "kept_kind": "chernovye"
+    },
+    {
+      "id": "PL-0486",
+      "section": "ПРОЧЕЕ",
+      "name": "Защитная упаковка окон",
+      "raw_mark": "Отдельный раздел - подготовительный",
+      "kept_kind": "both"
+    },
+    {
+      "id": "PL-0487",
+      "section": "ПРОЧЕЕ",
+      "name": "Защитная упаковка входной двери",
+      "raw_mark": "Отдельный раздел - подготовительный",
+      "kept_kind": "both"
+    },
+    {
+      "id": "PL-0488",
+      "section": "ПРОЧЕЕ",
+      "name": "Защитная упаковка пола | полиэтилен + оргалит с проклейкой швов",
+      "raw_mark": "Отдельный раздел - подготовительный",
+      "kept_kind": "both"
+    },
+    {
+      "id": "PL-0489",
+      "section": "ПРОЧЕЕ",
+      "name": "Защитная упаковка пола | ветошь + оргалит с проклейкой швов",
+      "raw_mark": "Отдельный раздел - подготовительный",
+      "kept_kind": "both"
+    },
+    {
+      "id": "PL-0490",
+      "section": "ПРОЧЕЕ",
+      "name": "Укрытие МОП (защита стен, пола)",
+      "raw_mark": "Отдельный раздел - подготовительный",
+      "kept_kind": "both"
+    },
+    {
+      "id": "PL-0491",
+      "section": "ПРОЧЕЕ",
+      "name": "Уборка лестничных клеток",
+      "raw_mark": "Отдельный раздел - подготовительный",
+      "kept_kind": "both"
+    },
+    {
+      "id": "PL-0492",
+      "section": "ПРОЧЕЕ",
+      "name": "Услуга приемки и проверка товара привезенного на объект",
+      "raw_mark": "Отдельный раздел - подготовительный",
+      "kept_kind": "both"
+    },
+    {
+      "id": "PL-0493",
+      "section": "ПРОЧЕЕ",
+      "name": "Нормо-час",
+      "raw_mark": "Отдельный раздел - подготовительный",
+      "kept_kind": "both"
+    },
+    {
+      "id": "PL-0494",
+      "section": "ПРОЧЕЕ",
+      "name": "Защитная упаковка подоконников | ветошь + оргалит",
+      "raw_mark": "Отдельный раздел - подготовительный",
+      "kept_kind": "both"
+    }
+  ],
+  "sample_changes": [
+    {
+      "id": "PL-0119",
+      "section": "ПОЛЫ",
+      "name": "Черновая подрезка керамогранита",
+      "old": "chernovye",
+      "new": "chistovye"
+    },
+    {
+      "id": "PL-0121",
+      "section": "ПОЛЫ",
+      "name": "Шлифование керамогранита (неректифицированная плитка, керамогранит)",
+      "old": "both",
+      "new": "chistovye"
+    },
+    {
+      "id": "PL-0132",
+      "section": "ПОЛЫ",
+      "name": "Подбор рисунка керамогранита с предварительной раскладкой, маркировкой и согласованием с заказчиком",
+      "old": "both",
+      "new": "chistovye"
+    },
+    {
+      "id": "PL-0141",
+      "section": "ПОЛЫ",
+      "name": "Шлифование бетона",
+      "old": "both",
+      "new": "chernovye"
+    },
+    {
+      "id": "PL-0142",
+      "section": "ПОЛЫ",
+      "name": "Обеспыливание пола",
+      "old": "both",
+      "new": "chernovye"
+    },
+    {
+      "id": "PL-0143",
+      "section": "ПОЛЫ",
+      "name": "Обработка пола антиплесенью",
+      "old": "both",
+      "new": "chernovye"
+    },
+    {
+      "id": "PL-0154",
+      "section": "ПОЛЫ",
+      "name": "Настил фанеры с проклейкой или креплением к черновому полу",
+      "old": "both",
+      "new": "chistovye"
+    },
+    {
+      "id": "PL-0164",
+      "section": "ПОЛЫ",
+      "name": "Монтаж порожка | прижимной Т-образный или на шурупах",
+      "old": "both",
+      "new": "chistovye"
+    },
+    {
+      "id": "PL-0165",
+      "section": "ПОЛЫ",
+      "name": "Монтаж пробкового компенсатора",
+      "old": "both",
+      "new": "chistovye"
+    },
+    {
+      "id": "PL-0167",
+      "section": "ПОЛЫ",
+      "name": "Монтаж стыковочного профиля",
+      "old": "both",
+      "new": "chistovye"
+    },
+    {
+      "id": "PL-0169",
+      "section": "ПОЛЫ",
+      "name": "Монтаж пробкового компенсатора",
+      "old": "both",
+      "new": "chistovye"
+    },
+    {
+      "id": "PL-0180",
+      "section": "СТЕНЫ",
+      "name": "Установка маяков для штукатурки",
+      "old": "chistovye",
+      "new": "chernovye"
+    },
+    {
+      "id": "PL-0185",
+      "section": "СТЕНЫ",
+      "name": "Армирование стен при кладке блоков",
+      "old": "both",
+      "new": "chernovye"
+    },
+    {
+      "id": "PL-0186",
+      "section": "СТЕНЫ",
+      "name": "Установка маяков для цементной штукатурки",
+      "old": "chistovye",
+      "new": "chernovye"
+    },
+    {
+      "id": "PL-0189",
+      "section": "СТЕНЫ",
+      "name": "Армирование дверного проема",
+      "old": "both",
+      "new": "chernovye"
+    },
+    {
+      "id": "PL-0194",
+      "section": "СТЕНЫ",
+      "name": "Пропенивание вертикальных стыков стен",
+      "old": "both",
+      "new": "chernovye"
+    },
+    {
+      "id": "PL-0210",
+      "section": "СТЕНЫ",
+      "name": "Монтаж перфорированного уголка",
+      "old": "both",
+      "new": "chernovye"
+    },
+    {
+      "id": "PL-0214",
+      "section": "СТЕНЫ",
+      "name": "Черновая подрезка керамогранита",
+      "old": "chernovye",
+      "new": "chistovye"
+    },
+    {
+      "id": "PL-0215",
+      "section": "СТЕНЫ",
+      "name": "Нанесение бетоноконтакта",
+      "old": "both",
+      "new": "chernovye"
+    },
+    {
+      "id": "PL-0216",
+      "section": "СТЕНЫ",
+      "name": "Армирование стыка разнородных материалов в один слой (СП 71.13330.2017 п.7.2.7)",
+      "old": "both",
+      "new": "chernovye"
+    },
+    {
+      "id": "PL-0217",
+      "section": "СТЕНЫ",
+      "name": "Монтаж полочек из керамогранита",
+      "old": "both",
+      "new": "chistovye"
+    },
+    {
+      "id": "PL-0219",
+      "section": "СТЕНЫ",
+      "name": "Тройное армирование мест примыкания разнородных материалов (Перлфикс, лента, сетка 5мм - 2шт, сетка 50 мм)",
+      "old": "both",
+      "new": "chernovye"
+    },
+    {
+      "id": "PL-0220",
+      "section": "СТЕНЫ",
+      "name": "Отверстие в плитке до 90 мм (под розетку, вывод труб ХВС, ГВС и пр.)",
+      "old": "chernovye",
+      "new": "chistovye"
+    },
+    {
+      "id": "PL-0221",
+      "section": "СТЕНЫ",
+      "name": "Установка пластикогового или металлического уголка",
+      "old": "chistovye",
+      "new": "chernovye"
+    },
+    {
+      "id": "PL-0226",
+      "section": "СТЕНЫ",
+      "name": "Профиль оконного примыкающего профили с армирующей сеткой",
+      "old": "both",
+      "new": "chernovye"
+    },
+    {
+      "id": "PL-0228",
+      "section": "СТЕНЫ",
+      "name": "Монтаж откоса из ГКЛ",
+      "old": "both",
+      "new": "chernovye"
+    },
+    {
+      "id": "PL-0229",
+      "section": "СТЕНЫ",
+      "name": "Монтаж отксоса из сэндвич панели (Руспанель или аналог)",
+      "old": "both",
+      "new": "chernovye"
+    },
+    {
+      "id": "PL-0230",
+      "section": "СТЕНЫ",
+      "name": "Монтаж теневого профиля на внутренние углы, премыкания",
+      "old": "both",
+      "new": "chernovye"
+    },
+    {
+      "id": "PL-0231",
+      "section": "СТЕНЫ",
+      "name": "Проклейка углов углоформирующей лентой",
+      "old": "both",
+      "new": "chernovye"
+    },
+    {
+      "id": "PL-0233",
+      "section": "СТЕНЫ",
+      "name": "Монтаж подоконника ПВХ",
+      "old": "both",
+      "new": "chistovye"
+    }
+  ],
+  "artifacts": {
+    "csv": "docs\\templates\\price_list_kind_markup_customer.csv",
+    "xlsx": "docs\\templates\\price_list_kind_markup.xlsx",
+    "report": "docs\\templates\\price_list_kind_import_report.json"
+  }
+}
