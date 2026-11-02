@@ -2,8 +2,8 @@
   "v": 4,
   "updated": "2026-11-02",
   "status": "active",
-  "goal": "Import customer kind markup → deploy 2026-11-02-a",
-  "next": "Deploy 2026-11-02-a; await customer on 10 подготовительных",
+  "goal": "Customer kind markup live 2026-11-02-a",
+  "next": "Idle — 2026-11-02-a live (index--ZOY8lRr.js); await customer on 10 подготовительных",
   "blockers": [
     "10 позиций «Отдельный раздел - подготовительный» без kind",
     "TG notify needs Docker API + TELEGRAM_* + ngrok"
