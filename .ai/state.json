@@ -3,7 +3,7 @@
   "updated": "2026-11-03",
   "status": "active",
   "goal": "Prep section live 2026-11-03-a",
-  "next": "Deploying 2026-11-03-a (prep section)",
+  "next": "Idle — 2026-11-03-a live (index-DoqMojHv.js)",
   "blockers": [
     "TG notify needs Docker API + TELEGRAM_* + ngrok"
   ],
