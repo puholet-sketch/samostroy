@@ -1,18 +1,17 @@
 {
   "v": 4,
-  "updated": "2026-11-02",
+  "updated": "2026-11-03",
   "status": "active",
-  "goal": "Customer kind markup live 2026-11-02-a",
-  "next": "Idle — 2026-11-02-a live (index--ZOY8lRr.js); await customer on 10 подготовительных",
+  "goal": "Prep section live 2026-11-03-a",
+  "next": "Deploying 2026-11-03-a (prep section)",
   "blockers": [
-    "10 позиций «Отдельный раздел - подготовительный» без kind",
     "TG notify needs Docker API + TELEGRAM_* + ngrok"
   ],
   "hot_files": [
     "data/price_list.json",
-    "docs/scripts/import_price_list_kind_markup.py",
+    "src/components/calculator/CalculatorPage.tsx",
     "data/changelog.json",
     "src/lib/buildStamp.ts",
-    "data/releases/2026-11-02-a.md"
+    "data/releases/2026-11-03-a.md"
   ]
 }

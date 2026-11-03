@@ -7,8 +7,8 @@ export type CalcSmetaLine = {
   price: number
   /** Раздел калькулятора (для группировки в смете / приложении) */
   section?: string
-  /** Черновые / чистовые (если задано в прайсе) */
-  kind?: 'chernovye' | 'chistovye' | 'both'
+  /** Черновые / чистовые / подготовительные (если задано в прайсе) */
+  kind?: 'chernovye' | 'chistovye' | 'podgotovka'
 }
 
 export type CalcTransferState = {
@@ -81,7 +81,7 @@ export function buildLinesFromQty(
     unit: string
     price: number
     section: string
-    kind?: 'chernovye' | 'chistovye' | 'both'
+    kind?: 'chernovye' | 'chistovye' | 'podgotovka'
   }[],
   qty: Record<string, number>,
   itemKey: (
@@ -90,7 +90,7 @@ export function buildLinesFromQty(
       unit: string
       price: number
       section: string
-      kind?: 'chernovye' | 'chistovye' | 'both'
+      kind?: 'chernovye' | 'chistovye' | 'podgotovka'
     },
     idx: number,
   ) => string,

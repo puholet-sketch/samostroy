@@ -9,7 +9,8 @@ import {
 import { usePageHeaderActions } from '../../contexts/PageHeaderContext'
 import { Panel } from '../ui/Kpi'
 
-type FinishKind = 'chernovye' | 'chistovye' | 'both'
+/** chernovye/chistovye — фильтр Чистовые/Черновые; podgotovka — только при «Все» */
+type FinishKind = 'chernovye' | 'chistovye' | 'podgotovka'
 
 type PriceItem = {
   section: string
@@ -42,7 +43,7 @@ const CANON_ORDER: string[] =
     'ПОТОЛКИ',
     'ЭЛЕКТРИКА',
     'САНТЕХНИКА',
-    'ПРОЧЕЕ',
+    'ПОДГОТОВИТЕЛЬНЫЕ',
   ]
 
 const items: PriceItem[] = (priceList.items ?? []).map((it) => ({
@@ -50,7 +51,7 @@ const items: PriceItem[] = (priceList.items ?? []).map((it) => ({
   name: it.name,
   unit: it.unit || 'шт',
   price: Number(it.price) || 0,
-  kind: (it as { kind?: FinishKind }).kind || 'both',
+  kind: (it as { kind?: FinishKind }).kind || 'chernovye',
 }))
 
 function itemKey(it: PriceItem, idx: number) {
@@ -115,14 +116,15 @@ function prettySection(name: string): string {
     ПОТОЛКИ: 'Потолки',
     ЭЛЕКТРИКА: 'Электрика',
     САНТЕХНИКА: 'Сантехника',
-    ПРОЧЕЕ: 'Прочее',
+    ПОДГОТОВИТЕЛЬНЫЕ: 'Подготовительные',
   }
   return map[name] || name
 }
 
+/** Подготовительные (podgotovka) — ни черновые, ни чистовые: видны только при «Все». */
 function matchesKind(itemKind: FinishKind, mode: SectionMode): boolean {
   if (mode === 'all') return true
-  if (itemKind === 'both') return true
+  if (itemKind === 'podgotovka') return false
   return itemKind === mode
 }
 
@@ -195,7 +197,7 @@ export default function CalculatorPage() {
       if (n > 0) filled += 1
     })
     const built = buildLinesFromQty(items, qty, (it, idx) =>
-      itemKey({ ...it, kind: it.kind ?? 'both' }, idx),
+      itemKey({ ...it, kind: it.kind ?? 'chernovye' }, idx),
     )
     return {
       baseTotal: built.total,

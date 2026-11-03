@@ -1,5 +1,41 @@
 [
   {
+    "id": "2026-11-03-a",
+    "at": "2026-11-03T15:56:54+03:00",
+    "title": "Калькулятор: раздел Подготовительные",
+    "items": [
+      {
+        "section": "Калькулятор · Прайс",
+        "text": "10 подготовительных позиций вынесены в отдельный раздел «Подготовительные» (не «оба» в каждом фильтре)"
+      },
+      {
+        "section": "Калькулятор",
+        "text": "При фильтре Чистовые/Черновые подготовительные скрыты; при «Все» — видны. Меток both в прайсе больше нет"
+      },
+      {
+        "section": "Калькулятор · Прайс",
+        "text": "Уточнение по разметке: зелёный «вид_работ» в Numbers был пуст — импорт взял жёлтый kind_системы на листе «Прайс»"
+      }
+    ],
+    "docs": [
+      {
+        "label": "Релиз 2026-11-03-a",
+        "href": "/updates/2026-11-03-a",
+        "kind": "app"
+      },
+      {
+        "label": "Калькулятор",
+        "href": "/calculator",
+        "kind": "app"
+      },
+      {
+        "label": "README разметки прайса",
+        "href": "docs/templates/README_price_list_kind_markup.md",
+        "kind": "repo"
+      }
+    ]
+  },
+  {
     "id": "2026-11-02-a",
     "at": "2026-11-02T22:45:00+03:00",
     "title": "Калькулятор: чистовые/черновые от заказчика",
@@ -18,9 +54,21 @@
       }
     ],
     "docs": [
-      { "label": "Релиз 2026-11-02-a", "href": "/updates/2026-11-02-a", "kind": "app" },
-      { "label": "Калькулятор", "href": "/calculator", "kind": "app" },
-      { "label": "README разметки прайса", "href": "docs/templates/README_price_list_kind_markup.md", "kind": "repo" }
+      {
+        "label": "Релиз 2026-11-02-a",
+        "href": "/updates/2026-11-02-a",
+        "kind": "app"
+      },
+      {
+        "label": "Калькулятор",
+        "href": "/calculator",
+        "kind": "app"
+      },
+      {
+        "label": "README разметки прайса",
+        "href": "docs/templates/README_price_list_kind_markup.md",
+        "kind": "repo"
+      }
     ]
   },
   {
@@ -34,8 +82,16 @@
       }
     ],
     "docs": [
-      { "label": "Релиз 2026-10-30-k", "href": "/updates/2026-10-30-k", "kind": "app" },
-      { "label": "Настройки", "href": "/security", "kind": "app" }
+      {
+        "label": "Релиз 2026-10-30-k",
+        "href": "/updates/2026-10-30-k",
+        "kind": "app"
+      },
+      {
+        "label": "Настройки",
+        "href": "/security",
+        "kind": "app"
+      }
     ]
   },
   {
@@ -57,9 +113,21 @@
       }
     ],
     "docs": [
-      { "label": "Релиз 2026-10-30-j", "href": "/updates/2026-10-30-j", "kind": "app" },
-      { "label": "Контроль объекта", "href": "/control", "kind": "app" },
-      { "label": "Модуль Контроль", "href": "docs/modules/object_control.md", "kind": "repo" }
+      {
+        "label": "Релиз 2026-10-30-j",
+        "href": "/updates/2026-10-30-j",
+        "kind": "app"
+      },
+      {
+        "label": "Контроль объекта",
+        "href": "/control",
+        "kind": "app"
+      },
+      {
+        "label": "Модуль Контроль",
+        "href": "docs/modules/object_control.md",
+        "kind": "repo"
+      }
     ]
   },
   {
@@ -81,9 +149,21 @@
       }
     ],
     "docs": [
-      { "label": "Релиз 2026-10-30-i", "href": "/updates/2026-10-30-i", "kind": "app" },
-      { "label": "Клиенты", "href": "/clients", "kind": "app" },
-      { "label": "Договоры и акты", "href": "/documents", "kind": "app" }
+      {
+        "label": "Релиз 2026-10-30-i",
+        "href": "/updates/2026-10-30-i",
+        "kind": "app"
+      },
+      {
+        "label": "Клиенты",
+        "href": "/clients",
+        "kind": "app"
+      },
+      {
+        "label": "Договоры и акты",
+        "href": "/documents",
+        "kind": "app"
+      }
     ]
   },
   {
@@ -101,8 +181,16 @@
       }
     ],
     "docs": [
-      { "label": "Релиз 2026-10-30-h", "href": "/updates/2026-10-30-h", "kind": "app" },
-      { "label": "Пакет клиенту", "href": "/control", "kind": "app" }
+      {
+        "label": "Релиз 2026-10-30-h",
+        "href": "/updates/2026-10-30-h",
+        "kind": "app"
+      },
+      {
+        "label": "Пакет клиенту",
+        "href": "/control",
+        "kind": "app"
+      }
     ]
   },
   {
@@ -120,9 +208,21 @@
       }
     ],
     "docs": [
-      { "label": "Релиз 2026-10-30-g", "href": "/updates/2026-10-30-g", "kind": "app" },
-      { "label": "Контроль объекта", "href": "/control", "kind": "app" },
-      { "label": "Модуль Контроль", "href": "docs/modules/object_control.md", "kind": "repo" }
+      {
+        "label": "Релиз 2026-10-30-g",
+        "href": "/updates/2026-10-30-g",
+        "kind": "app"
+      },
+      {
+        "label": "Контроль объекта",
+        "href": "/control",
+        "kind": "app"
+      },
+      {
+        "label": "Модуль Контроль",
+        "href": "docs/modules/object_control.md",
+        "kind": "repo"
+      }
     ]
   },
   {
@@ -140,8 +240,16 @@
       }
     ],
     "docs": [
-      { "label": "Релиз 2026-10-30-f", "href": "/updates/2026-10-30-f", "kind": "app" },
-      { "label": "Контроль объекта", "href": "/control", "kind": "app" }
+      {
+        "label": "Релиз 2026-10-30-f",
+        "href": "/updates/2026-10-30-f",
+        "kind": "app"
+      },
+      {
+        "label": "Контроль объекта",
+        "href": "/control",
+        "kind": "app"
+      }
     ]
   },
   {
@@ -155,8 +263,16 @@
       }
     ],
     "docs": [
-      { "label": "Релиз 2026-10-30-e", "href": "/updates/2026-10-30-e", "kind": "app" },
-      { "label": "Клиенты", "href": "/clients", "kind": "app" }
+      {
+        "label": "Релиз 2026-10-30-e",
+        "href": "/updates/2026-10-30-e",
+        "kind": "app"
+      },
+      {
+        "label": "Клиенты",
+        "href": "/clients",
+        "kind": "app"
+      }
     ]
   },
   {
@@ -170,8 +286,16 @@
       }
     ],
     "docs": [
-      { "label": "Релиз 2026-10-30-d", "href": "/updates/2026-10-30-d", "kind": "app" },
-      { "label": "Калькулятор", "href": "/calculator", "kind": "app" }
+      {
+        "label": "Релиз 2026-10-30-d",
+        "href": "/updates/2026-10-30-d",
+        "kind": "app"
+      },
+      {
+        "label": "Калькулятор",
+        "href": "/calculator",
+        "kind": "app"
+      }
     ]
   },
   {
@@ -193,8 +317,16 @@
       }
     ],
     "docs": [
-      { "label": "Релиз 2026-10-30-c", "href": "/updates/2026-10-30-c", "kind": "app" },
-      { "label": "Контроль объекта", "href": "/control", "kind": "app" }
+      {
+        "label": "Релиз 2026-10-30-c",
+        "href": "/updates/2026-10-30-c",
+        "kind": "app"
+      },
+      {
+        "label": "Контроль объекта",
+        "href": "/control",
+        "kind": "app"
+      }
     ]
   },
   {
@@ -212,8 +344,16 @@
       }
     ],
     "docs": [
-      { "label": "Релиз 2026-10-30-b", "href": "/updates/2026-10-30-b", "kind": "app" },
-      { "label": "Контроль объекта", "href": "/control", "kind": "app" }
+      {
+        "label": "Релиз 2026-10-30-b",
+        "href": "/updates/2026-10-30-b",
+        "kind": "app"
+      },
+      {
+        "label": "Контроль объекта",
+        "href": "/control",
+        "kind": "app"
+      }
     ]
   },
   {
@@ -227,8 +367,16 @@
       }
     ],
     "docs": [
-      { "label": "Релиз 2026-10-30-a", "href": "/updates/2026-10-30-a", "kind": "app" },
-      { "label": "Калькулятор", "href": "/calculator", "kind": "app" }
+      {
+        "label": "Релиз 2026-10-30-a",
+        "href": "/updates/2026-10-30-a",
+        "kind": "app"
+      },
+      {
+        "label": "Калькулятор",
+        "href": "/calculator",
+        "kind": "app"
+      }
     ]
   },
   {
@@ -242,8 +390,16 @@
       }
     ],
     "docs": [
-      { "label": "Релиз 2026-10-29-g", "href": "/updates/2026-10-29-g", "kind": "app" },
-      { "label": "Архитектура", "href": "docs/architecture.md", "kind": "repo" }
+      {
+        "label": "Релиз 2026-10-29-g",
+        "href": "/updates/2026-10-29-g",
+        "kind": "app"
+      },
+      {
+        "label": "Архитектура",
+        "href": "docs/architecture.md",
+        "kind": "repo"
+      }
     ]
   },
   {
@@ -261,10 +417,26 @@
       }
     ],
     "docs": [
-      { "label": "Релиз 2026-10-29-f", "href": "/updates/2026-10-29-f", "kind": "app" },
-      { "label": "Контроль", "href": "/control", "kind": "app" },
-      { "label": "Модуль контроля", "href": "docs/modules/object_control.md", "kind": "repo" },
-      { "label": "Безопасность", "href": "docs/modules/security.md", "kind": "repo" }
+      {
+        "label": "Релиз 2026-10-29-f",
+        "href": "/updates/2026-10-29-f",
+        "kind": "app"
+      },
+      {
+        "label": "Контроль",
+        "href": "/control",
+        "kind": "app"
+      },
+      {
+        "label": "Модуль контроля",
+        "href": "docs/modules/object_control.md",
+        "kind": "repo"
+      },
+      {
+        "label": "Безопасность",
+        "href": "docs/modules/security.md",
+        "kind": "repo"
+      }
     ]
   },
   {
@@ -278,8 +450,16 @@
       }
     ],
     "docs": [
-      { "label": "Релиз 2026-10-29-e", "href": "/updates/2026-10-29-e", "kind": "app" },
-      { "label": "Контроль", "href": "/control", "kind": "app" }
+      {
+        "label": "Релиз 2026-10-29-e",
+        "href": "/updates/2026-10-29-e",
+        "kind": "app"
+      },
+      {
+        "label": "Контроль",
+        "href": "/control",
+        "kind": "app"
+      }
     ]
   },
   {
@@ -293,8 +473,16 @@
       }
     ],
     "docs": [
-      { "label": "Релиз 2026-10-29-d", "href": "/updates/2026-10-29-d", "kind": "app" },
-      { "label": "Калькулятор", "href": "/calculator", "kind": "app" }
+      {
+        "label": "Релиз 2026-10-29-d",
+        "href": "/updates/2026-10-29-d",
+        "kind": "app"
+      },
+      {
+        "label": "Калькулятор",
+        "href": "/calculator",
+        "kind": "app"
+      }
     ]
   },
   {
@@ -308,9 +496,21 @@
       }
     ],
     "docs": [
-      { "label": "Релиз 2026-10-29-c", "href": "/updates/2026-10-29-c", "kind": "app" },
-      { "label": "Модуль Замечания", "href": "docs/modules/feedback.md", "kind": "repo" },
-      { "label": "Инбокс", "href": "/feedback", "kind": "app" }
+      {
+        "label": "Релиз 2026-10-29-c",
+        "href": "/updates/2026-10-29-c",
+        "kind": "app"
+      },
+      {
+        "label": "Модуль Замечания",
+        "href": "docs/modules/feedback.md",
+        "kind": "repo"
+      },
+      {
+        "label": "Инбокс",
+        "href": "/feedback",
+        "kind": "app"
+      }
     ]
   },
   {
@@ -336,10 +536,26 @@
       }
     ],
     "docs": [
-      { "label": "Релиз 2026-10-29-b", "href": "/updates/2026-10-29-b", "kind": "app" },
-      { "label": "Решения спринта", "href": "docs/customer-calls/2026-10-29-sprint-decisions.md", "kind": "repo" },
-      { "label": "Контроль", "href": "/control", "kind": "app" },
-      { "label": "Настройки", "href": "/settings/security", "kind": "app" }
+      {
+        "label": "Релиз 2026-10-29-b",
+        "href": "/updates/2026-10-29-b",
+        "kind": "app"
+      },
+      {
+        "label": "Решения спринта",
+        "href": "docs/customer-calls/2026-10-29-sprint-decisions.md",
+        "kind": "repo"
+      },
+      {
+        "label": "Контроль",
+        "href": "/control",
+        "kind": "app"
+      },
+      {
+        "label": "Настройки",
+        "href": "/settings/security",
+        "kind": "app"
+      }
     ]
   },
   {
@@ -377,10 +593,26 @@
       }
     ],
     "docs": [
-      { "label": "Релиз 2026-10-29-a", "href": "/updates/2026-10-29-a", "kind": "app" },
-      { "label": "Контроль объекта", "href": "docs/modules/object_control.md", "kind": "repo" },
-      { "label": "Решения спринта", "href": "docs/customer-calls/2026-10-29-sprint-decisions.md", "kind": "repo" },
-      { "label": "Контроль", "href": "/control", "kind": "app" }
+      {
+        "label": "Релиз 2026-10-29-a",
+        "href": "/updates/2026-10-29-a",
+        "kind": "app"
+      },
+      {
+        "label": "Контроль объекта",
+        "href": "docs/modules/object_control.md",
+        "kind": "repo"
+      },
+      {
+        "label": "Решения спринта",
+        "href": "docs/customer-calls/2026-10-29-sprint-decisions.md",
+        "kind": "repo"
+      },
+      {
+        "label": "Контроль",
+        "href": "/control",
+        "kind": "app"
+      }
     ]
   },
   {
@@ -402,10 +634,26 @@
       }
     ],
     "docs": [
-      { "label": "Релиз 2026-10-27-c", "href": "/updates/2026-10-27-c", "kind": "app" },
-      { "label": "Pro + ngrok", "href": "docs/modules/pro-local-ngrok.md", "kind": "repo" },
-      { "label": "Безопасность", "href": "/security", "kind": "app" },
-      { "label": "Релиз 2026-10-27-b", "href": "/updates/2026-10-27-b", "kind": "app" }
+      {
+        "label": "Релиз 2026-10-27-c",
+        "href": "/updates/2026-10-27-c",
+        "kind": "app"
+      },
+      {
+        "label": "Pro + ngrok",
+        "href": "docs/modules/pro-local-ngrok.md",
+        "kind": "repo"
+      },
+      {
+        "label": "Безопасность",
+        "href": "/security",
+        "kind": "app"
+      },
+      {
+        "label": "Релиз 2026-10-27-b",
+        "href": "/updates/2026-10-27-b",
+        "kind": "app"
+      }
     ]
   },
   {
@@ -427,11 +675,31 @@
       }
     ],
     "docs": [
-      { "label": "Релиз 2026-10-27-b", "href": "/updates/2026-10-27-b", "kind": "app" },
-      { "label": "Pro + ngrok", "href": "docs/modules/pro-local-ngrok.md", "kind": "repo" },
-      { "label": "Безопасность", "href": "/security", "kind": "app" },
-      { "label": "Feedback / API bot", "href": "bots/feedback-bot/README.md", "kind": "repo" },
-      { "label": "Релиз 2026-10-27-a", "href": "/updates/2026-10-27-a", "kind": "app" }
+      {
+        "label": "Релиз 2026-10-27-b",
+        "href": "/updates/2026-10-27-b",
+        "kind": "app"
+      },
+      {
+        "label": "Pro + ngrok",
+        "href": "docs/modules/pro-local-ngrok.md",
+        "kind": "repo"
+      },
+      {
+        "label": "Безопасность",
+        "href": "/security",
+        "kind": "app"
+      },
+      {
+        "label": "Feedback / API bot",
+        "href": "bots/feedback-bot/README.md",
+        "kind": "repo"
+      },
+      {
+        "label": "Релиз 2026-10-27-a",
+        "href": "/updates/2026-10-27-a",
+        "kind": "app"
+      }
     ]
   },
   {
@@ -461,12 +729,36 @@
       }
     ],
     "docs": [
-      { "label": "Релиз 2026-10-27-a", "href": "/updates/2026-10-27-a", "kind": "app" },
-      { "label": "Клиенты", "href": "/clients", "kind": "app" },
-      { "label": "Контроль объекта", "href": "/control", "kind": "app" },
-      { "label": "Модуль контроля", "href": "docs/modules/object_control.md", "kind": "repo" },
-      { "label": "Feedback / API bot", "href": "bots/feedback-bot/README.md", "kind": "repo" },
-      { "label": "Релиз 2026-10-26-g", "href": "/updates/2026-10-26-g", "kind": "app" }
+      {
+        "label": "Релиз 2026-10-27-a",
+        "href": "/updates/2026-10-27-a",
+        "kind": "app"
+      },
+      {
+        "label": "Клиенты",
+        "href": "/clients",
+        "kind": "app"
+      },
+      {
+        "label": "Контроль объекта",
+        "href": "/control",
+        "kind": "app"
+      },
+      {
+        "label": "Модуль контроля",
+        "href": "docs/modules/object_control.md",
+        "kind": "repo"
+      },
+      {
+        "label": "Feedback / API bot",
+        "href": "bots/feedback-bot/README.md",
+        "kind": "repo"
+      },
+      {
+        "label": "Релиз 2026-10-26-g",
+        "href": "/updates/2026-10-26-g",
+        "kind": "app"
+      }
     ]
   },
   {
@@ -484,9 +776,21 @@
       }
     ],
     "docs": [
-      { "label": "Релиз 2026-10-26-g", "href": "/updates/2026-10-26-g", "kind": "app" },
-      { "label": "Калькулятор", "href": "/calculator", "kind": "app" },
-      { "label": "Релиз 2026-10-26-f", "href": "/updates/2026-10-26-f", "kind": "app" }
+      {
+        "label": "Релиз 2026-10-26-g",
+        "href": "/updates/2026-10-26-g",
+        "kind": "app"
+      },
+      {
+        "label": "Калькулятор",
+        "href": "/calculator",
+        "kind": "app"
+      },
+      {
+        "label": "Релиз 2026-10-26-f",
+        "href": "/updates/2026-10-26-f",
+        "kind": "app"
+      }
     ]
   },
   {
@@ -508,10 +812,26 @@
       }
     ],
     "docs": [
-      { "label": "Релиз 2026-10-26-f", "href": "/updates/2026-10-26-f", "kind": "app" },
-      { "label": "Калькулятор", "href": "/calculator", "kind": "app" },
-      { "label": "Документы", "href": "/documents", "kind": "app" },
-      { "label": "Релиз 2026-10-26-e", "href": "/updates/2026-10-26-e", "kind": "app" }
+      {
+        "label": "Релиз 2026-10-26-f",
+        "href": "/updates/2026-10-26-f",
+        "kind": "app"
+      },
+      {
+        "label": "Калькулятор",
+        "href": "/calculator",
+        "kind": "app"
+      },
+      {
+        "label": "Документы",
+        "href": "/documents",
+        "kind": "app"
+      },
+      {
+        "label": "Релиз 2026-10-26-e",
+        "href": "/updates/2026-10-26-e",
+        "kind": "app"
+      }
     ]
   },
   {
@@ -529,9 +849,21 @@
       }
     ],
     "docs": [
-      { "label": "Релиз 2026-10-26-e", "href": "/updates/2026-10-26-e", "kind": "app" },
-      { "label": "Калькулятор", "href": "/calculator", "kind": "app" },
-      { "label": "Релиз 2026-10-26-d", "href": "/updates/2026-10-26-d", "kind": "app" }
+      {
+        "label": "Релиз 2026-10-26-e",
+        "href": "/updates/2026-10-26-e",
+        "kind": "app"
+      },
+      {
+        "label": "Калькулятор",
+        "href": "/calculator",
+        "kind": "app"
+      },
+      {
+        "label": "Релиз 2026-10-26-d",
+        "href": "/updates/2026-10-26-d",
+        "kind": "app"
+      }
     ]
   },
   {
@@ -557,12 +889,36 @@
       }
     ],
     "docs": [
-      { "label": "Релиз 2026-10-26-d", "href": "/updates/2026-10-26-d", "kind": "app" },
-      { "label": "Настройки", "href": "docs/modules/security.md", "kind": "repo" },
-      { "label": "Настройки (UI)", "href": "/settings/security", "kind": "app" },
-      { "label": "Договоры и акты", "href": "/documents", "kind": "app" },
-      { "label": "Калькулятор", "href": "/calculator", "kind": "app" },
-      { "label": "Сводка звонков (c)", "href": "/updates/2026-10-26-c", "kind": "app" }
+      {
+        "label": "Релиз 2026-10-26-d",
+        "href": "/updates/2026-10-26-d",
+        "kind": "app"
+      },
+      {
+        "label": "Настройки",
+        "href": "docs/modules/security.md",
+        "kind": "repo"
+      },
+      {
+        "label": "Настройки (UI)",
+        "href": "/settings/security",
+        "kind": "app"
+      },
+      {
+        "label": "Договоры и акты",
+        "href": "/documents",
+        "kind": "app"
+      },
+      {
+        "label": "Калькулятор",
+        "href": "/calculator",
+        "kind": "app"
+      },
+      {
+        "label": "Сводка звонков (c)",
+        "href": "/updates/2026-10-26-c",
+        "kind": "app"
+      }
     ]
   },
   {
@@ -608,14 +964,46 @@
       }
     ],
     "docs": [
-      { "label": "Звонки 26.10", "href": "docs/customer-calls/2026-10-26-daniil-aquarius.md", "kind": "repo" },
-      { "label": "Релиз 2026-10-26-c", "href": "/updates/2026-10-26-c", "kind": "app" },
-      { "label": "Релиз 2026-10-26-b", "href": "/updates/2026-10-26-b", "kind": "app" },
-      { "label": "Релиз 2026-10-26-a", "href": "/updates/2026-10-26-a", "kind": "app" },
-      { "label": "Договоры и акты", "href": "/documents", "kind": "app" },
-      { "label": "Калькулятор", "href": "/calculator", "kind": "app" },
-      { "label": "Контроль объекта", "href": "/control", "kind": "app" },
-      { "label": "Инбокс замечаний", "href": "/feedback", "kind": "app" }
+      {
+        "label": "Звонки 26.10",
+        "href": "docs/customer-calls/2026-10-26-daniil-aquarius.md",
+        "kind": "repo"
+      },
+      {
+        "label": "Релиз 2026-10-26-c",
+        "href": "/updates/2026-10-26-c",
+        "kind": "app"
+      },
+      {
+        "label": "Релиз 2026-10-26-b",
+        "href": "/updates/2026-10-26-b",
+        "kind": "app"
+      },
+      {
+        "label": "Релиз 2026-10-26-a",
+        "href": "/updates/2026-10-26-a",
+        "kind": "app"
+      },
+      {
+        "label": "Договоры и акты",
+        "href": "/documents",
+        "kind": "app"
+      },
+      {
+        "label": "Калькулятор",
+        "href": "/calculator",
+        "kind": "app"
+      },
+      {
+        "label": "Контроль объекта",
+        "href": "/control",
+        "kind": "app"
+      },
+      {
+        "label": "Инбокс замечаний",
+        "href": "/feedback",
+        "kind": "app"
+      }
     ]
   },
   {
@@ -645,10 +1033,26 @@
       }
     ],
     "docs": [
-      { "label": "Звонки 26.10", "href": "docs/customer-calls/2026-10-26-daniil-aquarius.md", "kind": "repo" },
-      { "label": "Релиз 2026-10-26-b", "href": "/updates/2026-10-26-b", "kind": "app" },
-      { "label": "Договоры и акты", "href": "/documents", "kind": "app" },
-      { "label": "Контроль объекта", "href": "/control", "kind": "app" }
+      {
+        "label": "Звонки 26.10",
+        "href": "docs/customer-calls/2026-10-26-daniil-aquarius.md",
+        "kind": "repo"
+      },
+      {
+        "label": "Релиз 2026-10-26-b",
+        "href": "/updates/2026-10-26-b",
+        "kind": "app"
+      },
+      {
+        "label": "Договоры и акты",
+        "href": "/documents",
+        "kind": "app"
+      },
+      {
+        "label": "Контроль объекта",
+        "href": "/control",
+        "kind": "app"
+      }
     ]
   },
   {
@@ -670,9 +1074,21 @@
       }
     ],
     "docs": [
-      { "label": "Модуль Замечания", "href": "docs/modules/feedback.md", "kind": "repo" },
-      { "label": "Релиз 2026-10-26-a", "href": "/updates/2026-10-26-a", "kind": "app" },
-      { "label": "Инбокс", "href": "/feedback", "kind": "app" }
+      {
+        "label": "Модуль Замечания",
+        "href": "docs/modules/feedback.md",
+        "kind": "repo"
+      },
+      {
+        "label": "Релиз 2026-10-26-a",
+        "href": "/updates/2026-10-26-a",
+        "kind": "app"
+      },
+      {
+        "label": "Инбокс",
+        "href": "/feedback",
+        "kind": "app"
+      }
     ]
   },
   {
@@ -690,9 +1106,21 @@
       }
     ],
     "docs": [
-      { "label": "Модуль Замечания", "href": "docs/modules/feedback.md", "kind": "repo" },
-      { "label": "Релиз 2026-10-25-c", "href": "/updates/2026-10-25-c", "kind": "app" },
-      { "label": "Безопасность", "href": "/security", "kind": "app" }
+      {
+        "label": "Модуль Замечания",
+        "href": "docs/modules/feedback.md",
+        "kind": "repo"
+      },
+      {
+        "label": "Релиз 2026-10-25-c",
+        "href": "/updates/2026-10-25-c",
+        "kind": "app"
+      },
+      {
+        "label": "Безопасность",
+        "href": "/security",
+        "kind": "app"
+      }
     ]
   },
   {
@@ -714,9 +1142,21 @@
       }
     ],
     "docs": [
-      { "label": "Модуль Замечания", "href": "docs/modules/feedback.md", "kind": "repo" },
-      { "label": "Безопасность", "href": "/security", "kind": "app" },
-      { "label": "Инбокс замечаний", "href": "/feedback", "kind": "app" }
+      {
+        "label": "Модуль Замечания",
+        "href": "docs/modules/feedback.md",
+        "kind": "repo"
+      },
+      {
+        "label": "Безопасность",
+        "href": "/security",
+        "kind": "app"
+      },
+      {
+        "label": "Инбокс замечаний",
+        "href": "/feedback",
+        "kind": "app"
+      }
     ]
   },
   {
@@ -734,8 +1174,16 @@
       }
     ],
     "docs": [
-      { "label": "Модуль Замечания", "href": "docs/modules/feedback.md", "kind": "repo" },
-      { "label": "Инбокс замечаний", "href": "/feedback", "kind": "app" }
+      {
+        "label": "Модуль Замечания",
+        "href": "docs/modules/feedback.md",
+        "kind": "repo"
+      },
+      {
+        "label": "Инбокс замечаний",
+        "href": "/feedback",
+        "kind": "app"
+      }
     ]
   },
   {
@@ -761,12 +1209,36 @@
       }
     ],
     "docs": [
-      { "label": "Модуль Замечания", "href": "docs/modules/feedback.md", "kind": "repo" },
-      { "label": "Безопасность / роли", "href": "docs/modules/security.md", "kind": "repo" },
-      { "label": "Архитектура", "href": "docs/architecture.md", "kind": "repo" },
-      { "label": "Feedback-бот", "href": "bots/feedback-bot/README.md", "kind": "repo" },
-      { "label": "Инбокс замечаний", "href": "/feedback", "kind": "app" },
-      { "label": "Безопасность", "href": "/security", "kind": "app" }
+      {
+        "label": "Модуль Замечания",
+        "href": "docs/modules/feedback.md",
+        "kind": "repo"
+      },
+      {
+        "label": "Безопасность / роли",
+        "href": "docs/modules/security.md",
+        "kind": "repo"
+      },
+      {
+        "label": "Архитектура",
+        "href": "docs/architecture.md",
+        "kind": "repo"
+      },
+      {
+        "label": "Feedback-бот",
+        "href": "bots/feedback-bot/README.md",
+        "kind": "repo"
+      },
+      {
+        "label": "Инбокс замечаний",
+        "href": "/feedback",
+        "kind": "app"
+      },
+      {
+        "label": "Безопасность",
+        "href": "/security",
+        "kind": "app"
+      }
     ]
   },
   {
@@ -784,10 +1256,26 @@
       }
     ],
     "docs": [
-      { "label": "Модуль Обновления", "href": "docs/modules/updates.md", "kind": "repo" },
-      { "label": "Архитектура", "href": "docs/architecture.md", "kind": "repo" },
-      { "label": "Индекс модулей", "href": "docs/modules/README.md", "kind": "repo" },
-      { "label": "Список обновлений", "href": "/updates", "kind": "app" }
+      {
+        "label": "Модуль Обновления",
+        "href": "docs/modules/updates.md",
+        "kind": "repo"
+      },
+      {
+        "label": "Архитектура",
+        "href": "docs/architecture.md",
+        "kind": "repo"
+      },
+      {
+        "label": "Индекс модулей",
+        "href": "docs/modules/README.md",
+        "kind": "repo"
+      },
+      {
+        "label": "Список обновлений",
+        "href": "/updates",
+        "kind": "app"
+      }
     ]
   },
   {
@@ -813,12 +1301,36 @@
       }
     ],
     "docs": [
-      { "label": "Модуль Замечания", "href": "docs/modules/feedback.md", "kind": "repo" },
-      { "label": "Процесс Ревизора", "href": "docs/processes/feedback.md", "kind": "repo" },
-      { "label": "Архитектура", "href": "docs/architecture.md", "kind": "repo" },
-      { "label": "Feedback-бот (Termux)", "href": "bots/feedback-bot/README.md", "kind": "repo" },
-      { "label": "Инбокс замечаний", "href": "/feedback", "kind": "app" },
-      { "label": "Настройка API", "href": "/security", "kind": "app" }
+      {
+        "label": "Модуль Замечания",
+        "href": "docs/modules/feedback.md",
+        "kind": "repo"
+      },
+      {
+        "label": "Процесс Ревизора",
+        "href": "docs/processes/feedback.md",
+        "kind": "repo"
+      },
+      {
+        "label": "Архитектура",
+        "href": "docs/architecture.md",
+        "kind": "repo"
+      },
+      {
+        "label": "Feedback-бот (Termux)",
+        "href": "bots/feedback-bot/README.md",
+        "kind": "repo"
+      },
+      {
+        "label": "Инбокс замечаний",
+        "href": "/feedback",
+        "kind": "app"
+      },
+      {
+        "label": "Настройка API",
+        "href": "/security",
+        "kind": "app"
+      }
     ]
   },
   {
@@ -836,8 +1348,16 @@
       }
     ],
     "docs": [
-      { "label": "Контроль объекта", "href": "docs/modules/object_control.md", "kind": "repo" },
-      { "label": "Контроль объекта (UI)", "href": "/control", "kind": "app" }
+      {
+        "label": "Контроль объекта",
+        "href": "docs/modules/object_control.md",
+        "kind": "repo"
+      },
+      {
+        "label": "Контроль объекта (UI)",
+        "href": "/control",
+        "kind": "app"
+      }
     ]
   },
   {
@@ -859,9 +1379,21 @@
       }
     ],
     "docs": [
-      { "label": "Контроль объекта", "href": "docs/modules/object_control.md", "kind": "repo" },
-      { "label": "Модуль Обновления", "href": "docs/modules/updates.md", "kind": "repo" },
-      { "label": "Контроль объекта (UI)", "href": "/control", "kind": "app" }
+      {
+        "label": "Контроль объекта",
+        "href": "docs/modules/object_control.md",
+        "kind": "repo"
+      },
+      {
+        "label": "Модуль Обновления",
+        "href": "docs/modules/updates.md",
+        "kind": "repo"
+      },
+      {
+        "label": "Контроль объекта (UI)",
+        "href": "/control",
+        "kind": "app"
+      }
     ]
   },
   {
@@ -879,8 +1411,16 @@
       }
     ],
     "docs": [
-      { "label": "Договоры и акты (UI)", "href": "/documents", "kind": "app" },
-      { "label": "Поля карточки клиента", "href": "docs/crm_client_card_fields.md", "kind": "repo" }
+      {
+        "label": "Договоры и акты (UI)",
+        "href": "/documents",
+        "kind": "app"
+      },
+      {
+        "label": "Поля карточки клиента",
+        "href": "docs/crm_client_card_fields.md",
+        "kind": "repo"
+      }
     ]
   },
   {
@@ -914,10 +1454,26 @@
       }
     ],
     "docs": [
-      { "label": "Контроль объекта", "href": "docs/modules/object_control.md", "kind": "repo" },
-      { "label": "Поля карточки клиента", "href": "docs/crm_client_card_fields.md", "kind": "repo" },
-      { "label": "Контроль объекта (UI)", "href": "/control", "kind": "app" },
-      { "label": "Клиенты (UI)", "href": "/clients", "kind": "app" }
+      {
+        "label": "Контроль объекта",
+        "href": "docs/modules/object_control.md",
+        "kind": "repo"
+      },
+      {
+        "label": "Поля карточки клиента",
+        "href": "docs/crm_client_card_fields.md",
+        "kind": "repo"
+      },
+      {
+        "label": "Контроль объекта (UI)",
+        "href": "/control",
+        "kind": "app"
+      },
+      {
+        "label": "Клиенты (UI)",
+        "href": "/clients",
+        "kind": "app"
+      }
     ]
   },
   {
@@ -951,11 +1507,31 @@
       }
     ],
     "docs": [
-      { "label": "Безопасность / роли", "href": "docs/modules/security.md", "kind": "repo" },
-      { "label": "Контроль объекта", "href": "docs/modules/object_control.md", "kind": "repo" },
-      { "label": "Модуль Обновления", "href": "docs/modules/updates.md", "kind": "repo" },
-      { "label": "Безопасность (UI)", "href": "/security", "kind": "app" },
-      { "label": "Обновления (UI)", "href": "/updates", "kind": "app" }
+      {
+        "label": "Безопасность / роли",
+        "href": "docs/modules/security.md",
+        "kind": "repo"
+      },
+      {
+        "label": "Контроль объекта",
+        "href": "docs/modules/object_control.md",
+        "kind": "repo"
+      },
+      {
+        "label": "Модуль Обновления",
+        "href": "docs/modules/updates.md",
+        "kind": "repo"
+      },
+      {
+        "label": "Безопасность (UI)",
+        "href": "/security",
+        "kind": "app"
+      },
+      {
+        "label": "Обновления (UI)",
+        "href": "/updates",
+        "kind": "app"
+      }
     ]
   },
   {
@@ -973,9 +1549,21 @@
       }
     ],
     "docs": [
-      { "label": "Поля карточки клиента", "href": "docs/crm_client_card_fields.md", "kind": "repo" },
-      { "label": "Калькулятор (UI)", "href": "/calculator", "kind": "app" },
-      { "label": "Договоры и акты (UI)", "href": "/documents", "kind": "app" }
+      {
+        "label": "Поля карточки клиента",
+        "href": "docs/crm_client_card_fields.md",
+        "kind": "repo"
+      },
+      {
+        "label": "Калькулятор (UI)",
+        "href": "/calculator",
+        "kind": "app"
+      },
+      {
+        "label": "Договоры и акты (UI)",
+        "href": "/documents",
+        "kind": "app"
+      }
     ]
   },
   {
@@ -1001,10 +1589,26 @@
       }
     ],
     "docs": [
-      { "label": "Архитектура", "href": "docs/architecture.md", "kind": "repo" },
-      { "label": "Индекс модулей", "href": "docs/modules/README.md", "kind": "repo" },
-      { "label": "Поля карточки клиента", "href": "docs/crm_client_card_fields.md", "kind": "repo" },
-      { "label": "Клиенты (UI)", "href": "/clients", "kind": "app" }
+      {
+        "label": "Архитектура",
+        "href": "docs/architecture.md",
+        "kind": "repo"
+      },
+      {
+        "label": "Индекс модулей",
+        "href": "docs/modules/README.md",
+        "kind": "repo"
+      },
+      {
+        "label": "Поля карточки клиента",
+        "href": "docs/crm_client_card_fields.md",
+        "kind": "repo"
+      },
+      {
+        "label": "Клиенты (UI)",
+        "href": "/clients",
+        "kind": "app"
+      }
     ]
   }
 ]
