@@ -3,7 +3,7 @@
   "updated": "2026-11-05",
   "status": "active",
   "goal": "Guided Documents hub shipped 2026-11-05-a",
-  "next": "Idle — await furniture template + real TZ file; then polish",
+  "next": "Idle — 2026-11-05-a live (index-CdouwFti.js); await furniture+TZ templates",
   "blockers": [
     "Furniture business rules / template pending",
     "Repair TZ template pending from customer"
