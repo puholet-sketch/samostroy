@@ -12,4 +12,7 @@ export const CONTRACTOR = {
   email: 'daniilrotar87@gmail.com',
 } as const
 
-export const DESIGN_RATE_PER_M2 = 4500
+/** @deprecated используйте тарифы из designTariffs; оставлено для совместимости превью */
+export const DESIGN_RATE_PER_M2 = 4700
+
+export { DESIGN_TARIFFS, getDesignTariff } from './designTariffs'

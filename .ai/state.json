@@ -1,17 +1,18 @@
 {
   "v": 4,
-  "updated": "2026-11-03",
+  "updated": "2026-11-05",
   "status": "active",
-  "goal": "Prep section live 2026-11-03-a",
-  "next": "Idle — 2026-11-03-a live (index-DoqMojHv.js)",
+  "goal": "Guided Documents hub shipped 2026-11-05-a",
+  "next": "Idle — await furniture template + real TZ file; then polish",
   "blockers": [
-    "TG notify needs Docker API + TELEGRAM_* + ngrok"
+    "Furniture business rules / template pending",
+    "Repair TZ template pending from customer"
   ],
   "hot_files": [
-    "data/price_list.json",
-    "src/components/calculator/CalculatorPage.tsx",
-    "data/changelog.json",
-    "src/lib/buildStamp.ts",
-    "data/releases/2026-11-03-a.md"
+    "src/components/documents/DocumentsHub.tsx",
+    "src/lib/docRegistry.ts",
+    "src/lib/designTariffs.ts",
+    "src/lib/generateDocs.ts",
+    "data/changelog.json"
   ]
 }

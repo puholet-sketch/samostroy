@@ -7,7 +7,12 @@ import LoginPage from './components/auth/LoginPage'
 import ClientsListPage from './components/clients/ClientsListPage'
 import ClientCardPage from './components/clients/ClientCardPage'
 import CalculatorPage from './components/calculator/CalculatorPage'
-import DocumentsPage from './components/documents/DocumentsPage'
+import DocumentsHub from './components/documents/DocumentsHub'
+import DesignWizardPage from './components/documents/DesignWizardPage'
+import RepairWizardPage from './components/documents/RepairWizardPage'
+import ActsWizardPage from './components/documents/ActsWizardPage'
+import FurnitureStubPage from './components/documents/FurnitureStubPage'
+import DocRegistryPage from './components/documents/DocRegistryPage'
 import ObjectControlPage from './components/control/ObjectControlPage'
 import PeriodReportPage from './components/control/PeriodReportPage'
 import WeeklyPackPage from './components/control/WeeklyPackPage'
@@ -106,7 +111,47 @@ export default function App() {
                 path="/documents"
                 element={
                   <ProtectedRoute module="documents">
-                    <DocumentsPage />
+                    <DocumentsHub />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/documents/design"
+                element={
+                  <ProtectedRoute module="documents">
+                    <DesignWizardPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/documents/repair"
+                element={
+                  <ProtectedRoute module="documents">
+                    <RepairWizardPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/documents/acts"
+                element={
+                  <ProtectedRoute module="documents">
+                    <ActsWizardPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/documents/furniture"
+                element={
+                  <ProtectedRoute module="documents">
+                    <FurnitureStubPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/documents/registry"
+                element={
+                  <ProtectedRoute module="documents">
+                    <DocRegistryPage />
                   </ProtectedRoute>
                 }
               />

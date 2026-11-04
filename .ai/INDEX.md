@@ -13,7 +13,13 @@ data/releases/ | бизнес-нарративы релизов (*.md)
 src/lib/changelog.ts | типы Release / docs
 src/lib/releaseNarratives.ts | загрузка data/releases
 src/components/updates/ | список и страница релиза
-src/lib/generateDocs.ts | договоры/акты
+src/lib/generateDocs.ts | договоры/акты/смета/ТЗ DOCX
+src/lib/docRegistry.ts | реестр выданных + сквозной №
+src/lib/designTariffs.ts | тарифы дизайна и исключения пунктов
+src/lib/calcVersions.ts | версии сметы; agreed на объект
+src/lib/calcTransfer.ts | мост калькулятор → документы
+src/components/documents/ | хаб + мастера + реестр
+docs/templates/ryba_dogovor_*.docx | рыбы договоров
 src/lib/feedbackStore.ts | очередь замечаний
 src/lib/feedbackApi.ts | клиент Feedback API
 bots/feedback-bot/ | local API: feedback + object reports + Telegram

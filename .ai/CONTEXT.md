@@ -1,6 +1,6 @@
 ---
 project: samostroy
-v: 6
+v: 8
 ---
 
 # СамоСтрой
@@ -12,14 +12,16 @@ MVP: КК → документы/калькулятор → контроль о�
 
 - Права: `allowedModules`; роли owner / developer / foreman
 - Ревизор: localStorage/IDB + Feedback API (`bots/feedback-bot`, JSON или Docker Postgres)
-- Документы: `docs/architecture.md`, `docs/modules/*`
 - Деплой Pages: changelog + `BUILD_STAMP`
 
-## Документы (SSOT)
+## Документы (guided)
 
-- Генерация: `src/lib/generateDocs.ts`
-- Образцы: `docs/preview/*.docx`, эталоны `docs/templates/`
-- Прайс: `docs/templates/price_list_march.pdf`
+- Хаб `/documents` → мастера design/repair/acts; furniture = stub «скоро»
+- Реестр: `src/lib/docRegistry.ts` (localStorage) + сквозной счётчик договоров
+- Акты: № этапа 1…N на договор; строки из согласованной сметы, группа по типу
+- Дизайн: тарифы `designTariffs.ts` (2000/3900/4700) + исключения 4.1.x/4.4.x
+- Генерация: `src/lib/generateDocs.ts`; эталон `docs/templates/ryba_dogovor_design.docx`
+- ТЗ ремонта: stub до файла заказчика
 
 ## Prod CRM (read-only)
 

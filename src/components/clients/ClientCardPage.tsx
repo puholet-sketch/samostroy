@@ -10,6 +10,11 @@ import {
   type ClientCard,
   type ClientObject,
 } from '../../lib/clients'
+import {
+  kindLabel,
+  listIssuedDocs,
+  statusLabel,
+} from '../../lib/docRegistry'
 import { formatRuPhone } from '../../lib/phoneActions'
 import { AddressInput } from '../ui/AddressInput'
 import { Panel } from '../ui/Kpi'
@@ -463,27 +468,94 @@ export default function ClientCardPage() {
         )}
 
         {active === 'docs' && (
-          <div className="grid grid-cols-2 gap-x-3 gap-y-2 lg:grid-cols-3">
-            <Field label="Договор дизайн">
-              <input
-                className={inputCls}
-                value={client.dogovor_design}
-                onChange={(e) => patch({ dogovor_design: e.target.value })}
-              />
-            </Field>
-            <Field label="Смета">
-              <input className={inputCls} value={client.smeta} onChange={(e) => patch({ smeta: e.target.value })} />
-            </Field>
-            <Field label="Договор отделка" className="col-span-2 lg:col-span-1">
-              <input
-                className={inputCls}
-                value={client.dogovor_otdelka}
-                onChange={(e) => patch({ dogovor_otdelka: e.target.value })}
-              />
-            </Field>
-            <p className="col-span-2 text-xs text-gray-500 lg:col-span-3">
-              Генерация файлов — в разделе «Договоры и акты».
-            </p>
+          <div className="space-y-3">
+            <div className="grid grid-cols-2 gap-x-3 gap-y-2 lg:grid-cols-3">
+              <Field label="Договор дизайн (meta)">
+                <input
+                  className={inputCls}
+                  value={client.dogovor_design}
+                  onChange={(e) => patch({ dogovor_design: e.target.value })}
+                />
+              </Field>
+              <Field label="Смета (meta)">
+                <input
+                  className={inputCls}
+                  value={client.smeta}
+                  onChange={(e) => patch({ smeta: e.target.value })}
+                />
+              </Field>
+              <Field label="Договор отделка (meta)" className="col-span-2 lg:col-span-1">
+                <input
+                  className={inputCls}
+                  value={client.dogovor_otdelka}
+                  onChange={(e) => patch({ dogovor_otdelka: e.target.value })}
+                />
+              </Field>
+            </div>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="text-[11px] font-medium text-gray-500">
+                Выпущенные документы по объектам
+              </p>
+              <Link
+                to="/documents"
+                className="text-xs font-medium text-blue-700 hover:underline"
+              >
+                Хаб документов →
+              </Link>
+            </div>
+            {client.objects.length === 0 ? (
+              <p className="text-xs text-amber-700">Нет объектов — некуда привязать документы.</p>
+            ) : (
+              client.objects.map((o) => {
+                const docs = listIssuedDocs({ clientId: client.id, objectId: o.id })
+                return (
+                  <div
+                    key={o.id}
+                    className="rounded-md border border-gray-200 bg-gray-50 p-2"
+                  >
+                    <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
+                      <p className="text-sm font-medium text-gray-900">
+                        {o.address || o.title || 'Объект'}
+                        {o.contractNumber ? (
+                          <span className="ml-1 text-xs font-normal text-gray-500">
+                            · дог. {o.contractNumber}
+                          </span>
+                        ) : null}
+                      </p>
+                      <Link
+                        to={`/documents/registry?clientId=${client.id}&objectId=${o.id}`}
+                        className="text-[11px] text-blue-700 hover:underline"
+                      >
+                        Реестр →
+                      </Link>
+                    </div>
+                    {docs.length === 0 ? (
+                      <p className="text-xs text-gray-500">Документов пока нет</p>
+                    ) : (
+                      <ul className="divide-y divide-gray-200 text-xs">
+                        {docs.map((d) => (
+                          <li
+                            key={d.id}
+                            className="flex flex-wrap items-center gap-x-2 gap-y-0.5 py-1"
+                          >
+                            <span className="font-medium text-gray-800">
+                              {kindLabel(d.kind)}
+                              {d.contractNumber ? ` № ${d.contractNumber}` : ''}
+                              {d.actStageNumber != null
+                                ? ` · этап ${d.actStageNumber}`
+                                : ''}
+                            </span>
+                            <span className="rounded bg-white px-1 text-[10px] text-gray-600">
+                              {statusLabel(d.status)}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                )
+              })
+            )}
           </div>
         )}
       </Panel>

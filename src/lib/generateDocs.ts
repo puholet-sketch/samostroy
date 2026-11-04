@@ -16,7 +16,12 @@ import {
   type FileChild,
 } from 'docx'
 import type { ClientCard } from './clients'
-import { CONTRACTOR, DESIGN_RATE_PER_M2 } from './contractor'
+import { CONTRACTOR } from './contractor'
+import {
+  getDesignTariff,
+  includedDesignStages,
+  type DesignTariffId,
+} from './designTariffs'
 import { formatDateRu, formatMoney, rublesInWords, splitPassport } from './moneyRu'
 
 const FONT = 'Times New Roman'
@@ -400,6 +405,8 @@ export type DesignForm = {
   objectAddress: string
   areaM2: number
   executorName: string
+  /** Тариф: Стандарт / Полный / Максимальный */
+  tariffId: DesignTariffId
 }
 
 export type AktLine = {
@@ -407,6 +414,8 @@ export type AktLine = {
   unit: string
   qty: number
   price: number
+  /** Тип работ / раздел сметы — для группировки в акте */
+  section?: string
 }
 
 export type AktForm = {
@@ -418,6 +427,8 @@ export type AktForm = {
   lines: AktLine[]
   paid: number
   executorName: string
+  /** Ссылка на № договора ремонта */
+  contractNumber?: string
 }
 
 /** Сборка без скачивания — для превью / тестов */
@@ -650,20 +661,47 @@ export async function buildRemontDocument(client: ClientCard, form: RemontForm):
 export async function buildDesignDocument(client: ClientCard, form: DesignForm): Promise<Document> {
   const d = formatDateRu(form.date)
   const area = form.areaM2 || 0
-  const total = area * DESIGN_RATE_PER_M2
-  const quarter = total / 4
+  const tariff = getDesignTariff(form.tariffId)
+  const stages = includedDesignStages(form.tariffId)
+  const total = area * tariff.ratePerM2
+  const stagePay = stages.length ? total / stages.length : 0
   const sumWords = rublesInWords(total)
-  const qWords = rublesInWords(quarter)
-  const rate = DESIGN_RATE_PER_M2.toLocaleString('ru-RU')
-  const qRate = (DESIGN_RATE_PER_M2 / 4).toLocaleString('ru-RU')
+  const stageWords = rublesInWords(stagePay)
+  const rate = tariff.ratePerM2.toLocaleString('ru-RU')
+  const stageRate = stages.length
+    ? (tariff.ratePerM2 / stages.length).toLocaleString('ru-RU')
+    : '0'
   const executor = form.executorName.trim() || CONTRACTOR.name
   const clientFio = shortFio(client.fizurlico === 'ur' ? client.podpisant || client.name : client.name)
   const execFio = shortFio(executor)
   const addr = form.objectAddress || '___________________________________________________'
+  const stageNames = stages.map((s) => s.short).join('; ')
+  const firstPayClause = stages[0]?.clausePay ?? '4.4.1'
+
+  const timelineById: Record<string, { clause: string; days: string }> = {
+    plan: { clause: '3.2.1', days: '10 рабочих дней' },
+    viz: { clause: '3.2.2', days: '20 рабочих дней' },
+    drawings: { clause: '3.2.3', days: '15 рабочих дней' },
+    materials: { clause: '3.2.4', days: '15 рабочих дней' },
+  }
+
+  const acceptParts: string[] = []
+  if (stages.some((s) => s.id === 'plan')) acceptParts.push('обмерный план и планировки')
+  if (stages.some((s) => s.id === 'viz'))
+    acceptParts.push('фотореалистичные 3D-визуализации (до 2 корректировок)')
+  if (stages.some((s) => s.id === 'drawings'))
+    acceptParts.push('комплект рабочих чертежей и ведомости')
+  if (stages.some((s) => s.id === 'materials')) acceptParts.push('ведомость чистовых материалов')
 
   const children: FileChild[] = [
     title('ДОГОВОР О СОЗДАНИИ ДИЗАЙН-ПРОЕКТА'),
-    para(`№ ${form.number || '__'}`, { bold: true, center: true, size: 24, after: 80 }),
+    para(`№ ${form.number || '__'}`, { bold: true, center: true, size: 24, after: 40 }),
+    para(`Тариф «${tariff.label}» · ${rate} ₽/м²`, {
+      center: true,
+      italics: true,
+      size: 20,
+      after: 80,
+    }),
     metaLine(form.city, d.full),
     clause(
       `${client.name || '____________________________________'}, именуемый в дальнейшем «Заказчик», с одной стороны, и ${executor}, именуемый в дальнейшем «Исполнитель», с другой стороны, заключили настоящий договор о нижеследующем:`,
@@ -696,38 +734,32 @@ export async function buildDesignDocument(client: ClientCard, form: DesignForm):
 
     sectionHead('3. СРОКИ ВЫПОЛНЕНИЯ РАБОТ'),
     clause(
-      '3.1.1. Начало работ — в течение 5 рабочих дней с момента выполнения Заказчиком п. 2.2.1, 2.2.2 и 4.4.1.',
+      `3.1.1. Начало работ — в течение 5 рабочих дней с момента выполнения Заказчиком п. 2.2.1, 2.2.2 и ${firstPayClause}.`,
     ),
     clause('3.1.2. Окончание работ — в течение 60 рабочих дней с даты начала.'),
     clause('3.2. Промежуточные этапы:'),
-    clause('3.2.1. Обмерный план и планировочное решение — 10 рабочих дней;'),
-    clause('3.2.2. Визуализация интерьера — 20 рабочих дней;'),
-    clause('3.2.3. Рабочие чертежи — 15 рабочих дней;'),
-    clause('3.2.4. Ведомость чистового материала — 15 рабочих дней.'),
+    ...stages.map((s) => {
+      const t = timelineById[s.id]
+      return clause(`${t.clause}. ${s.short[0].toUpperCase()}${s.short.slice(1)} — ${t.days};`)
+    }),
     clause(
       '3.3. Срок каждого последующего этапа начинается с подписания промежуточного акта по предыдущему этапу.',
     ),
 
     sectionHead('4. ПОРЯДОК РАСЧЁТОВ'),
     clause(
-      `4.1. Стоимость работ составляет ${rate} ₽ за 1 кв.м фактической площади объекта и складывается из этапов (по ${qRate} ₽/кв.м каждый): обмерный план и планировочное решение; визуализация; рабочие чертежи; ведомость чистовых материалов.`,
+      `4.1. Стоимость работ составляет ${rate} ₽ за 1 кв.м фактической площади объекта и складывается из этапов (по ${stageRate} ₽/кв.м каждый): ${stageNames}.`,
     ),
+    ...stages.map((s) => clause(s.composeText)),
     clause(
       `4.2. Договор подписывается на основании заявленной площади Объекта ${area || '____'} кв.м. После обмеров площадь корректируется дополнительным соглашением.`,
     ),
     clause(`4.3. Общая стоимость работ: ${formatMoney(total)} (${sumWords}).`),
     clause('4.4. Оплата этапов:'),
-    clause(
-      `4.4.1. ${formatMoney(quarter)} (${qWords}) — в течение 3 рабочих дней с момента подписания договора (обмерный план и планировочные решения).`,
-    ),
-    clause(
-      `4.4.2. ${formatMoney(quarter)} (${qWords}) — в течение 3 рабочих дней перед первым вариантом визуализации.`,
-    ),
-    clause(
-      `4.4.3. ${formatMoney(quarter)} (${qWords}) — в течение 3 рабочих дней перед разработкой рабочих чертежей.`,
-    ),
-    clause(
-      `4.4.4. ${formatMoney(quarter)} (${qWords}) — в течение 3 рабочих дней перед ведомостью чистовых материалов.`,
+    ...stages.map((s) =>
+      clause(
+        `${s.clausePay}. ${formatMoney(stagePay)} (${stageWords}) — ${s.payHint}.`,
+      ),
     ),
     clause(
       '4.5. При расторжении оплате подлежит часть стоимости, пропорциональная выполненной работе. Выезд на замер и обмерный план составляют 20% стоимости первого этапа.',
@@ -735,7 +767,7 @@ export async function buildDesignDocument(client: ClientCard, form: DesignForm):
 
     sectionHead('5. ПОРЯДОК ОСУЩЕСТВЛЕНИЯ И ПРИЁМКИ РАБОТ'),
     clause(
-      '5.1. Работы выполняются этапами с подписанием актов. Состав документов по этапам — обмерный план и планировки; фотореалистичные 3D-визуализации (до 2 корректировок); комплект рабочих чертежей и ведомости; ведомость чистовых материалов.',
+      `5.1. Работы выполняются этапами с подписанием актов. Состав документов по этапам — ${acceptParts.join('; ') || 'согласно тарифу'}.`,
     ),
     clause(
       '5.2. К следующему этапу Исполнитель приступает после согласования предыдущего и оплаты.',
@@ -789,8 +821,20 @@ export async function buildAktDocument(client: ClientCard, form: AktForm): Promi
   const executor = form.executorName.trim() || CONTRACTOR.name
   const clientFio = shortFio(client.fizurlico === 'ur' ? client.podpisant || client.name : client.name)
   const execFio = shortFio(executor)
+  const groups = groupSmetaLines(
+    lines.map((l) => ({
+      name: l.name,
+      unit: l.unit,
+      qty: l.qty,
+      price: l.price,
+      section: l.section || 'Прочее',
+    })),
+  )
 
   const summaryRows: [string, string][] = [
+    ...(form.contractNumber
+      ? ([['Договор ремонта №', form.contractNumber]] as [string, string][])
+      : []),
     ['Стоимость работ по акту', `${formatMoney(total)} ₽`],
     ['Оплачено', `${formatMoney(paid)} ₽`],
     ['Остаток к оплате', `${formatMoney(rest)} ₽`],
@@ -813,39 +857,115 @@ export async function buildAktDocument(client: ClientCard, form: AktForm): Promi
     para(`Адрес объекта: ${form.objectAddress || '—'}`, { bold: true, after: 200 }),
 
     sectionHead('1. ПЕРЕЧЕНЬ ВЫПОЛНЕННЫХ РАБОТ'),
-    moneyTable(
-      lines.length
-        ? lines
-        : [{ name: '—', unit: 'ед.', qty: 0, price: 0 }],
-    ),
-    para(''),
-    partyTable('ИТОГО ПО АКТУ', summaryRows),
+  ]
 
-    sectionHead('2. КАЧЕСТВО РАБОТ'),
+  if (groups.length === 0) {
+    children.push(moneyTable([{ name: '—', unit: 'ед.', qty: 0, price: 0 }]))
+  } else {
+    let nextNo = 1
+    groups.forEach((g, gi) => {
+      children.push(
+        para(`Тип работ: ${prettySectionTitle(g.section)}`, {
+          bold: true,
+          after: 80,
+          before: gi === 0 ? 0 : 120,
+        }),
+      )
+      const built = smetaSectionTable(nextNo, g.rows)
+      nextNo = built.nextNo
+      children.push(built.table)
+      children.push(
+        para(
+          `Итого по типу «${prettySectionTitle(g.section)}»: ${formatMoney(built.subtotal)} ₽`,
+          { bold: true, after: 100, before: 60 },
+        ),
+      )
+    })
+  }
+
+  children.push(para(''))
+  children.push(partyTable('ИТОГО ПО АКТУ', summaryRows))
+  children.push(sectionHead('2. КАЧЕСТВО РАБОТ'))
+  children.push(
     clause(
-      'Работы по Договору, указанные в Акте, выполнены в соответствии с условиями Договора и приложений к нему (смета, график, ТЗ).',
+      'Работы по Договору, указанные в Акте, выполнены в соответствии с условиями Договора и приложениями к нему (смета, график, ТЗ).',
     ),
+  )
+  children.push(
     clause(
       'Заказчик к выполненным работам по Договору, указанным в Акте, не имеет замечаний и возражений.',
     ),
-
-    sectionHead('3. РАСЧЁТЫ'),
+  )
+  children.push(sectionHead('3. РАСЧЁТЫ'))
+  children.push(
     clause(
       `Стоимость работ по акту: ${formatMoney(total)} ₽. Оплачено: ${formatMoney(paid)} ₽. Остаток к оплате: ${formatMoney(rest)} ₽.`,
     ),
-
-    sectionHead('4. РЕКВИЗИТЫ И ПОДПИСИ СТОРОН'),
-    para(''),
-    partyTable('ЗАКАЗЧИК', clientPartyRows(client)),
-    para(''),
-    signatureBlock('Заказчик', clientFio),
-    para(''),
-    partyTable('ИСПОЛНИТЕЛЬ', contractorPartyRows(executor)),
-    para(''),
-    signatureBlock('Исполнитель', execFio),
-  ]
+  )
+  children.push(sectionHead('4. РЕКВИЗИТЫ И ПОДПИСИ СТОРОН'))
+  children.push(para(''))
+  children.push(partyTable('ЗАКАЗЧИК', clientPartyRows(client)))
+  children.push(para(''))
+  children.push(signatureBlock('Заказчик', clientFio))
+  children.push(para(''))
+  children.push(partyTable('ИСПОЛНИТЕЛЬ', contractorPartyRows(executor)))
+  children.push(para(''))
+  children.push(signatureBlock('Исполнитель', execFio))
 
   return docShell(children, `Акт № ${form.number || '—'}`)
+}
+
+/** Заглушка ТЗ к договору ремонта — до получения шаблона заказчика. */
+export async function buildTzStubDocument(
+  client: ClientCard,
+  form: {
+    number: string
+    date: string
+    city: string
+    objectAddress: string
+    contractNumber: string
+    executorName: string
+  },
+): Promise<Document> {
+  const d = formatDateRu(form.date)
+  const executor = form.executorName.trim() || CONTRACTOR.name
+  const children: FileChild[] = [
+    title('ТЕХНИЧЕСКОЕ ЗАДАНИЕ'),
+    para('(заглушка — шаблон будет предоставлен заказчиком)', {
+      center: true,
+      italics: true,
+      after: 120,
+    }),
+    para(`Приложение к договору ремонта № ${form.contractNumber || form.number || '—'}`, {
+      center: true,
+      bold: true,
+      after: 80,
+    }),
+    metaLine(form.city, d.full),
+    partyTable('РЕКВИЗИТЫ', [
+      ['Заказчик', client.name || '—'],
+      ['Объект', form.objectAddress || '—'],
+      ['Договор №', form.contractNumber || '—'],
+      ['Исполнитель', executor],
+    ]),
+    para(''),
+    sectionHead('1. СОСТАВ ТЗ'),
+    clause(
+      '1.1. Полный текст технического задания будет подставлен из утверждённого шаблона заказчика. До получения файла данный документ фиксирует связку договора, объекта и сторон.',
+    ),
+    clause(
+      '1.2. Перечень работ и объёмы определяются согласованной сметой к договору ремонта.',
+    ),
+    sectionHead('2. ПОДПИСИ'),
+    para(''),
+    signatureBlock(
+      'Заказчик',
+      shortFio(client.fizurlico === 'ur' ? client.podpisant || client.name : client.name),
+    ),
+    para(''),
+    signatureBlock('Исполнитель', shortFio(executor)),
+  ]
+  return docShell(children, `ТЗ · дог. ${form.contractNumber || '—'}`)
 }
 
 export type SmetaLine = {
@@ -1124,4 +1244,19 @@ export async function generateAktDoc(client: ClientCard, form: AktForm) {
 export async function generateSmetaDoc(client: ClientCard, form: SmetaForm) {
   const doc = await buildSmetaDocument(client, form)
   await downloadDoc(doc, `Smeta_${form.number || client.id}.docx`)
+}
+
+export async function generateTzStubDoc(
+  client: ClientCard,
+  form: {
+    number: string
+    date: string
+    city: string
+    objectAddress: string
+    contractNumber: string
+    executorName: string
+  },
+) {
+  const doc = await buildTzStubDocument(client, form)
+  await downloadDoc(doc, `TZ_stub_remont_${form.contractNumber || form.number || client.id}.docx`)
 }

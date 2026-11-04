@@ -59,6 +59,7 @@ await save(
     objectAddress: '119501, г. Москва, ул. Веерная, д. 7, к. 1',
     areaM2: 62,
     executorName: CONTRACTOR.name,
+    tariffId: 'max',
   }),
 )
 
