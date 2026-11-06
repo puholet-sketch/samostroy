@@ -4,7 +4,6 @@ import { api } from '../../services/api'
 import { useAuth } from '../../contexts/AuthContext'
 import type { RenovationObject, ObjectStage } from '../../services/types'
 import PipelinePanel from '../pipeline/PipelinePanel'
-import { AddressInput } from '../ui/AddressInput'
 
 export default function ObjectDetailPage() {
   const { id } = useParams()
@@ -123,13 +122,11 @@ export default function ObjectDetailPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="label">Адрес</label>
-                <AddressInput
+                <input
+                  className="input"
                   value={obj.address}
                   disabled={!writable}
-                  onChange={(v) => setObj({ ...obj, address: v })}
-                  onSelect={(s) =>
-                    setObj((prev) => (prev ? { ...prev, address: s.label, lat: s.lat, lng: s.lng } : prev))
-                  }
+                  onChange={(e) => setObj({ ...obj, address: e.target.value })}
                 />
               </div>
               <Field label="Телефон" value={obj.contacts[0]?.phone ?? ''} onChange={(v) => setObj({ ...obj, contacts: [{ ...obj.contacts[0], name: obj.contacts[0]?.name ?? '', phone: v }] })} disabled={!writable} />
