@@ -46,6 +46,11 @@ const ROLE_OPTS: { id: Role; label: string; defaultModules: ModuleKey[] }[] = [
 
 const SECURITY_ROLES = new Set<Role>(ROLE_OPTS.map((r) => r.id))
 
+/** Разделы в чекбоксах учётки — без «Замечания» (модуль живёт отдельно). */
+const ACCOUNT_VISIBLE_MODULES = MVP_MODULES.filter((m) => m !== 'feedback')
+
+type AccountPane = 'idle' | 'create' | 'edit'
+
 function normalizeSecurityRole(role: Role): Role {
   if (SECURITY_ROLES.has(role)) return role
   return 'foreman'
@@ -71,6 +76,7 @@ export default function SecurityPage() {
   const [users, setUsers] = useState<User[]>([])
   const [form, setForm] = useState(emptyForm())
   const [editingId, setEditingId] = useState<string | null>(null)
+  const [pane, setPane] = useState<AccountPane>('idle')
   const [msg, setMsg] = useState('')
   const [busy, setBusy] = useState(false)
 
@@ -91,8 +97,9 @@ export default function SecurityPage() {
     )
   }
 
-  function startEdit(u: User) {
+  function selectAccount(u: User) {
     const role = normalizeSecurityRole(u.role)
+    setPane('edit')
     setEditingId(u.id)
     setForm({
       id: u.id,
@@ -110,6 +117,14 @@ export default function SecurityPage() {
   }
 
   function startCreate() {
+    setPane('create')
+    setEditingId(null)
+    setForm(emptyForm())
+    setMsg('')
+  }
+
+  function clearPane() {
+    setPane('idle')
     setEditingId(null)
     setForm(emptyForm())
     setMsg('')
@@ -162,10 +177,11 @@ export default function SecurityPage() {
         setMsg('Такой логин уже занят')
         return
       }
+      const wasCreate = pane === 'create'
       await api.users.upsert(row)
       await reload()
-      startCreate()
-      setMsg(editingId ? 'Учётная запись обновлена' : 'Учётная запись создана')
+      selectAccount(row)
+      setMsg(wasCreate ? 'Учётная запись создана' : 'Учётная запись обновлена')
     } finally {
       setBusy(false)
     }
@@ -179,12 +195,12 @@ export default function SecurityPage() {
     if (!confirm('Удалить учётную запись?')) return
     await api.users.remove(id)
     await reload()
-    if (editingId === id) startCreate()
+    if (editingId === id) clearPane()
     setMsg('Удалено')
   }
 
   const inputCls =
-    'block w-full rounded-md border border-gray-300 bg-white px-2.5 py-1.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500'
+    'block w-full rounded-md border border-gray-300 bg-white px-2 py-1 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500'
 
   return (
     <div className="space-y-4">
@@ -219,162 +235,183 @@ export default function SecurityPage() {
       )}
 
       {tab === 'accounts' && (
-        <div className="grid gap-4 lg:grid-cols-2">
-          <Panel title="Учётные записи">
+        <div className="grid gap-3 lg:grid-cols-2">
+          <Panel className="!p-3 sm:!p-3">
+            <div className="mb-2 flex items-center justify-end">
+              <button
+                type="button"
+                onClick={startCreate}
+                className="rounded-md bg-blue-600 px-2.5 py-1 text-xs font-semibold text-white hover:bg-blue-700"
+              >
+                Добавить
+              </button>
+            </div>
             <ul className="divide-y divide-gray-100">
-              {users.map((u) => (
-                <li key={u.id} className="flex flex-wrap items-center gap-2 py-2.5">
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-gray-900">
-                      {u.name}{' '}
-                      <span className="font-normal text-gray-400">@{u.login}</span>
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      {roleLabel(normalizeSecurityRole(u.role))}
-                      {!u.active ? ' · отключена' : ''}
-                      {u.phone ? ` · ${u.phone}` : ' · без телефона'}
-                      {' · '}
-                      {(u.allowedModules ?? [])
-                        .map((m) => MVP_MODULE_LABEL[m as keyof typeof MVP_MODULE_LABEL] || m)
-                        .join(', ') || 'по роли'}
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    className="rounded-md border border-gray-200 px-2 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50"
-                    onClick={() => startEdit(u)}
-                  >
-                    Изменить
-                  </button>
-                  <button
-                    type="button"
-                    className="rounded-md border border-red-200 px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-50"
-                    onClick={() => void onDelete(u.id)}
-                  >
-                    Удалить
-                  </button>
-                </li>
-              ))}
+              {users.map((u) => {
+                const selected = pane === 'edit' && editingId === u.id
+                const role = roleLabel(normalizeSecurityRole(u.role))
+                return (
+                  <li key={u.id} className="flex items-center gap-2 py-1.5">
+                    <button
+                      type="button"
+                      onClick={() => selectAccount(u)}
+                      className={`min-w-0 flex-1 rounded-md px-2 py-1.5 text-left transition-colors ${
+                        selected
+                          ? 'bg-blue-50 ring-1 ring-blue-200'
+                          : 'hover:bg-gray-50'
+                      }`}
+                    >
+                      <p className="truncate text-sm text-gray-900">
+                        <span className="font-medium">
+                          {u.name} ({role})
+                        </span>
+                        <span className="ml-1.5 font-normal text-gray-400">@{u.login}</span>
+                        {!u.active ? (
+                          <span className="ml-1.5 text-xs text-amber-600">откл.</span>
+                        ) : null}
+                      </p>
+                    </button>
+                    <button
+                      type="button"
+                      className="shrink-0 rounded-md border border-red-200 px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-50"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        void onDelete(u.id)
+                      }}
+                    >
+                      Удалить
+                    </button>
+                  </li>
+                )
+              })}
             </ul>
           </Panel>
 
-          <Panel title={editingId ? 'Изменить учётку' : 'Новая учётная запись'}>
-            <form onSubmit={onSubmit} className="space-y-3">
-              <label className="block">
-                <span className="mb-0.5 block text-xs text-gray-500">Имя</span>
-                <input
-                  className={inputCls}
-                  value={form.name}
-                  onChange={(e) => setForm({ ...form, name: e.target.value })}
-                />
-              </label>
-              <div className="grid grid-cols-2 gap-2">
+          <Panel className="!p-3 sm:!p-3">
+            {pane === 'idle' && (
+              <p className="py-8 text-center text-sm text-gray-500">выберите УЗ</p>
+            )}
+            {(pane === 'create' || pane === 'edit') && (
+              <form onSubmit={onSubmit} className="space-y-2">
                 <label className="block">
-                  <span className="mb-0.5 block text-xs text-gray-500">Логин</span>
+                  <span className="mb-0.5 block text-xs text-gray-500">Имя</span>
                   <input
                     className={inputCls}
-                    value={form.login}
-                    onChange={(e) => setForm({ ...form, login: e.target.value })}
-                    autoComplete="off"
+                    value={form.name}
+                    onChange={(e) => setForm({ ...form, name: e.target.value })}
                   />
                 </label>
-                <label className="block">
-                  <span className="mb-0.5 block text-xs text-gray-500">Пароль</span>
-                  <input
-                    className={inputCls}
-                    value={form.password}
-                    onChange={(e) => setForm({ ...form, password: e.target.value })}
-                    autoComplete="new-password"
-                  />
-                </label>
-              </div>
-              <label className="block">
-                <span className="mb-0.5 block text-xs text-gray-500">
-                  Телефон (Telegram / уведомления)
-                </span>
-                <input
-                  className={inputCls}
-                  value={form.phone || ''}
-                  onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                  placeholder="+7…"
-                  inputMode="tel"
-                />
-                <span className="mt-0.5 block text-[11px] text-gray-400">
-                  Дедлайны этапов: email + TG через API; +79773639300 всегда в рассылке.
-                </span>
-              </label>
-              <label className="block">
-                <span className="mb-0.5 block text-xs text-gray-500">Роль</span>
-                <select
-                  className={inputCls}
-                  value={normalizeSecurityRole(form.role)}
-                  onChange={(e) => onRoleChange(e.target.value as Role)}
-                >
-                  {ROLE_OPTS.map((r) => (
-                    <option key={r.id} value={r.id}>
-                      {r.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              <fieldset>
-                <legend className="mb-1.5 text-xs font-medium text-gray-500">
-                  Видимые разделы
-                </legend>
-                <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
-                  {MVP_MODULES.map((mod) => {
-                    const locked = form.role !== 'owner' && mod === 'security'
-                    const checked = Boolean(form.allowedModules?.includes(mod))
-                    return (
-                      <label
-                        key={mod}
-                        className={`inline-flex items-center gap-2 rounded-md border px-2 py-1.5 text-sm ${
-                          locked ? 'border-gray-100 text-gray-400' : 'border-gray-200 text-gray-800'
-                        }`}
-                      >
-                        <input
-                          type="checkbox"
-                          disabled={locked}
-                          checked={checked && !locked}
-                          onChange={() => toggleModule(mod)}
-                        />
-                        {MVP_MODULE_LABEL[mod]}
-                      </label>
-                    )
-                  })}
+                <div className="grid grid-cols-2 gap-1.5">
+                  <label className="block">
+                    <span className="mb-0.5 block text-xs text-gray-500">Логин</span>
+                    <input
+                      className={inputCls}
+                      value={form.login}
+                      onChange={(e) => setForm({ ...form, login: e.target.value })}
+                      autoComplete="off"
+                    />
+                  </label>
+                  <label className="block">
+                    <span className="mb-0.5 block text-xs text-gray-500">Пароль</span>
+                    <input
+                      className={inputCls}
+                      value={form.password}
+                      onChange={(e) => setForm({ ...form, password: e.target.value })}
+                      autoComplete="new-password"
+                    />
+                  </label>
                 </div>
-              </fieldset>
+                <label className="block">
+                  <span className="mb-0.5 block text-xs text-gray-500">
+                    Телефон (Telegram / уведомления)
+                  </span>
+                  <input
+                    className={inputCls}
+                    value={form.phone || ''}
+                    onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                    placeholder="+7…"
+                    inputMode="tel"
+                  />
+                  <span className="mt-0.5 block text-[11px] text-gray-400">
+                    Дедлайны этапов: email + TG через API; +79773639300 всегда в рассылке.
+                  </span>
+                </label>
+                <label className="block">
+                  <span className="mb-0.5 block text-xs text-gray-500">Роль</span>
+                  <select
+                    className={inputCls}
+                    value={normalizeSecurityRole(form.role)}
+                    onChange={(e) => onRoleChange(e.target.value as Role)}
+                  >
+                    {ROLE_OPTS.map((r) => (
+                      <option key={r.id} value={r.id}>
+                        {r.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
 
-              <label className="inline-flex items-center gap-2 text-sm text-gray-700">
-                <input
-                  type="checkbox"
-                  checked={form.active}
-                  onChange={(e) => setForm({ ...form, active: e.target.checked })}
-                />
-                Активна
-              </label>
+                <fieldset>
+                  <legend className="mb-1 text-xs font-medium text-gray-500">
+                    Видимые разделы
+                  </legend>
+                  <div className="grid grid-cols-1 gap-1 sm:grid-cols-2">
+                    {ACCOUNT_VISIBLE_MODULES.map((mod) => {
+                      const locked = form.role !== 'owner' && mod === 'security'
+                      const checked = Boolean(form.allowedModules?.includes(mod))
+                      return (
+                        <label
+                          key={mod}
+                          className={`inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-sm ${
+                            locked
+                              ? 'border-gray-100 text-gray-400'
+                              : 'border-gray-200 text-gray-800'
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            disabled={locked}
+                            checked={checked && !locked}
+                            onChange={() => toggleModule(mod)}
+                          />
+                          {MVP_MODULE_LABEL[mod]}
+                        </label>
+                      )
+                    })}
+                  </div>
+                </fieldset>
 
-              <div className="flex flex-wrap gap-2">
-                <button
-                  type="submit"
-                  disabled={busy}
-                  className="rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
-                >
-                  {busy ? '…' : editingId ? 'Сохранить' : 'Создать'}
-                </button>
-                {editingId && (
+                <label className="inline-flex items-center gap-2 text-sm text-gray-700">
+                  <input
+                    type="checkbox"
+                    checked={form.active}
+                    onChange={(e) => setForm({ ...form, active: e.target.checked })}
+                  />
+                  Активна
+                </label>
+
+                <div className="flex flex-wrap gap-1.5 pt-0.5">
+                  <button
+                    type="submit"
+                    disabled={busy}
+                    className="rounded-md bg-blue-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
+                  >
+                    {busy ? '…' : pane === 'edit' ? 'Сохранить' : 'Создать'}
+                  </button>
                   <button
                     type="button"
-                    onClick={startCreate}
-                    className="rounded-md border border-gray-200 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                    onClick={clearPane}
+                    className="rounded-md border border-gray-200 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50"
                   >
                     Отмена
                   </button>
-                )}
-              </div>
-              {msg && <p className="text-sm text-emerald-700">{msg}</p>}
-            </form>
+                </div>
+                {msg && <p className="text-sm text-emerald-700">{msg}</p>}
+              </form>
+            )}
+            {pane === 'idle' && msg && (
+              <p className="mt-2 text-center text-sm text-emerald-700">{msg}</p>
+            )}
           </Panel>
         </div>
       )}
