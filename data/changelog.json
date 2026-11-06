@@ -1,5 +1,67 @@
 [
   {
+    "id": "2026-11-06-c",
+    "at": "2026-11-06T23:40:00+03:00",
+    "title": "Рестарт LHR туннеля после 502",
+    "items": [
+      {
+        "section": "Инфра",
+        "text": "samostroy-lhr перезапущен; новый URL https://8ff4f3b7590fca.lhr.life (/health 200)"
+      },
+      {
+        "section": "Инфра",
+        "text": "Старый 972658b8835506.lhr.life отдавал 502 при живом LAN API"
+      },
+      {
+        "section": "Сборка",
+        "text": "VITE_FEEDBACK_API_URL и Pages обновлены; BUILD_STAMP 2026-11-06 · lhr restart c"
+      }
+    ],
+    "docs": [
+      {
+        "label": "Релиз 2026-11-06-c",
+        "href": "/updates/2026-11-06-c",
+        "kind": "app"
+      },
+      {
+        "label": "Сервер Lenovo",
+        "href": "docs/modules/lenovo-server.md",
+        "kind": "repo"
+      }
+    ]
+  },
+  {
+    "id": "2026-11-06-b",
+    "at": "2026-11-06T22:30:00+03:00",
+    "title": "API через localhost.run (обход CF 1033)",
+    "items": [
+      {
+        "section": "Инфра",
+        "text": "trycloudflare снова 530/1033 после рестарта; Pages→API переведён на https://972658b8835506.lhr.life (systemd samostroy-lhr)"
+      },
+      {
+        "section": "Инфра",
+        "text": "Named tunnel samostroy-tunnel жив, но без DNS-зоны публичного hostname нет"
+      },
+      {
+        "section": "Сборка",
+        "text": "Pages пересобран; BUILD_STAMP 2026-11-06 · lhr tunnel"
+      }
+    ],
+    "docs": [
+      {
+        "label": "Релиз 2026-11-06-b",
+        "href": "/updates/2026-11-06-b",
+        "kind": "app"
+      },
+      {
+        "label": "Сервер Lenovo",
+        "href": "docs/modules/lenovo-server.md",
+        "kind": "repo"
+      }
+    ]
+  },
+  {
     "id": "2026-11-06-a",
     "at": "2026-11-06T21:55:00+03:00",
     "title": "Новый URL Cloudflare quick tunnel",

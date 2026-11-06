@@ -2,16 +2,16 @@
   "v": 4,
   "updated": "2026-11-06",
   "status": "active",
-  "goal": "Lenovo API via Cloudflare Tunnel HTTPS for GitHub Pages",
-  "next": "Long-term: CF DNS zone + named tunnel public hostname; keep quick URL in sync on restart",
+  "goal": "Lenovo API via public HTTPS for GitHub Pages",
+  "next": "Buy/attach DNS zone → named tunnel public hostname; until then keep samostroy-lhr up",
   "blockers": [
-    "No DNS zone on Cloudflare — named tunnel has no stable public hostname",
-    "ASUS local Docker+ngrok still running in parallel (dev/fallback, not production)"
+    "No DNS zone — named tunnel has no stable public hostname",
+    "Free *.lhr.life changes on samostroy-lhr restart; Pages must be rebuilt"
   ],
   "hot_files": [
-    "docs/modules/lenovo-server.md",
     ".env.production",
+    "docs/modules/lenovo-server.md",
     "data/changelog.json",
-    "src/lib/buildStamp.ts"
+    "deploy/server/install-localhost-run-systemd.sh"
   ]
 }
