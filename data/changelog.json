@@ -1,5 +1,67 @@
 [
   {
+    "id": "2026-11-06-a",
+    "at": "2026-11-06T21:55:00+03:00",
+    "title": "Новый URL Cloudflare quick tunnel",
+    "items": [
+      {
+        "section": "Инфра",
+        "text": "VITE_FEEDBACK_API_URL переключён на актуальный trycloudflare (donald-kernel-vcr-cabinets); старый hostname мёртв"
+      },
+      {
+        "section": "Сборка",
+        "text": "Pages пересобран с новым Base URL API; BUILD_STAMP 2026-11-06"
+      }
+    ],
+    "docs": [
+      {
+        "label": "Релиз 2026-11-06-a",
+        "href": "/updates/2026-11-06-a",
+        "kind": "app"
+      },
+      {
+        "label": "Сервер Lenovo",
+        "href": "docs/modules/lenovo-server.md",
+        "kind": "repo"
+      }
+    ]
+  },
+  {
+    "id": "2026-11-05-b",
+    "at": "2026-11-05T21:25:00+03:00",
+    "title": "Домашний сервер Lenovo",
+    "items": [
+      {
+        "section": "Инфра",
+        "text": "Postgres+API на Ubuntu Server (Lenovo): Docker, sleep off, API :8787"
+      },
+      {
+        "section": "Инфра",
+        "text": "Документация deploy/server + docs/modules/lenovo-server.md"
+      },
+      {
+        "section": "Инфра",
+        "text": "Cloudflare named tunnel samostroy (healthy) + временный trycloudflare HTTPS для Pages"
+      },
+      {
+        "section": "Безопасность",
+        "text": "FEEDBACK_TOKEN обновлён; Postgres слушает только 127.0.0.1:5433"
+      }
+    ],
+    "docs": [
+      {
+        "label": "Релиз 2026-11-05-b",
+        "href": "/updates/2026-11-05-b",
+        "kind": "app"
+      },
+      {
+        "label": "Сервер Lenovo",
+        "href": "docs/modules/lenovo-server.md",
+        "kind": "repo"
+      }
+    ]
+  },
+  {
     "id": "2026-11-05-a",
     "at": "2026-11-05T01:32:44+03:00",
     "title": "Документы: хаб и мастера",
