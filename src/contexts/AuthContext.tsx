@@ -93,6 +93,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const can = useCallback(
     (module: ModuleKey, action: 'read' | 'write' = 'read') => {
       if (!user || !permMatrix) return false
+      // UI модуля «Замечания» скрыт для всех ролей (backend/API код остаётся)
+      if (module === 'feedback') return false
       if (user.role === 'owner' && (module === 'security' || module === 'updates')) return true
       // персональный список разделов учётной записи
       if (user.allowedModules && user.allowedModules.length > 0) {

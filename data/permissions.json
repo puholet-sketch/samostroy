@@ -85,8 +85,8 @@
         "write": true
       },
       "feedback": {
-        "read": true,
-        "write": true
+        "read": false,
+        "write": false
       }
     },
     "developer": {
@@ -155,8 +155,8 @@
         "write": false
       },
       "feedback": {
-        "read": true,
-        "write": true
+        "read": false,
+        "write": false
       }
     },
     "foreman": {
@@ -225,8 +225,8 @@
         "write": false
       },
       "feedback": {
-        "read": true,
-        "write": true
+        "read": false,
+        "write": false
       }
     },
     "seller": {
@@ -295,8 +295,8 @@
         "write": false
       },
       "feedback": {
-        "read": true,
-        "write": true
+        "read": false,
+        "write": false
       }
     },
     "builder": {
@@ -365,8 +365,8 @@
         "write": false
       },
       "feedback": {
-        "read": true,
-        "write": true
+        "read": false,
+        "write": false
       }
     },
     "supervisor": {
@@ -435,8 +435,8 @@
         "write": false
       },
       "feedback": {
-        "read": true,
-        "write": true
+        "read": false,
+        "write": false
       }
     },
     "client": {

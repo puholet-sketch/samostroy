@@ -13,8 +13,7 @@
       "documents",
       "object_control",
       "security",
-      "updates",
-      "feedback"
+      "updates"
     ]
   },
   {
@@ -25,7 +24,7 @@
     "role": "developer",
     "phone": "",
     "active": true,
-    "allowedModules": ["feedback", "updates", "object_control"]
+    "allowedModules": ["updates", "object_control"]
   },
   {
     "id": "u-foreman-1",

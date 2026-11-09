@@ -19,23 +19,25 @@ import {
 } from '../../services/types'
 import { Panel } from '../ui/Kpi'
 
-type SecurityTab = 'accounts' | 'feedback'
+type SecurityTab = 'accounts' | 'integrations'
 
 const TABS: { id: SecurityTab; label: string }[] = [
   { id: 'accounts', label: 'Учётки' },
-  { id: 'feedback', label: 'Замечания / API' },
+  { id: 'integrations', label: 'API / уведомления' },
 ]
+
+const NAV_MODULES = MVP_MODULES.filter((m) => m !== 'feedback')
 
 const ROLE_OPTS: { id: Role; label: string; defaultModules: ModuleKey[] }[] = [
   {
     id: 'owner',
     label: 'Владелец',
-    defaultModules: [...MVP_MODULES],
+    defaultModules: [...NAV_MODULES],
   },
   {
     id: 'developer',
     label: 'Разработчик',
-    defaultModules: ['feedback', 'updates', 'object_control'],
+    defaultModules: ['updates', 'object_control'],
   },
   {
     id: 'foreman',
@@ -46,8 +48,8 @@ const ROLE_OPTS: { id: Role; label: string; defaultModules: ModuleKey[] }[] = [
 
 const SECURITY_ROLES = new Set<Role>(ROLE_OPTS.map((r) => r.id))
 
-/** Разделы в чекбоксах учётки — без «Замечания» (модуль живёт отдельно). */
-const ACCOUNT_VISIBLE_MODULES = MVP_MODULES.filter((m) => m !== 'feedback')
+/** Разделы в чекбоксах учётки — без скрытого модуля «Замечания». */
+const ACCOUNT_VISIBLE_MODULES = NAV_MODULES
 
 type AccountPane = 'idle' | 'create' | 'edit'
 
@@ -109,9 +111,10 @@ export default function SecurityPage() {
       phone: u.phone || '',
       role,
       active: u.active,
-      allowedModules: u.allowedModules?.length
+      allowedModules: (u.allowedModules?.length
         ? [...u.allowedModules]
-        : [...(ROLE_OPTS.find((r) => r.id === role)?.defaultModules ?? ['object_control'])],
+        : [...(ROLE_OPTS.find((r) => r.id === role)?.defaultModules ?? ['object_control'])]
+      ).filter((m) => m !== 'feedback'),
     })
     setMsg('')
   }
@@ -154,7 +157,7 @@ export default function SecurityPage() {
     setMsg('')
     try {
       const role = normalizeSecurityRole(form.role)
-      const mods = [...(form.allowedModules ?? [])]
+      const mods = (form.allowedModules ?? []).filter((m) => m !== 'feedback')
       if (role === 'owner' && !mods.includes('security')) mods.push('security')
       if (role !== 'owner') {
         const i = mods.indexOf('security')
@@ -205,8 +208,8 @@ export default function SecurityPage() {
   return (
     <div className="space-y-4">
       <p className="text-sm text-gray-500">
-        Роли: владелец (полный контур), разработчик (замечания / обновления, без PII клиентов),
-        прораб (контроль объекта). Модуль «Замечания» включает FAB и инбокс Ревизора.
+        Роли: владелец (полный контур), разработчик (обновления / контроль, без PII клиентов),
+        прораб (контроль объекта).
       </p>
 
       <div className="flex flex-wrap gap-0.5 border-b border-gray-200">
@@ -226,7 +229,7 @@ export default function SecurityPage() {
         ))}
       </div>
 
-      {tab === 'feedback' && (
+      {tab === 'integrations' && (
         <div className="space-y-4">
           <DeadlineNotifyPanel />
           <FeedbackApiSettings />

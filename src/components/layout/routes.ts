@@ -13,7 +13,6 @@ export const MVP_ROUTES: NavRoute[] = [
   { path: '/calculator', name: 'Калькулятор', module: 'calculator' },
   { path: '/documents', name: 'Договоры и акты', module: 'documents' },
   { path: '/control', name: 'Контроль объекта', module: 'object_control' },
-  { path: '/feedback', name: 'Замечания', module: 'feedback' },
   { path: '/updates', name: 'Обновления', module: 'updates' },
   /** Права модуля `security`; UI — раздел «Настройки» */
   { path: '/settings/security', name: 'Настройки', module: 'security' },
@@ -58,7 +57,7 @@ export function routeTitle(pathname: string): string {
 /** Стартовый раздел после входа */
 export function homePathForUser(user: User): string {
   if (user.role === 'foreman') return '/control'
-  if (user.role === 'developer') return '/feedback'
+  if (user.role === 'developer') return '/updates'
   const mods = user.allowedModules
   if (mods && mods.length === 1) {
     const hit = MVP_ROUTES.find((r) => r.module === mods[0])
