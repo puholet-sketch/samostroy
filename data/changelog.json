@@ -1,5 +1,36 @@
 [
   {
+    "id": "2026-11-10-c",
+    "at": "2026-11-10T15:40:00+03:00",
+    "title": "LHR после ротации hostname",
+    "items": [
+      {
+        "section": "Инфра",
+        "text": "Новый URL https://8b88fda9fa1018.lhr.life (/health 200); b1b66beb275a3a.lhr.life отдал no tunnel"
+      },
+      {
+        "section": "Сервер",
+        "text": "Подтверждён xrdp на 192.168.1.39:3389 (active/enabled, UFW выключен); ярлык Lenovo i5lenovo.rdp на Desktop ASUS"
+      },
+      {
+        "section": "Сборка",
+        "text": "VITE_FEEDBACK_API_URL и Pages обновлены; BUILD_STAMP 2026-11-10 · lhr restart c"
+      }
+    ],
+    "docs": [
+      {
+        "label": "Релиз 2026-11-10-c",
+        "href": "/updates/2026-11-10-c",
+        "kind": "app"
+      },
+      {
+        "label": "Сервер Lenovo",
+        "href": "docs/modules/lenovo-server.md",
+        "kind": "repo"
+      }
+    ]
+  },
+  {
     "id": "2026-11-10-b",
     "at": "2026-11-10T15:25:00+03:00",
     "title": "LHR снова после 502 + xRDP LAN",
