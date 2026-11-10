@@ -82,14 +82,47 @@ systemctl --user restart samostroy-tunnel
 
 **Стабильный публичный hostname** требует зону DNS **в этом же** CF-аккаунте: CNAME `api.<домен>` → `ab87fe84-9ecf-4e30-9d72-239959d7eb3e.cfargotunnel.com`, затем hostname в ingress. Без домена CF Zero Trust Free также просит карту при активации — named tunnel при этом уже работает.
 
-**Временно без домена:** `samostroy-quick.service` (trycloudflare.com). URL в `journalctl --user -u samostroy-quick` — при рестарте меняется; обновить `.env.production` и пересобрать Pages.
+**Временно без домена:**
+- `samostroy-quick.service` (trycloudflare.com) — с этой сети часто **1033**; router DNS (`192.168.1.1`) часто не резолвит новые `*.trycloudflare.com` (нужны `1.1.1.1`/`8.8.8.8`).
+- Fallback: `samostroy-lhr.service` (`deploy/server/install-localhost-run-systemd.sh`) → `*.lhr.life`. URL в `journalctl --user -u samostroy-lhr` — при рестарте меняется; обновить `.env.production` и пересобрать Pages.
 
 ```bash
 # переустановка named unit
 bash deploy/server/install-cloudflared-systemd.sh
+# fallback без CF quick:
+bash deploy/server/install-localhost-run-systemd.sh
 ```
 
 Затем на ASUS: `.env.production` → `VITE_FEEDBACK_API_URL=https://…` → `GITHUB_PAGES=1 npm run build` → `npx gh-pages -d dist`.
+
+## Удалённый рабочий стол (xrdp, только LAN)
+
+С Windows в той же Wi‑Fi / LAN: штатное **«Подключение к удалённому рабочему столу»**.
+
+| | |
+|---|---|
+| Хост | `192.168.1.39` (порт `3389`) |
+| Пользователь | `sa` (пароль Linux-пользователя) |
+| Сессия | XFCE через xrdp (локально на ноуте может оставаться GNOME) |
+| Слушает | только `192.168.1.39:3389` (не 0.0.0.0; Cloudflare/туннели не трогали) |
+| UFW | выключен; при включении: `ufw allow from 192.168.1.0/24 to any port 3389 proto tcp` |
+
+```powershell
+# проверка с ASUS
+Test-NetConnection 192.168.1.39 -Port 3389
+mstsc /v:192.168.1.39
+```
+
+На Lenovo:
+
+```bash
+systemctl status xrdp --no-pager
+ss -lntp | grep 3389
+```
+
+**Caveat:** у `sa` часто уже открыта локальная GUI-сессия (автологин GDM). Если RDP логин «висит» или чёрный экран — выйдите из локальной сессии на ноуте (или переключите пользователя) и подключитесь снова. После смены `WaylandEnable=false` в GDM полный эффект для локального сидения — после перезагрузки/перелогина GDM.
+
+Не пробрасывайте 3389 на роутере наружу.
 
 ## Sleep / крышка
 

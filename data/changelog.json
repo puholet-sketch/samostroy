@@ -1,5 +1,36 @@
 [
   {
+    "id": "2026-11-10-b",
+    "at": "2026-11-10T15:25:00+03:00",
+    "title": "LHR снова после 502 + xRDP LAN",
+    "items": [
+      {
+        "section": "Инфра",
+        "text": "Новый URL https://b1b66beb275a3a.lhr.life (/health 200); e9b487d5ee305b.lhr.life отдавал 502"
+      },
+      {
+        "section": "Сервер",
+        "text": "На Lenovo включён xrdp (RDP) только на 192.168.1.39:3389, пользователь sa"
+      },
+      {
+        "section": "Сборка",
+        "text": "VITE_FEEDBACK_API_URL и Pages обновлены; BUILD_STAMP 2026-11-10 · lhr restart b"
+      }
+    ],
+    "docs": [
+      {
+        "label": "Релиз 2026-11-10-b",
+        "href": "/updates/2026-11-10-b",
+        "kind": "app"
+      },
+      {
+        "label": "Сервер Lenovo",
+        "href": "docs/modules/lenovo-server.md",
+        "kind": "repo"
+      }
+    ]
+  },
+  {
     "id": "2026-11-10-a",
     "at": "2026-11-10T15:20:00+03:00",
     "title": "Рестарт LHR туннеля после 502",
