@@ -1,5 +1,36 @@
 [
   {
+    "id": "2026-11-10-a",
+    "at": "2026-11-10T15:20:00+03:00",
+    "title": "Рестарт LHR туннеля после 502",
+    "items": [
+      {
+        "section": "Инфра",
+        "text": "Новый URL https://e9b487d5ee305b.lhr.life (/health 200)"
+      },
+      {
+        "section": "Инфра",
+        "text": "Старый 8ff4f3b7590fca.lhr.life отдавал 502 при живом LAN API"
+      },
+      {
+        "section": "Сборка",
+        "text": "VITE_FEEDBACK_API_URL и Pages обновлены; BUILD_STAMP 2026-11-10 · lhr restart a"
+      }
+    ],
+    "docs": [
+      {
+        "label": "Релиз 2026-11-10-a",
+        "href": "/updates/2026-11-10-a",
+        "kind": "app"
+      },
+      {
+        "label": "Сервер Lenovo",
+        "href": "docs/modules/lenovo-server.md",
+        "kind": "repo"
+      }
+    ]
+  },
+  {
     "id": "2026-11-09-a",
     "at": "2026-11-09T20:10:00+03:00",
     "title": "Скрыты замечания и FAB",

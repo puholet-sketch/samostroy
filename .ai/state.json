@@ -1,12 +1,11 @@
 {
   "v": 4,
-  "updated": "2026-11-06",
+  "updated": "2026-11-10",
   "status": "active",
   "goal": "Lenovo API via public HTTPS for GitHub Pages",
-  "next": "Buy/attach DNS zone → named tunnel public hostname; until then keep samostroy-lhr up",
+  "next": "Monitor LHR hostname; if 502 again restart samostroy-lhr and redeploy Pages",
   "blockers": [
-    "No DNS zone — named tunnel has no stable public hostname",
-    "Free *.lhr.life changes on samostroy-lhr restart; Pages must be rebuilt"
+    "No DNS zone — named tunnel has no stable public hostname"
   ],
   "hot_files": [
     ".env.production",
