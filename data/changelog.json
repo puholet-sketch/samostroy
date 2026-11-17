@@ -1,5 +1,32 @@
 [
   {
+    "id": "2026-11-17-b",
+    "at": "2026-11-17T22:55:00+03:00",
+    "title": "LHR снова после mid-deploy ротации",
+    "items": [
+      {
+        "section": "Инфра",
+        "text": "Новый URL https://d012bb34ce36e9.app.lhr.life (/health 200); a5b257020299d3.app.lhr.life отдал no tunnel сразу после деплоя a"
+      },
+      {
+        "section": "Сборка",
+        "text": "VITE_FEEDBACK_API_URL и Pages обновлены; BUILD_STAMP 2026-11-17 · lhr restart b"
+      }
+    ],
+    "docs": [
+      {
+        "label": "Релиз 2026-11-17-b",
+        "href": "/updates/2026-11-17-b",
+        "kind": "app"
+      },
+      {
+        "label": "Сервер Lenovo",
+        "href": "docs/modules/lenovo-server.md",
+        "kind": "repo"
+      }
+    ]
+  },
+  {
     "id": "2026-11-17-a",
     "at": "2026-11-17T22:50:00+03:00",
     "title": "LHR после ротации (Pages→API)",
