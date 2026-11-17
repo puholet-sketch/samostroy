@@ -1,5 +1,36 @@
 [
   {
+    "id": "2026-11-17-a",
+    "at": "2026-11-17T22:50:00+03:00",
+    "title": "LHR после ротации (Pages→API)",
+    "items": [
+      {
+        "section": "Инфра",
+        "text": "Новый URL https://a5b257020299d3.app.lhr.life (/health 200); 8b88fda9fa1018.lhr.life отдал no tunnel"
+      },
+      {
+        "section": "Инфра",
+        "text": "trycloudflare 1033/530, ngrok offline; LAN API 192.168.1.39:8787 жив; samostroy-lhr active"
+      },
+      {
+        "section": "Сборка",
+        "text": "VITE_FEEDBACK_API_URL и Pages обновлены; BUILD_STAMP 2026-11-17 · lhr restart a"
+      }
+    ],
+    "docs": [
+      {
+        "label": "Релиз 2026-11-17-a",
+        "href": "/updates/2026-11-17-a",
+        "kind": "app"
+      },
+      {
+        "label": "Сервер Lenovo",
+        "href": "docs/modules/lenovo-server.md",
+        "kind": "repo"
+      }
+    ]
+  },
+  {
     "id": "2026-11-10-c",
     "at": "2026-11-10T15:40:00+03:00",
     "title": "LHR после ротации hostname",
