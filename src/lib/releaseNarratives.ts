@@ -2,7 +2,8 @@
  * Бизнес-описания релизов: `data/releases/<id>.md` (raw через Vite).
  * Id файла = id релиза в changelog.json.
  */
-const rawModules = import.meta.glob('@data/releases/*.md', {
+/** Relative glob — alias @data breaks Vite on dual Windows path roots (D: vs C:). */
+const rawModules = import.meta.glob('../../data/releases/*.md', {
   query: '?raw',
   import: 'default',
   eager: true,
