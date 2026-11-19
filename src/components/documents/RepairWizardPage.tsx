@@ -287,7 +287,7 @@ export default function RepairWizardPage() {
               className="rounded-md bg-emerald-600 px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-40"
               onClick={() => void issueContract()}
             >
-              {busy ? 'Формируем…' : 'Согласовать договор + скачать пакет'}
+              {busy ? 'Формируем…' : 'Согласовать договор + скачать PDF'}
             </button>
           )}
           {msg && <span className="text-sm text-gray-600">{msg}</span>}

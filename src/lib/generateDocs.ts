@@ -369,8 +369,9 @@ function docShell(children: FileChild[], headerHint: string): Document {
 
 async function downloadDoc(doc: Document, filename: string) {
   const blob = await Packer.toBlob(doc)
-  const { saveAs } = await import('file-saver')
-  saveAs(blob, filename)
+  const { downloadPdfFromDocxBlob } = await import('./docPdf')
+  const pdfName = filename.replace(/\.docx$/i, '.pdf')
+  await downloadPdfFromDocxBlob(blob, pdfName)
 }
 
 export type RemontSmetaLine = {
@@ -1228,22 +1229,22 @@ export async function buildSmetaDocument(client: ClientCard, form: SmetaForm): P
 
 export async function generateRemontDoc(client: ClientCard, form: RemontForm) {
   const doc = await buildRemontDocument(client, form)
-  await downloadDoc(doc, `Dogovor_remont_${form.number || client.id}.docx`)
+  await downloadDoc(doc, `Dogovor_remont_${form.number || client.id}.pdf`)
 }
 
 export async function generateDesignDoc(client: ClientCard, form: DesignForm) {
   const doc = await buildDesignDocument(client, form)
-  await downloadDoc(doc, `Dogovor_design_${form.number || client.id}.docx`)
+  await downloadDoc(doc, `Dogovor_design_${form.number || client.id}.pdf`)
 }
 
 export async function generateAktDoc(client: ClientCard, form: AktForm) {
   const doc = await buildAktDocument(client, form)
-  await downloadDoc(doc, `Akt_${form.number || client.id}.docx`)
+  await downloadDoc(doc, `Akt_${form.number || client.id}.pdf`)
 }
 
 export async function generateSmetaDoc(client: ClientCard, form: SmetaForm) {
   const doc = await buildSmetaDocument(client, form)
-  await downloadDoc(doc, `Smeta_${form.number || client.id}.docx`)
+  await downloadDoc(doc, `Smeta_${form.number || client.id}.pdf`)
 }
 
 export async function generateTzStubDoc(
@@ -1258,5 +1259,5 @@ export async function generateTzStubDoc(
   },
 ) {
   const doc = await buildTzStubDocument(client, form)
-  await downloadDoc(doc, `TZ_stub_remont_${form.contractNumber || form.number || client.id}.docx`)
+  await downloadDoc(doc, `TZ_stub_remont_${form.contractNumber || form.number || client.id}.pdf`)
 }

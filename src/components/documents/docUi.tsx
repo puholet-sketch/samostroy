@@ -53,7 +53,7 @@ function clientHaystack(c: ClientCard): string {
 }
 
 export function useClientObjectPicker(initialClientId = '', initialObjectId = '') {
-  const [clients] = useState(() => loadClients())
+  const [clients, setClients] = useState(() => loadClients())
   const [q, setQ] = useState('')
   const [clientId, setClientId] = useState(initialClientId)
   const [objectId, setObjectId] = useState(initialObjectId)
@@ -67,6 +67,10 @@ export function useClientObjectPicker(initialClientId = '', initialObjectId = ''
   const client = clients.find((c) => c.id === clientId) ?? null
   const objects = client?.objects ?? []
   const selectedObject = objects.find((o) => o.id === objectId) ?? null
+
+  function reloadClients() {
+    setClients(loadClients())
+  }
 
   function pickClient(c: ClientCard) {
     setClientId(c.id)
@@ -94,6 +98,7 @@ export function useClientObjectPicker(initialClientId = '', initialObjectId = ''
     selectedObject,
     pickClient,
     clearClient,
+    reloadClients,
   }
 }
 

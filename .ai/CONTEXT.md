@@ -20,7 +20,7 @@ MVP: КК → документы/калькулятор → контроль о�
 - Реестр: `src/lib/docRegistry.ts` (localStorage) + сквозной счётчик договоров
 - Акты: № этапа 1…N на договор; строки из согласованной сметы, группа по типу
 - Дизайн: тарифы `designTariffs.ts` (2000/3900/4700) + исключения 4.1.x/4.4.x
-- Генерация: `src/lib/generateDocs.ts`; эталон `docs/templates/ryba_dogovor_design.docx`
+- Генерация: `src/lib/generateDocs.ts` (+ `docPdf.ts` DOCX→PDF); эталон `docs/templates/ryba_dogovor_design.docx`
 - ТЗ ремонта: stub до файла заказчика
 
 ## Prod CRM (read-only)

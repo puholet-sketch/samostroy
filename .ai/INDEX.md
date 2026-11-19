@@ -13,7 +13,8 @@ data/releases/ | бизнес-нарративы релизов (*.md)
 src/lib/changelog.ts | типы Release / docs
 src/lib/releaseNarratives.ts | загрузка data/releases
 src/components/updates/ | список и страница релиза
-src/lib/generateDocs.ts | договоры/акты/смета/ТЗ DOCX
+src/lib/generateDocs.ts | договоры/акты/смета/ТЗ → PDF (через DOCX)
+src/lib/docPdf.ts | DOCX blob → PDF (docx-preview + html2pdf)
 src/lib/docRegistry.ts | реестр выданных + сквозной №
 src/lib/designTariffs.ts | тарифы дизайна и исключения пунктов
 src/lib/calcVersions.ts | версии сметы; agreed на объект

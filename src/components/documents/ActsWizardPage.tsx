@@ -157,7 +157,7 @@ export default function ActsWizardPage() {
             className="rounded-md bg-emerald-600 px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-40"
             onClick={() => void issue()}
           >
-            {busy ? 'Формируем…' : 'Выпустить акт'}
+            {busy ? 'Формируем…' : 'Выпустить акт (PDF)'}
           </button>
           {msg && <span className="text-sm text-gray-600">{msg}</span>}
         </div>
@@ -281,7 +281,7 @@ export default function ActsWizardPage() {
               <p>
                 Итого по акту: <strong>{formatMoney(aktTotal)} ₽</strong>
               </p>
-              <p className="mt-1 text-xs text-gray-500">Группировка в DOCX по типам работ:</p>
+              <p className="mt-1 text-xs text-gray-500">Группировка в PDF по типам работ:</p>
               <ul className="mt-1 list-inside list-disc text-xs text-gray-600">
                 {groupedPreview.map(([sec, rows]) => (
                   <li key={sec}>

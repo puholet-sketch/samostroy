@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
+import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { usePageHeaderActions, usePageHeaderMeta } from '../../contexts/PageHeaderContext'
 import {
@@ -50,15 +50,31 @@ const inputCls =
 
 export default function ClientCardPage() {
   const { id, section } = useParams<{ id: string; section?: string }>()
+  const [searchParams] = useSearchParams()
   const navigate = useNavigate()
   const { user } = useAuth()
   const isOwner = user?.role === 'owner'
   const [clients, setClients] = useState<ClientCard[]>(() => loadClients())
   const [saveMsg, setSaveMsg] = useState('')
+  const focusObjectId = searchParams.get('objectId') || ''
+  const returnToRaw = searchParams.get('returnTo') || ''
+  const returnTo =
+    returnToRaw.startsWith('/') && !returnToRaw.startsWith('//') ? returnToRaw : ''
 
   const active = (CLIENT_SECTIONS.some((s) => s.id === section) ? section : 'main') as ClientSection
 
   const client = useMemo(() => clients.find((c) => c.id === id) ?? null, [clients, id])
+
+  useEffect(() => {
+    if (!focusObjectId || active !== 'main') return
+    const t = window.setTimeout(() => {
+      document.getElementById(`client-object-${focusObjectId}`)?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+      })
+    }, 80)
+    return () => window.clearTimeout(t)
+  }, [focusObjectId, active, client?.id])
 
   const headerMeta = useMemo(() => {
     if (!client) return null
@@ -176,6 +192,21 @@ export default function ClientCardPage() {
   return (
     <div className="space-y-3">
       {saveMsg && <p className="text-sm text-emerald-700">{saveMsg}</p>}
+      {returnTo && (
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-950">
+          <span>
+            {focusObjectId
+              ? 'Укажите площадь объекта и вернитесь в мастер договора.'
+              : 'После правок можно вернуться в мастер документов.'}
+          </span>
+          <Link
+            to={returnTo}
+            className="rounded-md bg-blue-600 px-2.5 py-1 text-xs font-semibold text-white hover:bg-blue-700"
+          >
+            ← Вернуться в мастер
+          </Link>
+        </div>
+      )}
       <div className="flex flex-wrap gap-1 border-b border-gray-200 lg:hidden">
         {CLIENT_SECTIONS.map((s) => (
           <button
@@ -315,7 +346,12 @@ export default function ClientCardPage() {
               {client.objects.map((o) => (
                 <div
                   key={o.id}
-                  className="grid grid-cols-1 gap-2 rounded-md border border-gray-200 bg-gray-50 p-2 sm:grid-cols-3"
+                  id={`client-object-${o.id}`}
+                  className={`grid grid-cols-1 gap-2 rounded-md border p-2 sm:grid-cols-3 ${
+                    focusObjectId === o.id
+                      ? 'border-blue-400 bg-blue-50 ring-2 ring-blue-300'
+                      : 'border-gray-200 bg-gray-50'
+                  }`}
                 >
                   <input
                     className={inputCls}
