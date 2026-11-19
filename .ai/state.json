@@ -3,7 +3,7 @@
   "updated": "2026-11-19",
   "status": "active",
   "goal": "Docs hub header + recent fill → 2026-11-19-d",
-  "next": "Idle — 2026-11-19-d live",
+  "next": "Idle — 2026-11-19-d live (index-CzaNrV_s.js)",
   "blockers": [
     "Free LHR hostname rotates — may need redeploy after tunnel restart"
   ],
