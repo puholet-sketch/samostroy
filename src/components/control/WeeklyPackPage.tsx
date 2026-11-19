@@ -12,15 +12,21 @@ import {
   type WeeklyPackObjectSection,
 } from '../../lib/weeklyPack'
 
+type PackStyle = 'normal' | 'comic'
+
 function formatRuDate(iso: string): string {
   const [y, m, d] = iso.split('-')
   if (!y || !m || !d) return iso
   return `${d}.${m}.${y}`
 }
 
+function readPackStyle(raw: string | null): PackStyle {
+  return raw === 'comic' ? 'comic' : 'normal'
+}
+
 type MediaLoadState = 'loading' | 'ready' | 'missing' | 'broken'
 
-function DayMediaNav({ day }: { day: WeeklyPackDay }) {
+function DayMediaNav({ day, packStyle }: { day: WeeklyPackDay; packStyle: PackStyle }) {
   // Stable list — do not put a freshly filtered array in effect deps (that revokes blob URLs every render).
   const images = useMemo(
     () => day.media.filter((m) => m.kind === 'image'),
@@ -87,12 +93,17 @@ function DayMediaNav({ day }: { day: WeeklyPackDay }) {
   }, [])
 
   if (images.length === 0) {
-    return <p className="text-xs text-gray-400">Нет фото за день</p>
+    return <p className="text-xs text-gray-400 day-no-photo">Нет фото за день</p>
   }
 
   return (
     <div className="day-media mt-2">
       <div className="day-media-frame">
+        {packStyle === 'comic' && (
+          <span className="comic-panel-tag" aria-hidden>
+            {day.weekdayRu.slice(0, 2).toUpperCase()} · {formatRuDate(day.date)}
+          </span>
+        )}
         {loadState === 'ready' && url ? (
           <img
             src={url}
@@ -130,42 +141,62 @@ function DayMediaNav({ day }: { day: WeeklyPackDay }) {
         )}
       </div>
       <p className="day-media-caption">
-        Фото {safeIdx + 1} / {images.length}
+        {packStyle === 'comic' ? `Кадр ${safeIdx + 1} / ${images.length}` : `Фото ${safeIdx + 1} / ${images.length}`}
         {current?.name ? ` · ${current.name}` : ''}
       </p>
     </div>
   )
 }
 
-function DaySection({ day }: { day: WeeklyPackDay }) {
+function DaySection({ day, packStyle }: { day: WeeklyPackDay; packStyle: PackStyle }) {
+  const comic = packStyle === 'comic'
   return (
     <section className={`day${!day.report ? ' miss' : ''}`}>
       <div className="day-head">
         <strong>{day.weekdayRu}</strong>
-        <span className="tabular-nums text-sm text-gray-800">{formatRuDate(day.date)}</span>
+        <span className="tabular-nums text-sm text-gray-800 day-date">{formatRuDate(day.date)}</span>
         <span className={`badge ${day.report ? 'ok' : 'no'}`}>
-          {day.report ? 'есть отчёт' : 'нет отчёта'}
+          {day.report ? (comic ? 'ЕСТЬ ОТЧЁТ' : 'есть отчёт') : comic ? 'ПРОПУСК' : 'нет отчёта'}
         </span>
         {day.report?.workerName && (
-          <span className="text-xs text-gray-500">{day.report.workerName}</span>
+          <span className="text-xs text-gray-500 day-worker">{day.report.workerName}</span>
         )}
       </div>
       {day.report ? (
         <>
-          <p className="text-sm text-gray-800">
-            <span className="text-xs font-medium text-gray-500">Сделано: </span>
-            {day.shortWork || '—'}
-          </p>
-          {day.shortProblems && (
-            <p className="mt-1 text-sm text-amber-900">
-              <span className="text-xs font-medium text-amber-700">Проблемы: </span>
-              {day.shortProblems}
-            </p>
+          {comic ? (
+            <div className="comic-balloons">
+              <div className="comic-balloon comic-balloon--done">
+                <span className="comic-balloon-label">Сделано</span>
+                <p>{day.shortWork || '—'}</p>
+              </div>
+              {day.shortProblems ? (
+                <div className="comic-balloon comic-balloon--prob">
+                  <span className="comic-balloon-label">Проблемы</span>
+                  <p>{day.shortProblems}</p>
+                </div>
+              ) : null}
+            </div>
+          ) : (
+            <>
+              <p className="text-sm text-gray-800">
+                <span className="text-xs font-medium text-gray-500">Сделано: </span>
+                {day.shortWork || '—'}
+              </p>
+              {day.shortProblems && (
+                <p className="mt-1 text-sm text-amber-900">
+                  <span className="text-xs font-medium text-amber-700">Проблемы: </span>
+                  {day.shortProblems}
+                </p>
+              )}
+            </>
           )}
-          <DayMediaNav day={day} />
+          <DayMediaNav day={day} packStyle={packStyle} />
         </>
       ) : (
-        <p className="text-sm text-gray-400">Прораб не сдал дневной отчёт</p>
+        <p className={`text-sm text-gray-400${comic ? ' comic-miss-copy' : ''}`}>
+          {comic ? 'В этот день прораб не сдал отчёт — кадр пуст.' : 'Прораб не сдал дневной отчёт'}
+        </p>
       )}
     </section>
   )
@@ -174,9 +205,11 @@ function DaySection({ day }: { day: WeeklyPackDay }) {
 function ObjectBlock({
   section,
   showHeading,
+  packStyle,
 }: {
   section: WeeklyPackObjectSection
   showHeading: boolean
+  packStyle: PackStyle
 }) {
   return (
     <div className="object-block">
@@ -191,7 +224,11 @@ function ObjectBlock({
         </header>
       )}
       {section.days.map((day) => (
-        <DaySection key={`${section.objectId}:${day.date}`} day={day} />
+        <DaySection
+          key={`${section.objectId}:${day.date}`}
+          day={day}
+          packStyle={packStyle}
+        />
       ))}
     </div>
   )
@@ -203,14 +240,31 @@ export default function WeeklyPackPage() {
   const objectId = params.get('objectId') || ''
   const fromParam = params.get('from') || ''
   const toParam = params.get('to') || ''
+  const packStyle = readPackStyle(params.get('style'))
 
   const [pack, setPack] = useState<WeeklyPack | null>(null)
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState('')
 
   useEffect(() => {
-    document.title = 'Еженедельный пакет — СамоСтрой'
-  }, [])
+    document.title =
+      packStyle === 'comic'
+        ? 'Еженедельный пакет · Комикс — СамоСтрой'
+        : 'Еженедельный пакет — СамоСтрой'
+  }, [packStyle])
+
+  useEffect(() => {
+    if (packStyle !== 'comic') return
+    const href =
+      'https://fonts.googleapis.com/css2?family=Exo+2:wght@500;700&family=Russo+One&display=swap'
+    const existing = document.querySelector<HTMLLinkElement>('link[data-weekly-pack-comic-fonts="1"]')
+    if (existing) return
+    const link = document.createElement('link')
+    link.rel = 'stylesheet'
+    link.href = href
+    link.dataset.weeklyPackComicFonts = '1'
+    document.head.appendChild(link)
+  }, [packStyle])
 
   useEffect(() => {
     if (!clientId) {
@@ -244,6 +298,7 @@ export default function WeeklyPackPage() {
               ...(anchorId ? { objectId: anchorId } : {}),
               from: next.from,
               to: next.to,
+              ...(packStyle === 'comic' ? { style: 'comic' } : {}),
             },
             { replace: true },
           )
@@ -257,7 +312,7 @@ export default function WeeklyPackPage() {
     return () => {
       cancelled = true
     }
-  }, [clientId, objectId, fromParam, toParam, setSearchParams])
+  }, [clientId, objectId, fromParam, toParam, setSearchParams, packStyle])
 
   const multi = (pack?.objects.length ?? 0) > 1
   const sole = pack?.objects.length === 1 ? pack.objects[0] : null
@@ -274,6 +329,24 @@ export default function WeeklyPackPage() {
     return `Еженедельный пакет · ${week}`
   }, [pack, multi, sole])
 
+  const comicChapter = useMemo(() => {
+    if (!pack) return { week: '', place: 'Еженедельный пакет' }
+    const week = weekLabelRu(pack.from, pack.to)
+    if (multi) return { week, place: pack.clientName || 'Клиент' }
+    if (sole) return { week, place: sole.objectAddress || sole.objectTitle }
+    return { week, place: 'Еженедельный пакет' }
+  }, [pack, multi, sole])
+
+  function patchParams(nextStyle: PackStyle) {
+    const next: Record<string, string> = {}
+    if (clientId) next.clientId = clientId
+    if (objectId) next.objectId = objectId
+    if (fromParam) next.from = fromParam
+    if (toParam) next.to = toParam
+    if (nextStyle === 'comic') next.style = 'comic'
+    setSearchParams(next, { replace: true })
+  }
+
   function shiftWeek(delta: number) {
     if (!pack) return
     const next = shiftWeekSatFri(pack.from, delta)
@@ -283,11 +356,14 @@ export default function WeeklyPackPage() {
       ...(primaryObjectId ? { objectId: primaryObjectId } : {}),
       from: next.from,
       to: next.to,
+      ...(packStyle === 'comic' ? { style: 'comic' } : {}),
     })
   }
 
+  const rootClass = packStyle === 'comic' ? 'weekly-pack weekly-pack--comic' : 'weekly-pack'
+
   return (
-    <div className="weekly-pack">
+    <div className={rootClass}>
       <style>{`
         .weekly-pack {
           --ink: #1a1a1a;
@@ -306,6 +382,29 @@ export default function WeeklyPackPage() {
           gap: 0.5rem;
           align-items: center;
           margin-bottom: 1rem;
+        }
+        .weekly-pack .style-toggle {
+          display: inline-flex;
+          border: 1px solid #c4c4c4;
+          border-radius: 6px;
+          overflow: hidden;
+          background: #fff;
+        }
+        .weekly-pack .style-toggle button {
+          border: none;
+          background: transparent;
+          padding: 0.4rem 0.7rem;
+          font-size: 0.8rem;
+          cursor: pointer;
+          color: #374151;
+        }
+        .weekly-pack .style-toggle button + button {
+          border-left: 1px solid #c4c4c4;
+        }
+        .weekly-pack .style-toggle button.is-active {
+          background: #111;
+          color: #fff;
+          font-weight: 600;
         }
         .weekly-pack h1 {
           font-size: 1.25rem;
@@ -420,6 +519,245 @@ export default function WeeklyPackPage() {
           font-size: 11px;
           color: #6b7280;
         }
+        .weekly-pack .comic-poster { display: none; }
+
+        /* —— Comic / 80s poster homage (no trademark logos) —— */
+        .weekly-pack--comic {
+          --ink: #0a0a0a;
+          --text: #121212;
+          --muted: #2f4f4f;
+          --line: #0a0a0a;
+          --comic-yellow: #ffd000;
+          --comic-teal: #0f9d9a;
+          --comic-teal-deep: #066663;
+          --comic-cream: #fff6d8;
+          --comic-panel: #fffef8;
+          font-family: "Exo 2", "Trebuchet MS", "Segoe UI", sans-serif;
+          color: var(--text);
+          background-color: var(--comic-cream);
+          background-image:
+            radial-gradient(circle at 1px 1px, rgba(10, 10, 10, 0.14) 1px, transparent 0),
+            linear-gradient(135deg, rgba(15, 157, 154, 0.12), transparent 42%),
+            linear-gradient(0deg, #fff6d8, #ffe98a 55%, #fff6d8);
+          background-size: 7px 7px, 100% 100%, 100% 100%;
+          padding: 1rem 1.1rem 2.75rem;
+        }
+        .weekly-pack--comic::before {
+          content: "";
+          pointer-events: none;
+          position: fixed;
+          inset: 0;
+          z-index: 0;
+          opacity: 0.18;
+          background:
+            repeating-linear-gradient(
+              -18deg,
+              transparent 0 10px,
+              rgba(10, 10, 10, 0.35) 10px 11px,
+              transparent 11px 22px
+            );
+          mix-blend-mode: multiply;
+        }
+        .weekly-pack--comic > * { position: relative; z-index: 1; }
+        .weekly-pack--comic .style-toggle {
+          border: 3px solid #0a0a0a;
+          border-radius: 0;
+          box-shadow: 3px 3px 0 #0f9d9a;
+        }
+        .weekly-pack--comic .style-toggle button.is-active {
+          background: var(--comic-yellow);
+          color: #0a0a0a;
+        }
+        .weekly-pack--comic .toolbar a,
+        .weekly-pack--comic .toolbar > button:not(.style-toggle button) {
+          border-radius: 0 !important;
+          border: 2px solid #0a0a0a !important;
+          box-shadow: 2px 2px 0 #0a0a0a;
+          font-weight: 700;
+        }
+        .weekly-pack--comic .toolbar > button.bg-emerald-600 {
+          background: var(--comic-teal) !important;
+          color: #fff !important;
+        }
+        .weekly-pack--comic h1.pack-title-normal { display: none; }
+        .weekly-pack--comic .comic-poster {
+          display: block;
+          margin: 0.35rem 0 1rem;
+          padding: 1rem 1.1rem 1.15rem;
+          border: 4px solid #0a0a0a;
+          background:
+            linear-gradient(180deg, var(--comic-yellow) 0 58%, var(--comic-teal) 58% 100%);
+          box-shadow: 6px 6px 0 #0a0a0a;
+          break-inside: avoid;
+          break-after: avoid;
+        }
+        .weekly-pack--comic .comic-poster-kicker {
+          margin: 0 0 0.35rem;
+          font-family: "Russo One", Impact, "Arial Black", sans-serif;
+          font-size: 0.72rem;
+          letter-spacing: 0.18em;
+          text-transform: uppercase;
+          color: #0a0a0a;
+        }
+        .weekly-pack--comic .comic-poster-title {
+          margin: 0;
+          font-family: "Russo One", Impact, "Arial Black", sans-serif;
+          font-size: clamp(1.35rem, 3.4vw, 2.15rem);
+          line-height: 1.05;
+          text-transform: uppercase;
+          color: #0a0a0a;
+          text-shadow: 2px 2px 0 rgba(255, 255, 255, 0.35);
+        }
+        .weekly-pack--comic .comic-poster-week {
+          margin: 0.55rem 0 0;
+          display: inline-block;
+          padding: 0.2rem 0.55rem;
+          background: #0a0a0a;
+          color: var(--comic-yellow);
+          font-family: "Russo One", Impact, "Arial Black", sans-serif;
+          font-size: 0.85rem;
+          letter-spacing: 0.04em;
+        }
+        .weekly-pack--comic .meta {
+          color: #0a0a0a;
+          font-weight: 600;
+          background: rgba(255, 255, 255, 0.72);
+          border: 2px solid #0a0a0a;
+          padding: 0.45rem 0.65rem;
+        }
+        .weekly-pack--comic .object-block + .object-block {
+          border-top: 4px solid #0a0a0a;
+          margin-top: 1.25rem;
+        }
+        .weekly-pack--comic .object-head h2 {
+          font-family: "Russo One", Impact, "Arial Black", sans-serif;
+          font-size: 1.2rem;
+          text-transform: uppercase;
+          background: var(--comic-yellow);
+          display: inline-block;
+          padding: 0.15rem 0.45rem;
+          border: 2px solid #0a0a0a;
+          box-shadow: 3px 3px 0 var(--comic-teal);
+        }
+        .weekly-pack--comic .day {
+          border: 3px solid #0a0a0a;
+          border-radius: 0;
+          background: var(--comic-panel);
+          box-shadow: 4px 4px 0 #0a0a0a;
+          margin-bottom: 1rem;
+          padding: 0.85rem 0.9rem 1rem;
+        }
+        .weekly-pack--comic .day.miss {
+          background:
+            repeating-linear-gradient(
+              45deg,
+              #f3f3f3,
+              #f3f3f3 8px,
+              #e8e8e8 8px 16px
+            );
+          opacity: 0.95;
+        }
+        .weekly-pack--comic .day-head strong {
+          font-family: "Russo One", Impact, "Arial Black", sans-serif;
+          font-size: 0.9rem;
+          letter-spacing: 0.06em;
+        }
+        .weekly-pack--comic .day-date { font-weight: 700; }
+        .weekly-pack--comic .badge {
+          border: 2px solid #0a0a0a;
+          border-radius: 0;
+          font-family: "Russo One", Impact, "Arial Black", sans-serif;
+          letter-spacing: 0.04em;
+        }
+        .weekly-pack--comic .badge.ok {
+          background: var(--comic-teal);
+          color: #fff;
+        }
+        .weekly-pack--comic .badge.no {
+          background: #ff3b3b;
+          color: #fff;
+        }
+        .weekly-pack--comic .comic-balloons {
+          display: grid;
+          gap: 0.55rem;
+          margin: 0.45rem 0 0.65rem;
+        }
+        .weekly-pack--comic .comic-balloon {
+          position: relative;
+          border: 2px solid #0a0a0a;
+          background: #fff;
+          padding: 0.55rem 0.7rem 0.65rem;
+          border-radius: 1.1rem 1.1rem 1.1rem 0.25rem;
+          box-shadow: 2px 2px 0 rgba(10, 10, 10, 0.85);
+        }
+        .weekly-pack--comic .comic-balloon--prob {
+          background: #fff1c9;
+          border-radius: 0.25rem 1.1rem 1.1rem 1.1rem;
+        }
+        .weekly-pack--comic .comic-balloon-label {
+          display: inline-block;
+          margin-bottom: 0.2rem;
+          padding: 0.05rem 0.4rem;
+          font-family: "Russo One", Impact, "Arial Black", sans-serif;
+          font-size: 0.68rem;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+          background: #0a0a0a;
+          color: var(--comic-yellow);
+        }
+        .weekly-pack--comic .comic-balloon--prob .comic-balloon-label {
+          background: #b45309;
+          color: #fff;
+        }
+        .weekly-pack--comic .comic-balloon p {
+          margin: 0;
+          font-size: 0.92rem;
+          line-height: 1.35;
+          font-weight: 600;
+        }
+        .weekly-pack--comic .comic-miss-copy {
+          font-weight: 700;
+          color: #444 !important;
+          font-style: italic;
+        }
+        .weekly-pack--comic .day-media-frame {
+          border: 3px solid #0a0a0a;
+          border-radius: 0;
+          background: #111;
+          min-height: 11rem;
+          overflow: hidden;
+        }
+        .weekly-pack--comic .day-media-img {
+          border-radius: 0;
+          max-height: 22rem;
+        }
+        .weekly-pack--comic .comic-panel-tag {
+          position: absolute;
+          top: 0.4rem;
+          left: 0.4rem;
+          z-index: 2;
+          padding: 0.15rem 0.4rem;
+          background: var(--comic-yellow);
+          color: #0a0a0a;
+          border: 2px solid #0a0a0a;
+          font-family: "Russo One", Impact, "Arial Black", sans-serif;
+          font-size: 0.65rem;
+          letter-spacing: 0.06em;
+          text-transform: uppercase;
+        }
+        .weekly-pack--comic .day-media-caption {
+          font-family: "Russo One", Impact, "Arial Black", sans-serif;
+          font-size: 0.7rem;
+          letter-spacing: 0.05em;
+          color: #0a0a0a;
+          text-transform: uppercase;
+        }
+        .weekly-pack--comic .day-media-nav {
+          border-radius: 0;
+          border: 2px solid #0a0a0a;
+          background: var(--comic-yellow);
+        }
+
         @media print {
           .weekly-pack .no-print { display: none !important; }
           .weekly-pack { padding: 0; }
@@ -434,6 +772,29 @@ export default function WeeklyPackPage() {
           }
           .weekly-pack .day-media-img {
             max-height: 14rem;
+          }
+          .weekly-pack--comic {
+            background: #fff6d8 !important;
+            background-image:
+              radial-gradient(circle at 1px 1px, rgba(10, 10, 10, 0.12) 1px, transparent 0) !important;
+            background-size: 6px 6px !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+          }
+          .weekly-pack--comic::before { display: none; }
+          .weekly-pack--comic .comic-poster {
+            box-shadow: none;
+            break-after: avoid;
+          }
+          .weekly-pack--comic .day {
+            box-shadow: none;
+            break-inside: avoid;
+          }
+          .weekly-pack--comic .day-media-img {
+            max-height: 12.5rem;
+          }
+          .weekly-pack--comic .object-block + .object-block {
+            border-top: none;
           }
         }
       `}</style>
@@ -461,6 +822,22 @@ export default function WeeklyPackPage() {
         >
           Нед. →
         </button>
+        <div className="style-toggle" role="group" aria-label="Стиль пакета">
+          <button
+            type="button"
+            className={packStyle === 'normal' ? 'is-active' : undefined}
+            onClick={() => patchParams('normal')}
+          >
+            Обычный
+          </button>
+          <button
+            type="button"
+            className={packStyle === 'comic' ? 'is-active' : undefined}
+            onClick={() => patchParams('comic')}
+          >
+            Комикс (Back to the Future)
+          </button>
+        </div>
         <button
           type="button"
           className="rounded-md bg-emerald-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-emerald-700"
@@ -471,7 +848,16 @@ export default function WeeklyPackPage() {
         </button>
       </div>
 
-      <h1>{title}</h1>
+      {packStyle === 'comic' ? (
+        <header className="comic-poster">
+          <p className="comic-poster-kicker">СамоСтрой · Пакет клиенту · Глава недели</p>
+          <h1 className="comic-poster-title">{comicChapter.place}</h1>
+          <p className="comic-poster-week">{comicChapter.week || 'Неделя'}</p>
+        </header>
+      ) : (
+        <h1 className="pack-title-normal">{title}</h1>
+      )}
+
       {pack && (
         <p className="meta">
           Клиент: <strong>{pack.clientName || '—'}</strong>
@@ -488,6 +874,7 @@ export default function WeeklyPackPage() {
           {pack.objects.reduce((s, o) => s + o.days.length, 0)}
           {' · '}
           Медиа: {pack.mediaTotal}
+          {packStyle === 'comic' ? ' · режим: комикс' : null}
         </p>
       )}
 
@@ -496,7 +883,12 @@ export default function WeeklyPackPage() {
 
       {pack &&
         pack.objects.map((section) => (
-          <ObjectBlock key={section.objectId} section={section} showHeading={multi} />
+          <ObjectBlock
+            key={section.objectId}
+            section={section}
+            showHeading={multi}
+            packStyle={packStyle}
+          />
         ))}
     </div>
   )
