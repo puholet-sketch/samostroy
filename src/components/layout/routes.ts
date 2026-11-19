@@ -41,6 +41,7 @@ export function routeTitle(pathname: string): string {
     return rel?.title ?? 'Обновления'
   }
   if (pathname.startsWith('/control/report/')) return 'Отчёт по объекту'
+  if (pathname === '/documents') return 'Документы'
   if (pathname.startsWith('/documents/')) {
     if (pathname.includes('/design')) return 'Договор дизайна'
     if (pathname.includes('/repair')) return 'Договор ремонта'

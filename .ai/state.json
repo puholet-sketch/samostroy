@@ -2,15 +2,14 @@
   "v": 4,
   "updated": "2026-11-19",
   "status": "active",
-  "goal": "Design returnTo + contracts PDF → 2026-11-19-b",
-  "next": "Idle — 2026-11-19-b live (index-CoE6EzLC.js)",
+  "goal": "Docs hub header cleanup → 2026-11-19-d",
+  "next": "Idle — deploying 2026-11-19-d",
   "blockers": [
     "Free LHR hostname rotates — may need redeploy after tunnel restart"
   ],
   "hot_files": [
-    "src/components/documents/DesignWizardPage.tsx",
-    "src/lib/docPdf.ts",
-    "src/lib/generateDocs.ts",
+    "src/components/documents/DocumentsHub.tsx",
+    "src/components/layout/routes.ts",
     "data/changelog.json"
   ]
 }

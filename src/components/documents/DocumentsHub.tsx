@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { usePageHeaderActions } from '../../contexts/PageHeaderContext'
 import {
   kindLabel,
   listIssuedDocs,
-  peekContractCounter,
   statusLabel,
   type IssuedDocKind,
 } from '../../lib/docRegistry'
@@ -44,6 +44,19 @@ export default function DocumentsHub() {
     document.title = 'Документы — СамоСтрой'
   }, [])
 
+  const headerBtn = useMemo(
+    () => (
+      <Link
+        to="/documents/registry"
+        className="inline-flex items-center justify-center rounded-md border border-gray-200 bg-white px-3 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-50 sm:px-4"
+      >
+        Реестры →
+      </Link>
+    ),
+    [],
+  )
+  usePageHeaderActions(headerBtn)
+
   const recent = useMemo(() => {
     void tick
     return listIssuedDocs().slice(0, 8)
@@ -54,23 +67,6 @@ export default function DocumentsHub() {
 
   return (
     <div className="-mx-1 space-y-4 pb-16">
-      <div className="flex flex-wrap items-end justify-between gap-2">
-        <div>
-          <h1 className="text-xl font-semibold text-gray-900">Документы</h1>
-          <p className="mt-0.5 text-sm text-gray-500">
-            Выберите тип · сквозной № договоров сейчас:{' '}
-            <span className="font-medium text-gray-800">{peekContractCounter()}</span>
-          </p>
-        </div>
-        <Link
-          to="/documents/registry"
-          className="rounded-md border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-blue-700 hover:bg-blue-50"
-          onClick={() => setTick((t) => t + 1)}
-        >
-          Реестры →
-        </Link>
-      </div>
-
       <div className="grid gap-3 sm:grid-cols-2">
         {TILES.map((t) =>
           t.soon ? (
