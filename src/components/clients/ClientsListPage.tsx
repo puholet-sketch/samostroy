@@ -110,12 +110,21 @@ export default function ClientsListPage() {
   return (
     <div className="space-y-4">
       <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm sm:p-5">
-        <div className="mb-3 flex flex-wrap items-center gap-2">
+        <form
+          className="mb-3 flex flex-wrap items-center gap-2"
+          onSubmit={(e) => {
+            e.preventDefault()
+            // Enter / «Найти»: зафиксировать trim; список уже фильтруется live по onChange.
+            setQName((v) => v.trim())
+            setQPhone((v) => v.trim())
+          }}
+        >
           <input
             className={`${filterCls} w-36 min-w-0 shrink sm:w-44`}
             placeholder="ФИО"
             value={qName}
             onChange={(e) => setQName(e.target.value)}
+            autoComplete="off"
           />
           <input
             className={`${filterCls} w-32 min-w-0 shrink tabular-nums sm:w-40`}
@@ -123,6 +132,7 @@ export default function ClientsListPage() {
             inputMode="tel"
             value={qPhone}
             onChange={(e) => setQPhone(e.target.value)}
+            autoComplete="off"
           />
           <select
             className={`${filterCls} min-w-0 flex-1 sm:max-w-xs`}
@@ -144,7 +154,13 @@ export default function ClientsListPage() {
             />
             Объект в работе
           </label>
-        </div>
+          <button
+            type="submit"
+            className="inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-800 shadow-sm hover:bg-gray-50"
+          >
+            Найти
+          </button>
+        </form>
         <div className="overflow-x-auto rounded-md border border-gray-200">
           <table className="min-w-full divide-y divide-gray-200 text-sm">
             <thead className="bg-gray-50 text-left text-xs uppercase text-gray-500">

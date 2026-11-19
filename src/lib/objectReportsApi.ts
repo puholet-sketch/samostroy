@@ -59,7 +59,7 @@ export async function postObjectReportRemote(
     method: 'POST',
     headers: headers(cfg.token, { 'Content-Type': 'application/json' }),
     body: JSON.stringify(report),
-    timeoutMs: 15_000,
+    timeoutMs: 25_000,
   })
   if (!res.ok) {
     const text = await res.text().catch(() => '')

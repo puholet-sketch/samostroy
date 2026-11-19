@@ -257,7 +257,13 @@ export function matchClientFilters(
   const phoneQ = (filters.phone ?? '').replace(/\D/g, '')
   const channelQ = (filters.channel ?? '').trim().toLowerCase()
 
-  if (nameQ && !c.name.toLowerCase().includes(nameQ)) return false
+  if (nameQ) {
+    const hay = [c.name, c.lico, c.podpisant, c.city, c.manager, c.tag]
+      .filter(Boolean)
+      .join(' ')
+      .toLowerCase()
+    if (!hay.includes(nameQ)) return false
+  }
 
   if (phoneQ) {
     const ok =

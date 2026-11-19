@@ -171,6 +171,8 @@ function ObjectCalendarCard({
   onReportDate,
   tick,
   onBump,
+  packFrom,
+  packTo,
 }: {
   client: ClientCard
   object: ClientObject
@@ -181,6 +183,9 @@ function ObjectCalendarCard({
   onReportDate: (date: string) => void
   tick: number
   onBump: () => void
+  /** Период С/По с панели Контроля — не подменять «сегодняшней» неделей. */
+  packFrom?: string
+  packTo?: string
 }) {
   const navigate = useNavigate()
   const [copied, setCopied] = useState(false)
@@ -256,7 +261,14 @@ function ObjectCalendarCard({
   }
 
   function openWeeklyPack() {
-    const { from, to } = fullWeekSatFri()
+    // Период с Контроля (С/По); иначе текущая неделя сб→пт.
+    let from = packFrom || fullWeekSatFri().from
+    let to = packTo || fullWeekSatFri().to
+    if (from > to) {
+      const t = from
+      from = to
+      to = t
+    }
     // Пакет на клиента: все inWork-адреса; objectId — якорь URL / fallback.
     const qs = new URLSearchParams({
       clientId: client.id,
@@ -455,7 +467,18 @@ export default function ObjectControlPage() {
 
   function openWeeklyPack() {
     if (!clientId) return
-    const { from, to } = fullWeekSatFri()
+    // Берём выбранный период С/По (как у «Сводки»), а не currentWeekSatFri()/сегодня.
+    let from = periodFrom
+    let to = periodTo
+    if (!from || !to) {
+      const week = fullWeekSatFri()
+      from = week.from
+      to = week.to
+    } else if (from > to) {
+      const t = from
+      from = to
+      to = t
+    }
     const qs = new URLSearchParams({ clientId, from, to })
     if (objectId) qs.set('objectId', objectId)
     navigate(`/control/weekly-pack?${qs.toString()}`)
@@ -516,13 +539,13 @@ export default function ObjectControlPage() {
               className="inline-flex h-[34px] items-center rounded-md border border-indigo-300 bg-indigo-50 px-3 text-sm font-medium text-indigo-900 shadow-sm hover:bg-indigo-100 disabled:cursor-not-allowed disabled:opacity-50"
               title={!clientId ? 'Сначала выберите клиента' : undefined}
             >
-              Пакет клиенту (сб→пт)
+              Пакет клиенту
             </button>
           </div>
           <p className="mt-1 text-[11px] text-gray-500">
-            Сводный — период × все адреса с флагом «в работе» (не только выбранный клиент). «Пакет
-            клиенту» — неделя сб→пт по всем объектам «в работе» выбранного клиента (один отчёт).
-            Печать/PDF — на странице отчёта. KPI — в шапке.
+            Сводный и «Пакет клиенту» берут период С→По выше (не «сегодняшнюю» неделю и не год
+            календаря). Пакет — по объектам «в работе» выбранного клиента. Печать/PDF — на
+            странице отчёта. KPI — в шапке.
           </p>
         </div>
       )}
@@ -534,12 +557,20 @@ export default function ObjectControlPage() {
             {filteredClients.length} / {inWorkClients.length}
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-1.5">
+        <form
+          className="flex flex-wrap items-center gap-1.5"
+          onSubmit={(e) => {
+            e.preventDefault()
+            setQName((v) => v.trim())
+            setQPhone((v) => v.trim())
+          }}
+        >
           <input
             className={`${inputCls} w-36 min-w-0 shrink sm:w-44`}
             placeholder="ФИО"
             value={qName}
             onChange={(e) => setQName(e.target.value)}
+            autoComplete="off"
           />
           <input
             className={`${inputCls} w-32 min-w-0 shrink tabular-nums sm:w-40`}
@@ -547,6 +578,7 @@ export default function ObjectControlPage() {
             inputMode="tel"
             value={qPhone}
             onChange={(e) => setQPhone(e.target.value)}
+            autoComplete="off"
           />
           <select
             className={`${inputCls} min-w-0 flex-1 sm:max-w-xs`}
@@ -560,7 +592,13 @@ export default function ObjectControlPage() {
               </option>
             ))}
           </select>
-        </div>
+          <button
+            type="submit"
+            className="inline-flex h-[34px] items-center rounded-md border border-gray-300 bg-white px-3 text-sm font-medium text-gray-800 shadow-sm hover:bg-gray-50"
+          >
+            Найти
+          </button>
+        </form>
         <div className="mt-1.5 max-h-52 overflow-y-auto rounded-md border border-gray-200">
           {filteredClients.length === 0 ? (
             <p className="px-2 py-2 text-xs text-gray-500">
@@ -674,6 +712,8 @@ export default function ObjectControlPage() {
                 onReportDate={setReportDate}
                 tick={tick}
                 onBump={bump}
+                packFrom={periodFrom}
+                packTo={periodTo}
               />
             ))
           )}
