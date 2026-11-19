@@ -1,16 +1,16 @@
 {
   "v": 4,
-  "updated": "2026-11-10",
+  "updated": "2026-11-19",
   "status": "active",
-  "goal": "Lenovo API via public HTTPS for GitHub Pages",
-  "next": "Monitor LHR hostname; if 502 again restart samostroy-lhr and redeploy Pages",
+  "goal": "Design returnTo + contracts PDF → 2026-11-19-b",
+  "next": "Idle — 2026-11-19-b live (index-CoE6EzLC.js)",
   "blockers": [
-    "No DNS zone — named tunnel has no stable public hostname"
+    "Free LHR hostname rotates — may need redeploy after tunnel restart"
   ],
   "hot_files": [
-    ".env.production",
-    "docs/modules/lenovo-server.md",
-    "data/changelog.json",
-    "deploy/server/install-localhost-run-systemd.sh"
+    "src/components/documents/DesignWizardPage.tsx",
+    "src/lib/docPdf.ts",
+    "src/lib/generateDocs.ts",
+    "data/changelog.json"
   ]
 }
