@@ -2,14 +2,14 @@
   "v": 4,
   "updated": "2026-11-19",
   "status": "active",
-  "goal": "Clients list viewport-fit table → 2026-11-19-e",
-  "next": "Deploy 2026-11-19-e to master + gh-pages",
+  "goal": "Docs hub header + recent fill → 2026-11-19-d",
+  "next": "Idle — deploying 2026-11-19-d",
   "blockers": [
     "Free LHR hostname rotates — may need redeploy after tunnel restart"
   ],
   "hot_files": [
-    "src/components/clients/ClientsListPage.tsx",
-    "data/changelog.json",
-    "src/lib/buildStamp.ts"
+    "src/components/documents/DocumentsHub.tsx",
+    "src/components/layout/routes.ts",
+    "data/changelog.json"
   ]
 }
