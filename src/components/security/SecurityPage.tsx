@@ -3,6 +3,11 @@ import { api } from '../../services/api'
 import { useAuth } from '../../contexts/AuthContext'
 import { runDeadlineNotify, SPRINT_NOTIFY_PHONE } from '../../lib/deadlineNotify'
 import {
+  clearErrorLog,
+  loadErrorLog,
+  type ErrorLogEntry,
+} from '../../lib/errorLog'
+import {
   DEFAULT_FEEDBACK_EMAIL_TO,
   loadFeedbackApiConfig,
   loadFeedbackEmailConfig,
@@ -234,6 +239,7 @@ export default function SecurityPage() {
           <DeadlineNotifyPanel />
           <FeedbackApiSettings />
           <FeedbackEmailSettings />
+          <ErrorLogPanel />
         </div>
       )}
 
@@ -484,6 +490,66 @@ function DeadlineNotifyPanel() {
       {log && (
         <pre className="mt-2 max-h-48 overflow-auto whitespace-pre-wrap rounded-md bg-gray-50 p-2 text-[11px] text-gray-700">
           {log}
+        </pre>
+      )}
+    </Panel>
+  )
+}
+
+function ErrorLogPanel() {
+  const [entries, setEntries] = useState<ErrorLogEntry[]>([])
+
+  function reload() {
+    setEntries(loadErrorLog())
+  }
+
+  useEffect(() => {
+    reload()
+  }, [])
+
+  return (
+    <Panel title="Журнал ошибок API (это устройство)">
+      <p className="mb-2 text-[11px] text-gray-500">
+        Кольцевой буфер в localStorage (`samostroy:error_log`) — fetch fail, таймаут, 4xx/5xx,
+        fallback отчёта в локальное хранилище. Без Sentry.
+      </p>
+      <div className="mb-2 flex flex-wrap gap-2">
+        <button
+          type="button"
+          onClick={reload}
+          className="rounded-md border border-gray-300 bg-white px-2.5 py-1 text-xs font-medium text-gray-800 hover:bg-gray-50"
+        >
+          Обновить
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            clearErrorLog()
+            reload()
+          }}
+          className="rounded-md border border-gray-300 bg-white px-2.5 py-1 text-xs font-medium text-gray-800 hover:bg-gray-50"
+        >
+          Очистить
+        </button>
+      </div>
+      {entries.length === 0 ? (
+        <p className="text-sm text-gray-500">Пока пусто</p>
+      ) : (
+        <pre className="max-h-56 overflow-auto whitespace-pre-wrap rounded-md bg-gray-50 p-2 text-[11px] text-gray-800">
+          {entries
+            .map((e) => {
+              const bits = [
+                e.at,
+                e.kind,
+                e.message,
+                e.status != null ? `status=${e.status}` : '',
+                e.url ? `url=${e.url}` : '',
+                e.route ? `route=${e.route}` : '',
+                e.detail || '',
+              ].filter(Boolean)
+              return bits.join(' · ')
+            })
+            .join('\n')}
         </pre>
       )}
     </Panel>

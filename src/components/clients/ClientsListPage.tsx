@@ -174,7 +174,7 @@ export default function ClientsListPage() {
               value={qChannel}
               onChange={(e) => setQChannel(e.target.value)}
             >
-              <option value="">Канал продаж — все</option>
+              <option value="">Канал</option>
               {CHANNEL_OPTIONS.map((ch) => (
                 <option key={ch} value={ch}>
                   {ch}

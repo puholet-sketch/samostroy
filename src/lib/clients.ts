@@ -1,4 +1,5 @@
 import seedPublic from '../../data/clients_public.json'
+import { logFetchFailure } from './errorLog'
 import { phoneDigitsMatch } from './phoneActions'
 
 export type ClientPersonType = 'fiz' | 'ur'
@@ -364,8 +365,12 @@ export async function hydrateLocalCrmIfEmpty(): Promise<boolean> {
     if (existing && existing.length > 0) return false
 
     const base = import.meta.env.BASE_URL.replace(/\/$/, '')
-    const res = await fetch(`${base}/api/local-crm-seed`)
-    if (!res.ok) return false
+    const url = `${base}/api/local-crm-seed`
+    const res = await fetch(url)
+    if (!res.ok) {
+      logFetchFailure({ kind: 'clients-crm-seed', url, status: res.status })
+      return false
+    }
     const data = (await res.json()) as Partial<ClientCard>[]
     if (!Array.isArray(data) || data.length === 0) {
       // CRM недоступен — положим публичный сид, чтобы экран не был пустым
@@ -384,7 +389,12 @@ export async function hydrateLocalCrmIfEmpty(): Promise<boolean> {
     )
     saveClients(normalized)
     return true
-  } catch {
+  } catch (e) {
+    logFetchFailure({
+      kind: 'clients-crm-seed',
+      url: '/api/local-crm-seed',
+      error: e,
+    })
     if (SEED.length > 0) {
       saveClients(SEED)
       return true

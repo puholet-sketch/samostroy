@@ -3,6 +3,7 @@
  */
 
 import { getMediaBlob, putMediaBlob } from './mediaStore'
+import { appendErrorLog } from './errorLog'
 import {
   fetchControlLinkRemote,
   fetchObjectReportsRemote,
@@ -162,7 +163,11 @@ export function getOrCreateControlLink(opts: {
 function syncControlLinkRemote(link: ControlLink) {
   if (!isObjectReportsApiConfigured()) return
   return postControlLinkRemote(link).catch((e) => {
-    console.warn('control-link sync failed', e)
+    appendErrorLog({
+      kind: 'control-link-sync',
+      message: e instanceof Error ? e.message : 'sync error',
+      detail: `token=${link.token}`,
+    })
   })
 }
 
@@ -271,7 +276,11 @@ export async function hydrateReportsForToken(token: string): Promise<ObjectDaily
     void hydrateMediaBlobs(forToken)
     return forToken
   } catch (e) {
-    console.warn('hydrate object-reports failed', e)
+    appendErrorLog({
+      kind: 'object-reports-hydrate',
+      message: e instanceof Error ? e.message : 'hydrate failed',
+      detail: `token=${token}`,
+    })
     return local
   }
 }
@@ -368,10 +377,16 @@ export async function saveDailyReportAsync(
     notifyReportsChanged(row.token)
     return { row: { ...merged, media: row.media }, synced: true }
   } catch (e) {
+    const message = e instanceof Error ? e.message : 'sync error'
+    appendErrorLog({
+      kind: 'object-report-save-local',
+      message,
+      detail: `token=${row.token};date=${row.date}`,
+    })
     return {
       row,
       synced: false,
-      error: e instanceof Error ? e.message : 'sync error',
+      error: message,
     }
   }
 }

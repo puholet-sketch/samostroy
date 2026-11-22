@@ -1,3 +1,4 @@
+import { appendErrorLog, logFetchFailure } from './errorLog'
 import { isFeedbackApiConfigured, loadFeedbackApiConfig } from './feedbackConfig'
 import { sendFeedbackEmail } from './feedbackEmail'
 import type { FeedbackItem, FeedbackStatus } from './feedbackStore'
@@ -12,13 +13,30 @@ function headers(token: string, extra?: HeadersInit): HeadersInit {
   }
 }
 
+async function feedbackFetch(
+  url: string,
+  kind: string,
+  init: RequestInit,
+): Promise<Response> {
+  try {
+    return await fetch(url, init)
+  } catch (e) {
+    logFetchFailure({ kind, url, error: e })
+    throw e
+  }
+}
+
 export async function fetchFeedbackList(): Promise<FeedbackItem[]> {
   const cfg = loadFeedbackApiConfig()
   if (!isFeedbackApiConfigured(cfg)) return []
-  const res = await fetch(`${cfg.baseUrl}/api/feedback`, {
+  const url = `${cfg.baseUrl}/api/feedback`
+  const res = await feedbackFetch(url, 'feedback-get', {
     headers: headers(cfg.token),
   })
-  if (!res.ok) throw new Error(`GET feedback ${res.status}`)
+  if (!res.ok) {
+    logFetchFailure({ kind: 'feedback-get', url, status: res.status })
+    throw new Error(`GET feedback ${res.status}`)
+  }
   const data = (await res.json()) as FeedbackItem[]
   return Array.isArray(data) ? data : []
 }
@@ -29,12 +47,16 @@ export async function patchFeedbackStatusRemote(
 ): Promise<void> {
   const cfg = loadFeedbackApiConfig()
   if (!isFeedbackApiConfigured(cfg)) return
-  const res = await fetch(`${cfg.baseUrl}/api/feedback/${encodeURIComponent(id)}`, {
+  const url = `${cfg.baseUrl}/api/feedback/${encodeURIComponent(id)}`
+  const res = await feedbackFetch(url, 'feedback-patch', {
     method: 'PATCH',
     headers: headers(cfg.token, { 'Content-Type': 'application/json' }),
     body: JSON.stringify({ status }),
   })
-  if (!res.ok) throw new Error(`PATCH feedback ${res.status}`)
+  if (!res.ok) {
+    logFetchFailure({ kind: 'feedback-patch', url, status: res.status })
+    throw new Error(`PATCH feedback ${res.status}`)
+  }
 }
 
 export async function postFeedbackRemote(
@@ -51,13 +73,20 @@ export async function postFeedbackRemote(
   fd.append('meta', JSON.stringify(meta))
   fd.append('image', imageBlob, `${item.id}.png`)
 
-  const res = await fetch(`${cfg.baseUrl}/api/feedback`, {
+  const url = `${cfg.baseUrl}/api/feedback`
+  const res = await feedbackFetch(url, 'feedback-post', {
     method: 'POST',
     headers: headers(cfg.token),
     body: fd,
   })
   if (!res.ok) {
     const text = await res.text().catch(() => '')
+    logFetchFailure({
+      kind: 'feedback-post',
+      url,
+      status: res.status,
+      bodySnippet: text.slice(0, 200),
+    })
     throw new Error(`POST feedback ${res.status}${text ? `: ${text}` : ''}`)
   }
   const data = (await res.json()) as { id?: string; tgMessageId?: number }
@@ -84,6 +113,13 @@ export async function submitFeedbackWithSync(
   } catch (e) {
     const msg = e instanceof Error ? e.message : 'sync error'
     const cfgOk = isFeedbackApiConfigured()
+    if (cfgOk) {
+      appendErrorLog({
+        kind: 'feedback-sync-fallback',
+        message: msg,
+        detail: `feedbackId=${next.id}`,
+      })
+    }
     next = {
       ...next,
       syncStatus: cfgOk ? 'error' : 'local',

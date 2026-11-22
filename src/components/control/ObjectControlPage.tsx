@@ -624,7 +624,7 @@ export default function ObjectControlPage() {
               value={qChannel}
               onChange={(e) => setQChannel(e.target.value)}
             >
-              <option value="">Канал — все</option>
+              <option value="">Канал</option>
               {CHANNEL_OPTIONS.map((ch) => (
                 <option key={ch} value={ch}>
                   {ch}
