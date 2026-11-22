@@ -3,13 +3,13 @@
   "updated": "2026-11-22",
   "status": "active",
   "goal": "Lenovo API via public HTTPS for GitHub Pages",
-  "next": "Confirm CDN index-CM69HdHd.js; watch LHR rotation",
+  "next": "Named CF tunnel+DNS for stable URL (avoid LHR rotate redeploys)",
   "blockers": [],
   "hot_files": [
-    "src/lib/errorLog.ts",
-    "src/lib/objectReportsApi.ts",
     ".env.production",
+    "src/lib/buildStamp.ts",
     "data/changelog.json",
-    "src/lib/buildStamp.ts"
+    "deploy/server/watchdog-samostroy.sh",
+    "docs/modules/lenovo-server.md"
   ]
 }

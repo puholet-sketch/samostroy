@@ -1,5 +1,37 @@
 [
   {
+    "id": "2026-11-22-c",
+    "at": "2026-11-22T15:13:00+03:00",
+    "title": "LHR после watchdog",
+    "items": [
+      {
+        "section": "API",
+        "text": "Pages → живой LHR https://1315e26a88aa83.app.lhr.life (/health 200); старый cc287da7947296.app.lhr.life давал 502"
+      },
+      {
+        "section": "Сборка",
+        "text": "VITE_FEEDBACK_API_URL и BUILD_STAMP 2026-11-22 · lhr 1315e26a"
+      }
+    ],
+    "docs": [
+      {
+        "label": "Релиз 2026-11-22-c",
+        "href": "/updates/2026-11-22-c",
+        "kind": "app"
+      },
+      {
+        "label": "Сервер Lenovo",
+        "href": "docs/modules/lenovo-server.md",
+        "kind": "repo"
+      },
+      {
+        "label": "Модуль обновлений",
+        "href": "docs/modules/updates.md",
+        "kind": "repo"
+      }
+    ]
+  },
+  {
     "id": "2026-11-22-b",
     "at": "2026-11-22T12:40:00+03:00",
     "title": "Канал, LHR API, журнал ошибок",
