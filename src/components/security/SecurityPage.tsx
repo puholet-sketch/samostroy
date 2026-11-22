@@ -610,8 +610,10 @@ function FeedbackApiSettings() {
           {saved && <span className="text-xs text-emerald-700">{saved}</span>}
         </div>
         <p className="text-[11px] text-gray-400 sm:col-span-2">
-          См. docs/modules/feedback.md и bots/feedback-bot/README.md. Без API замечания
-          остаются локально в браузере заказчика — для GitHub Pages настройте email ниже.
+          Приоритет Base URL: это поле (если сохранено) → runtime{' '}
+          <code className="text-[10px]">api-config.json</code> на Pages → сборка{' '}
+          <code className="text-[10px]">VITE_FEEDBACK_API_URL</code>. См. docs/modules/feedback.md.
+          Без API замечания остаются локально — для GitHub Pages настройте email ниже.
         </p>
       </form>
     </Panel>

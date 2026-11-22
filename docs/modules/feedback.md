@@ -54,7 +54,7 @@
 
 ## API (один REST: Docker / Termux / cloud)
 
-База: `VITE_FEEDBACK_API_URL` или настройка в Безопасности (`samostroy:feedback_api`).
+База (приоритет): Безопасность / localStorage → runtime `api-config.json` на Pages → bake `VITE_FEEDBACK_API_URL` (`samostroy:feedback_api`).
 
 Заголовок: `X-Feedback-Token`.
 

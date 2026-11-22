@@ -20,29 +20,69 @@ export type FeedbackEmailConfig = {
   emailTo: string
 }
 
-export function loadFeedbackApiConfig(): FeedbackApiConfig {
-  // VITE_API_URL — alias для local pro-stack (тот же REST: feedback + object reports)
-  const fromEnvUrl =
+/** Runtime base from public/api-config.json (set by bootstrapRuntimeApiConfig). */
+let runtimeApiBase = ''
+
+function bakedEnvApiUrl(): string {
+  return (
     (import.meta.env.VITE_FEEDBACK_API_URL as string | undefined)?.trim() ||
     (import.meta.env.VITE_API_URL as string | undefined)?.trim() ||
     ''
-  const fromEnvToken =
+  )
+}
+
+function bakedEnvApiToken(): string {
+  return (
     (import.meta.env.VITE_FEEDBACK_API_TOKEN as string | undefined)?.trim() ||
     (import.meta.env.VITE_API_TOKEN as string | undefined)?.trim() ||
     ''
+  )
+}
+
+/**
+ * Fetch `${BASE_URL}api-config.json` (no-cache) so Pages can pick up a new tunnel
+ * hostname without a full Vite rebuild. CRM Settings Base URL still wins if set.
+ */
+export async function bootstrapRuntimeApiConfig(): Promise<void> {
+  try {
+    const base = import.meta.env.BASE_URL || '/'
+    const url = `${base}api-config.json`
+    const res = await fetch(url, {
+      cache: 'no-store',
+      headers: { Accept: 'application/json', 'Cache-Control': 'no-cache' },
+    })
+    if (!res.ok) return
+    const data = (await res.json()) as { apiBase?: unknown }
+    const apiBase = typeof data.apiBase === 'string' ? data.apiBase.trim().replace(/\/$/, '') : ''
+    if (apiBase) runtimeApiBase = apiBase
+  } catch {
+    /* keep baked env */
+  }
+}
+
+export function getRuntimeApiBase(): string {
+  return runtimeApiBase
+}
+
+export function loadFeedbackApiConfig(): FeedbackApiConfig {
+  // Priority: CRM localStorage override → runtime api-config.json → VITE_* bake
+  const fromEnvUrl = bakedEnvApiUrl()
+  const fromEnvToken = bakedEnvApiToken()
+  const defaultUrl = (runtimeApiBase || fromEnvUrl).replace(/\/$/, '')
   try {
     const raw = localStorage.getItem(API_KEY)
     if (raw) {
       const parsed = JSON.parse(raw) as Partial<FeedbackApiConfig>
+      const lsUrl = typeof parsed.baseUrl === 'string' ? parsed.baseUrl.trim() : ''
       return {
-        baseUrl: (parsed.baseUrl || fromEnvUrl).replace(/\/$/, ''),
+        baseUrl: (lsUrl || defaultUrl).replace(/\/$/, ''),
         token: parsed.token || fromEnvToken,
       }
     }
   } catch {
     /* ignore */
   }
-  return { baseUrl: fromEnvUrl.replace(/\/$/, ''), token: fromEnvToken }
+  return { baseUrl: defaultUrl, token: fromEnvToken }
 }
 
 export function saveFeedbackApiConfig(cfg: FeedbackApiConfig): void {

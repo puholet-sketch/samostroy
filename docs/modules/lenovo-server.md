@@ -1,7 +1,7 @@
 # Сервер СамоСтрой (Lenovo V15-IIL)
 
 Постоянный бэкенд домашнего сервера: **Postgres + API (+ Telegram notify)** в Docker.  
-Фронт — лёгкая статика на **GitHub Pages**; браузер ходит в API через **ngrok**.
+Фронт — лёгкая статика на **GitHub Pages**; браузер ходит в API через публичный HTTPS-туннель (сейчас **localhost.run**, целевой — **named Cloudflare + DNS**).
 
 | | |
 |---|---|
@@ -11,16 +11,19 @@
 | API | `http://127.0.0.1:8787` · с LAN `http://192.168.1.39:8787` |
 | Health | `GET /health` → `{"ok":true,"store":"postgres",…}` |
 | Postgres | только с хоста `127.0.0.1:5433` → контейнер `:5432` |
-| Туннель | systemd user: `samostroy-tunnel` (**cloudflared**). ngrok с IP РФ → `ERR_NGROK_9040`, не использовать |
+| Туннель | `samostroy-lhr` (localhost.run) + named `samostroy-tunnel` (cloudflared, без публичного DNS пока). ngrok с IP РФ → `ERR_NGROK_9040` |
+| Runtime API URL | `public/api-config.json` на Pages (`{ "apiBase": "https://…" }`) |
 | UI | https://puholet-sketch.github.io/samostroy/ |
 
 ## Архитектура
 
 ```text
 [GitHub Pages — React/Vite]
-        │  HTTPS (VITE_FEEDBACK_API_URL)
+        │  1) fetch /samostroy/api-config.json (no-cache)
+        │  2) fallback VITE_FEEDBACK_API_URL
+        │  3) CRM Settings Base URL override (localStorage) wins
         ▼
-[ngrok] ──► [Lenovo :8787 api] ──► [Postgres volume]
+[LHR / CF hostname] ──► [Lenovo :8787 api] ──► [Postgres volume]
                  │
                  └── Telegram notify (если TELEGRAM_* в .env)
 ```
@@ -41,6 +44,45 @@
 
 Скрипты: `deploy/server/`.
 
+## Watchdog (host-side, не Pages)
+
+Браузер/GitHub Pages **не** держат цепочку: вкладка открыта только иногда, статика не может чинить Docker или туннель. Поэтому health-check крутится **на Lenovo** (systemd user timer).
+
+| | |
+|---|---|
+| Скрипт | `deploy/server/watchdog-samostroy.sh` |
+| Установка | `bash deploy/server/install-watchdog-systemd.sh` |
+| Timer | `samostroy-watchdog.timer` — каждые **5 мин** (+ 2 мин после boot) |
+| Service | `samostroy-watchdog.service` (oneshot) |
+| Лог | `~/samostroy-watchdog.log` (truncate ~512 KiB) |
+| Текущий public URL | `~/.config/samostroy/public_api_url` |
+| Publish Pages URL | `deploy/server/publish-api-config.sh` → `repository_dispatch` `samostroy_api_url` |
+| Token (опц.) | `~/.config/samostroy/github.env` → `GITHUB_TOKEN=` (scope `repo` + `workflow`) |
+| ASUS sync | `deploy/sync-api-config.ps1` (SSH → Lenovo URL → gh-pages `api-config.json`) |
+
+Что чинит:
+
+1. Docker: контейнеры `samostroy-api` / healthy `samostroy-postgres` + `curl -sf localhost:8787/health` → иначе `docker compose up -d` в `~/samostroy`.
+2. Публичный LHR: читает URL из state-файла / `journalctl --user -u samostroy-lhr`; `curl …/health`; при fail → `systemctl --user restart samostroy-lhr`, пишет новый `*.lhr.life` в state-файл.
+3. При смене hostname: `publish-api-config.sh` (если есть `GITHUB_TOKEN`) → GitHub Action обновляет **только** `api-config.json` на `gh-pages` **без** Vite rebuild. Иначе: с ASUS `pwsh deploy/sync-api-config.ps1`.
+4. Если в `~/samostroy/.env` заданы `TELEGRAM_*` — алерт при смене hostname.
+
+```bash
+systemctl --user status samostroy-watchdog.timer
+systemctl --user start samostroy-watchdog.service   # ручной прогон
+tail -n 50 ~/samostroy-watchdog.log
+cat ~/.config/samostroy/public_api_url
+bash ~/samostroy/deploy/server/publish-api-config.sh   # ручной push URL → Pages
+```
+
+**Как CRM берёт API URL (приоритет):**
+
+1. CRM → Безопасность → Base URL (localStorage), если задан.
+2. Runtime `GET ${BASE_URL}api-config.json` (`apiBase`, cache: no-store) — watchdog/ASUS обновляют при ротации LHR.
+3. Fallback bake: `VITE_FEEDBACK_API_URL` из сборки.
+
+Полный redeploy Pages для **смены URL больше не обязателен**. Рекомендуется по-прежнему: **named Cloudflare tunnel + DNS** (`api.<домен>` → CF tunnel) — один стабильный hostname, без ротации LHR. На аккаунте уже есть healthy named tunnel `samostroy`, но **без зоны DNS** публичного hostname нет.
+
 ## Повседневные команды (на Lenovo)
 
 ```bash
@@ -48,17 +90,17 @@ cd ~/samostroy
 docker compose ps
 curl -s http://127.0.0.1:8787/health
 
-systemctl --user status samostroy-tunnel
-journalctl --user -u samostroy-tunnel -n 30 --no-pager
+systemctl --user status samostroy-lhr
+journalctl --user -u samostroy-lhr -n 30 --no-pager
+systemctl --user status samostroy-watchdog.timer
 ```
 
 Рестарт стека:
 
 ```bash
 cd ~/samostroy && docker compose up -d --build
-systemctl --user restart samostroy-tunnel
+systemctl --user restart samostroy-lhr
 ```
-
 ## Секреты (не в git)
 
 | Файл | Назначение |
@@ -84,7 +126,7 @@ systemctl --user restart samostroy-tunnel
 
 **Временно без домена:**
 - `samostroy-quick.service` (trycloudflare.com) — с этой сети часто **1033**; router DNS (`192.168.1.1`) часто не резолвит новые `*.trycloudflare.com` (нужны `1.1.1.1`/`8.8.8.8`).
-- Fallback: `samostroy-lhr.service` (`deploy/server/install-localhost-run-systemd.sh`) → `*.lhr.life`. URL в `journalctl --user -u samostroy-lhr` — при рестарте меняется; обновить `.env.production` и пересобрать Pages.
+- Fallback: `samostroy-lhr.service` (`deploy/server/install-localhost-run-systemd.sh`) → `*.lhr.life`. URL в `journalctl --user -u samostroy-lhr` / `~/.config/samostroy/public_api_url` — при рестарте меняется; watchdog пишет state и (с токеном) пушит `api-config.json`. AdGuard DNS на домашнем Wi‑Fi может травить `*.lhr.life` — whitelist / `1.1.1.1` / мобильный интернет.
 
 ```bash
 # переустановка named unit
@@ -93,7 +135,13 @@ bash deploy/server/install-cloudflared-systemd.sh
 bash deploy/server/install-localhost-run-systemd.sh
 ```
 
-Затем на ASUS: `.env.production` → `VITE_FEEDBACK_API_URL=https://…` → `GITHUB_PAGES=1 npm run build` → `npx gh-pages -d dist`.
+На ASUS после ротации LHR (если нет `GITHUB_TOKEN` на Lenovo):
+
+```powershell
+pwsh deploy/sync-api-config.ps1
+# полный redeploy только при смене кода UI:
+# .env.production → GITHUB_PAGES=1 npm run build → npx gh-pages -d dist
+```
 
 ## Удалённый рабочий стол (xrdp, только LAN)
 

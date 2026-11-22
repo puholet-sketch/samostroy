@@ -1,5 +1,41 @@
 [
   {
+    "id": "2026-11-22-d",
+    "at": "2026-11-22T15:25:00+03:00",
+    "title": "Runtime api-config без rebuild",
+    "items": [
+      {
+        "section": "API",
+        "text": "CRM при старте читает public/api-config.json (no-cache); приоритет: Настройки → runtime → VITE_FEEDBACK_API_URL"
+      },
+      {
+        "section": "Сервер",
+        "text": "Watchdog при ротации LHR пишет public_api_url и (с GITHUB_TOKEN) шлёт repository_dispatch → gh-pages api-config без Vite rebuild; ASUS: deploy/sync-api-config.ps1"
+      },
+      {
+        "section": "Сборка",
+        "text": "BUILD_STAMP 2026-11-22 · api-config runtime; live LHR https://1315e26a88aa83.app.lhr.life"
+      }
+    ],
+    "docs": [
+      {
+        "label": "Релиз 2026-11-22-d",
+        "href": "/updates/2026-11-22-d",
+        "kind": "app"
+      },
+      {
+        "label": "Сервер Lenovo",
+        "href": "docs/modules/lenovo-server.md",
+        "kind": "repo"
+      },
+      {
+        "label": "Модуль обновлений",
+        "href": "docs/modules/updates.md",
+        "kind": "repo"
+      }
+    ]
+  },
+  {
     "id": "2026-11-22-c",
     "at": "2026-11-22T15:13:00+03:00",
     "title": "LHR после watchdog",
