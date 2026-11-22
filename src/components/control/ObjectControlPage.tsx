@@ -19,7 +19,14 @@ import {
   type ControlLink,
 } from '../../lib/objectReports'
 import { runDeadlineNotify } from '../../lib/deadlineNotify'
-import { computeWeekReportKpi, currentWeekSatFri, fullWeekSatFri } from '../../lib/weekRange'
+import {
+  computeWeekReportKpi,
+  currentWeekSatFri,
+  fullWeekSatFri,
+  loadControlPeriod,
+  saveControlPeriod,
+  shiftWeekSatFri,
+} from '../../lib/weekRange'
 import { useAuth } from '../../contexts/AuthContext'
 import { usePageHeaderMeta } from '../../contexts/PageHeaderContext'
 import { PhoneActions } from '../ui/PhoneActions'
@@ -375,11 +382,23 @@ export default function ObjectControlPage() {
   const [viewYear, setViewYear] = useState(currentYear)
   const [reportDate, setReportDate] = useState(todayIso())
   const [tick, setTick] = useState(0)
-  const periodDefaults = currentWeekSatFri()
+  const periodDefaults = loadControlPeriod() ?? currentWeekSatFri()
   const [periodFrom, setPeriodFrom] = useState(periodDefaults.from)
   const [periodTo, setPeriodTo] = useState(periodDefaults.to)
 
   const bump = () => setTick((t) => t + 1)
+
+  useEffect(() => {
+    if (periodFrom && periodTo) saveControlPeriod(periodFrom, periodTo)
+  }, [periodFrom, periodTo])
+
+  function shiftPeriodWeek(delta: number) {
+    const base = periodFrom || currentWeekSatFri().from
+    const next = shiftWeekSatFri(base, delta)
+    const today = todayIso()
+    setPeriodFrom(next.from)
+    setPeriodTo(next.to > today ? today : next.to)
+  }
 
   const weekKpi = useMemo(() => {
     void tick
@@ -503,49 +522,68 @@ export default function ObjectControlPage() {
           <p className="mb-1 text-xs font-medium text-gray-500">
             Сводный отчёт по всем объектам «в работе»
           </p>
-          <div className="flex flex-wrap items-end gap-1.5">
-            <label className="min-w-0">
+          <div className="grid grid-cols-2 gap-1.5 sm:flex sm:flex-wrap sm:items-end">
+            <label className="min-w-0 sm:w-[9.5rem]">
               <span className="mb-0.5 block text-[10px] text-gray-500">С</span>
               <input
                 type="date"
-                className={`${inputCls} w-[9.5rem] tabular-nums`}
+                className={`${inputCls} h-[34px] tabular-nums`}
                 value={periodFrom}
                 max={todayIso()}
                 onChange={(e) => setPeriodFrom(e.target.value)}
               />
             </label>
-            <label className="min-w-0">
+            <label className="min-w-0 sm:w-[9.5rem]">
               <span className="mb-0.5 block text-[10px] text-gray-500">По</span>
               <input
                 type="date"
-                className={`${inputCls} w-[9.5rem] tabular-nums`}
+                className={`${inputCls} h-[34px] tabular-nums`}
                 value={periodTo}
                 max={todayIso()}
                 onChange={(e) => setPeriodTo(e.target.value)}
               />
             </label>
-            <button
-              type="button"
-              onClick={openPeriodReport}
-              disabled={!periodFrom || !periodTo}
-              className="inline-flex h-[34px] items-center rounded-md bg-emerald-600 px-3 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              Сводный отчёт
-            </button>
-            <button
-              type="button"
-              onClick={openWeeklyPack}
-              disabled={!clientId}
-              className="inline-flex h-[34px] items-center rounded-md border border-indigo-300 bg-indigo-50 px-3 text-sm font-medium text-indigo-900 shadow-sm hover:bg-indigo-100 disabled:cursor-not-allowed disabled:opacity-50"
-              title={!clientId ? 'Сначала выберите клиента' : undefined}
-            >
-              Пакет клиенту
-            </button>
+            <div className="col-span-2 grid grid-cols-2 gap-1.5 sm:contents">
+              <button
+                type="button"
+                onClick={() => shiftPeriodWeek(-1)}
+                className="inline-flex h-[34px] items-center justify-center rounded-md border border-gray-300 bg-white px-2 text-sm font-medium text-gray-800 shadow-sm hover:bg-gray-50 sm:w-auto"
+                title="Предыдущая неделя сб→пт"
+              >
+                ← нед.
+              </button>
+              <button
+                type="button"
+                onClick={() => shiftPeriodWeek(1)}
+                className="inline-flex h-[34px] items-center justify-center rounded-md border border-gray-300 bg-white px-2 text-sm font-medium text-gray-800 shadow-sm hover:bg-gray-50 sm:w-auto"
+                title="Следующая неделя сб→пт"
+              >
+                нед. →
+              </button>
+            </div>
+            <div className="col-span-2 grid grid-cols-2 gap-1.5 sm:contents">
+              <button
+                type="button"
+                onClick={openPeriodReport}
+                disabled={!periodFrom || !periodTo}
+                className="inline-flex h-[34px] w-full items-center justify-center rounded-md bg-emerald-600 px-3 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+              >
+                Сводный отчёт
+              </button>
+              <button
+                type="button"
+                onClick={openWeeklyPack}
+                disabled={!clientId}
+                className="inline-flex h-[34px] w-full items-center justify-center rounded-md border border-indigo-300 bg-indigo-50 px-3 text-sm font-medium text-indigo-900 shadow-sm hover:bg-indigo-100 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+                title={!clientId ? 'Сначала выберите клиента' : undefined}
+              >
+                Пакет клиенту
+              </button>
+            </div>
           </div>
           <p className="mt-1 text-[11px] text-gray-500">
-            Сводный и «Пакет клиенту» берут период С→По выше (не «сегодняшнюю» неделю и не год
-            календаря). Пакет — по объектам «в работе» выбранного клиента. Печать/PDF — на
-            странице отчёта. KPI — в шапке.
+            Период сохраняется на устройстве. Сводный и «Пакет» — С→По выше; «← нед.» /
+            «нед. →» — сб→пт (октябрь доступен сдвигами). Календарь: прошлый + текущий месяц.
           </p>
         </div>
       )}
@@ -558,7 +596,7 @@ export default function ObjectControlPage() {
           </p>
         </div>
         <form
-          className="flex flex-wrap items-center gap-1.5"
+          className="grid grid-cols-1 gap-1.5 sm:flex sm:flex-wrap sm:items-center"
           onSubmit={(e) => {
             e.preventDefault()
             setQName((v) => v.trim())
@@ -566,38 +604,40 @@ export default function ObjectControlPage() {
           }}
         >
           <input
-            className={`${inputCls} w-36 min-w-0 shrink sm:w-44`}
+            className={`${inputCls} h-[34px] sm:w-44`}
             placeholder="ФИО"
             value={qName}
             onChange={(e) => setQName(e.target.value)}
             autoComplete="off"
           />
           <input
-            className={`${inputCls} w-32 min-w-0 shrink tabular-nums sm:w-40`}
+            className={`${inputCls} h-[34px] tabular-nums sm:w-40`}
             placeholder="Телефон"
             inputMode="tel"
             value={qPhone}
             onChange={(e) => setQPhone(e.target.value)}
             autoComplete="off"
           />
-          <select
-            className={`${inputCls} min-w-0 flex-1 sm:max-w-xs`}
-            value={qChannel}
-            onChange={(e) => setQChannel(e.target.value)}
-          >
-            <option value="">Канал — все</option>
-            {CHANNEL_OPTIONS.map((ch) => (
-              <option key={ch} value={ch}>
-                {ch}
-              </option>
-            ))}
-          </select>
-          <button
-            type="submit"
-            className="inline-flex h-[34px] items-center rounded-md border border-gray-300 bg-white px-3 text-sm font-medium text-gray-800 shadow-sm hover:bg-gray-50"
-          >
-            Найти
-          </button>
+          <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-1.5 sm:contents">
+            <select
+              className={`${inputCls} h-[34px] sm:min-w-0 sm:max-w-xs sm:flex-1`}
+              value={qChannel}
+              onChange={(e) => setQChannel(e.target.value)}
+            >
+              <option value="">Канал — все</option>
+              {CHANNEL_OPTIONS.map((ch) => (
+                <option key={ch} value={ch}>
+                  {ch}
+                </option>
+              ))}
+            </select>
+            <button
+              type="submit"
+              className="inline-flex h-[34px] min-w-[5.5rem] items-center justify-center rounded-md border border-gray-300 bg-white px-3 text-sm font-medium text-gray-800 shadow-sm hover:bg-gray-50"
+            >
+              Найти
+            </button>
+          </div>
         </form>
         <div className="mt-1.5 max-h-52 overflow-y-auto rounded-md border border-gray-200">
           {filteredClients.length === 0 ? (

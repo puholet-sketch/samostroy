@@ -145,9 +145,19 @@ const publicRaw: unknown = Array.isArray(seedPublic)
     ? (seedPublic as unknown as { default: unknown }).default
     : seedPublic
 
-const SEED: ClientCard[] = (Array.isArray(publicRaw) ? publicRaw : []).map((c) =>
-  emptyClient({ ...(c as Partial<ClientCard>), id: (c as ClientCard).id || `demo-tmp` }),
-)
+function seedRawList(): ClientCard[] {
+  return (Array.isArray(publicRaw) ? publicRaw : []).map((c) =>
+    emptyClient({ ...(c as Partial<ClientCard>), id: (c as ClientCard).id || `demo-tmp` }),
+  )
+}
+
+/** Договор / активный тег → объект считаем «в работе» при миграции из address. */
+function likelyInWork(c: ClientCard): boolean {
+  const tag = (c.tag || '').toLowerCase()
+  if (tag === 'договор' || tag === 'в работе' || tag === 'ремонт') return true
+  if (c.dogovor_otdelka || c.dogovor_design) return true
+  return false
+}
 
 function ensureObjects(c: ClientCard): ClientObject[] {
   if (Array.isArray(c.objects) && c.objects.length > 0) {
@@ -172,7 +182,7 @@ function ensureObjects(c: ClientCard): ClientObject[] {
       contractNumber: c.dogovor_otdelka || c.dogovor_design || '',
       areaM2: 0,
       startDate: '',
-      inWork: false,
+      inWork: likelyInWork(c),
     },
   ]
 }
@@ -199,6 +209,29 @@ function normalizeList(list: ClientCard[]): ClientCard[] {
     }
   })
 }
+
+/**
+ * Свежий public-сид / старая миграция без inWork → Control пустой.
+ * Поднимаем флаг только для демо-карточек, если во всей базе нет ни одного inWork.
+ */
+function ensureDemoInWork(list: ClientCard[]): ClientCard[] {
+  if (list.length === 0) return list
+  if (list.some((c) => (c.objects ?? []).some((o) => o.inWork))) return list
+  const demoCount = list.filter(
+    (c) => c.id.startsWith('demo-') || (c.source || '').toLowerCase() === 'демо',
+  ).length
+  if (demoCount < Math.min(3, list.length)) return list
+  return list.map((c) => {
+    const isDemo = c.id.startsWith('demo-') || (c.source || '').toLowerCase() === 'демо'
+    if (!isDemo || c.objects.length === 0) return c
+    return {
+      ...c,
+      objects: c.objects.map((o, i) => (i === 0 ? { ...o, inWork: true } : o)),
+    }
+  })
+}
+
+const SEED: ClientCard[] = ensureDemoInWork(normalizeList(seedRawList()))
 
 /** Сортировка: недавно добавленные сверху */
 export function sortClientsRecentFirst(list: ClientCard[]): ClientCard[] {
@@ -294,8 +327,19 @@ function readStoredClients(): ClientCard[] | null {
         localStorage.removeItem(key)
         continue
       }
-      const normalized = normalizeList(list)
-      if (key !== STORAGE_KEY) localStorage.setItem(STORAGE_KEY, JSON.stringify(normalized))
+      const normalized = ensureDemoInWork(normalizeList(list))
+      const prevInWork = list.some((c) => (c.objects ?? []).some((o) => o.inWork))
+      const nextInWork = normalized.some((c) => c.objects.some((o) => o.inWork))
+      // миграция ключа или восстановление демо inWork — перезаписать
+      if (key !== STORAGE_KEY || (!prevInWork && nextInWork)) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(normalized))
+      } else if (key === STORAGE_KEY) {
+        // objects[] могли появиться из address — тоже зафиксировать
+        const hadEmptyObjects = list.some(
+          (c) => !Array.isArray(c.objects) || c.objects.length === 0,
+        )
+        if (hadEmptyObjects) localStorage.setItem(STORAGE_KEY, JSON.stringify(normalized))
+      }
       return normalized
     }
   } catch {

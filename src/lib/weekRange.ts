@@ -43,6 +43,32 @@ export function currentWeekSatFri(ref = new Date()): { from: string; to: string 
   return { from, to }
 }
 
+const CONTROL_PERIOD_KEY = 'samostroy:control_period_v1'
+
+/** Сохранённый период Контроля (чтобы октябрь не терялся при открытии в ноябре). */
+export function loadControlPeriod(): { from: string; to: string } | null {
+  try {
+    const raw = localStorage.getItem(CONTROL_PERIOD_KEY)
+    if (!raw) return null
+    const p = JSON.parse(raw) as { from?: string; to?: string }
+    if (
+      typeof p.from === 'string' &&
+      /^\d{4}-\d{2}-\d{2}$/.test(p.from) &&
+      typeof p.to === 'string' &&
+      /^\d{4}-\d{2}-\d{2}$/.test(p.to)
+    ) {
+      return { from: p.from, to: p.to }
+    }
+  } catch {
+    /* ignore */
+  }
+  return null
+}
+
+export function saveControlPeriod(from: string, to: string) {
+  localStorage.setItem(CONTROL_PERIOD_KEY, JSON.stringify({ from, to }))
+}
+
 export type WeekKpi = {
   from: string
   to: string

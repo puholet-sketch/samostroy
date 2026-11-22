@@ -191,11 +191,11 @@ export default function DesignWizardPage() {
     <WizardShell
       title="Договор дизайна"
       footer={
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center">
           {step > 1 && step < 4 && (
             <button
               type="button"
-              className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
+              className="inline-flex h-10 w-full items-center justify-center rounded-md border border-gray-300 px-3 text-sm sm:w-auto"
               onClick={() => setStep((s) => s - 1)}
             >
               Назад
@@ -205,7 +205,7 @@ export default function DesignWizardPage() {
             <button
               type="button"
               disabled={!picker.client || !picker.objectId}
-              className="rounded-md bg-blue-600 px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-40"
+              className="col-span-2 inline-flex h-10 w-full items-center justify-center rounded-md bg-blue-600 px-3 text-sm font-semibold text-white disabled:opacity-40 sm:col-auto sm:w-auto"
               onClick={() => setStep(2)}
             >
               Далее: тариф
@@ -214,7 +214,7 @@ export default function DesignWizardPage() {
           {step === 2 && (
             <button
               type="button"
-              className="rounded-md bg-blue-600 px-3 py-1.5 text-sm font-semibold text-white"
+              className="col-span-2 inline-flex h-10 w-full items-center justify-center rounded-md bg-blue-600 px-3 text-sm font-semibold text-white sm:col-auto sm:w-auto"
               onClick={() => setStep(3)}
             >
               Далее: выпуск
@@ -224,7 +224,7 @@ export default function DesignWizardPage() {
             <button
               type="button"
               disabled={busy}
-              className="rounded-md bg-emerald-600 px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-40"
+              className="col-span-2 inline-flex h-10 w-full items-center justify-center rounded-md bg-emerald-600 px-3 text-sm font-semibold text-white disabled:opacity-40 sm:col-auto sm:w-auto"
               onClick={() => void issue()}
             >
               {busy ? 'Формируем…' : 'Выпустить и скачать PDF'}
@@ -233,7 +233,7 @@ export default function DesignWizardPage() {
           {step === 4 && (
             <Link
               to="/documents/registry?kind=design"
-              className="rounded-md bg-blue-600 px-3 py-1.5 text-sm font-semibold text-white"
+              className="col-span-2 inline-flex h-10 w-full items-center justify-center rounded-md bg-blue-600 px-3 text-sm font-semibold text-white sm:col-auto sm:w-auto"
             >
               В реестр дизайна
             </Link>

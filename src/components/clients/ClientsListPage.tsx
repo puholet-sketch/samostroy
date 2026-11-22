@@ -145,7 +145,7 @@ export default function ClientsListPage() {
     <div className={VIEWPORT_FILL}>
       <div className="flex min-h-0 flex-1 flex-col rounded-lg border border-gray-200 bg-white p-4 shadow-sm sm:p-5">
         <form
-          className="mb-3 flex shrink-0 flex-wrap items-center gap-2"
+          className="mb-3 grid shrink-0 grid-cols-1 gap-2 sm:flex sm:flex-wrap sm:items-center"
           onSubmit={(e) => {
             e.preventDefault()
             // Enter / «Найти»: зафиксировать trim; список уже фильтруется live по onChange.
@@ -154,46 +154,48 @@ export default function ClientsListPage() {
           }}
         >
           <input
-            className={`${filterCls} w-36 min-w-0 shrink sm:w-44`}
+            className={`${filterCls} h-[34px] w-full sm:w-44`}
             placeholder="ФИО"
             value={qName}
             onChange={(e) => setQName(e.target.value)}
             autoComplete="off"
           />
           <input
-            className={`${filterCls} w-32 min-w-0 shrink tabular-nums sm:w-40`}
+            className={`${filterCls} h-[34px] w-full tabular-nums sm:w-40`}
             placeholder="Телефон"
             inputMode="tel"
             value={qPhone}
             onChange={(e) => setQPhone(e.target.value)}
             autoComplete="off"
           />
-          <select
-            className={`${filterCls} min-w-0 flex-1 sm:max-w-xs`}
-            value={qChannel}
-            onChange={(e) => setQChannel(e.target.value)}
-          >
-            <option value="">Канал продаж — все</option>
-            {CHANNEL_OPTIONS.map((ch) => (
-              <option key={ch} value={ch}>
-                {ch}
-              </option>
-            ))}
-          </select>
-          <label className="inline-flex items-center gap-1.5 rounded-md border border-gray-300 bg-white px-2.5 py-1.5 text-sm text-gray-800 shadow-sm">
-            <input
-              type="checkbox"
-              checked={onlyInWork}
-              onChange={(e) => setOnlyInWork(e.target.checked)}
-            />
-            Объект в работе
-          </label>
-          <button
-            type="submit"
-            className="inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-800 shadow-sm hover:bg-gray-50"
-          >
-            Найти
-          </button>
+          <div className="grid grid-cols-[minmax(0,1fr)_auto_auto] gap-2 sm:contents">
+            <select
+              className={`${filterCls} h-[34px] w-full sm:max-w-xs sm:flex-1`}
+              value={qChannel}
+              onChange={(e) => setQChannel(e.target.value)}
+            >
+              <option value="">Канал продаж — все</option>
+              {CHANNEL_OPTIONS.map((ch) => (
+                <option key={ch} value={ch}>
+                  {ch}
+                </option>
+              ))}
+            </select>
+            <label className="inline-flex h-[34px] items-center gap-1.5 rounded-md border border-gray-300 bg-white px-2.5 text-sm text-gray-800 shadow-sm">
+              <input
+                type="checkbox"
+                checked={onlyInWork}
+                onChange={(e) => setOnlyInWork(e.target.checked)}
+              />
+              <span className="whitespace-nowrap">В работе</span>
+            </label>
+            <button
+              type="submit"
+              className="inline-flex h-[34px] min-w-[5.5rem] items-center justify-center rounded-md border border-gray-300 bg-white px-3 text-sm font-medium text-gray-800 shadow-sm hover:bg-gray-50"
+            >
+              Найти
+            </button>
+          </div>
         </form>
 
         <div

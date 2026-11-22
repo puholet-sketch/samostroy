@@ -29,7 +29,8 @@ export function loadPeriodFilters(): PeriodReportFilters {
           p.reportPresence === 'has' || p.reportPresence === 'missing'
             ? p.reportPresence
             : '',
-        onlyInWork: Boolean(p.onlyInWork),
+        // undefined в старых записях не должен сбрасывать default true
+        onlyInWork: p.onlyInWork === undefined ? true : Boolean(p.onlyInWork),
       }
     }
   } catch {

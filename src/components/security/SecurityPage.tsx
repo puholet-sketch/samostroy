@@ -463,12 +463,12 @@ function DeadlineNotifyPanel() {
         владельца (телефоны в учётках). TG — через Feedback API + бот; без Docker/ngrok/токена
         останется email (Web3Forms).
       </p>
-      <div className="flex flex-wrap gap-2">
+      <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
         <button
           type="button"
           disabled={busy}
           onClick={() => void run(false)}
-          className="rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
+          className="inline-flex h-10 w-full items-center justify-center rounded-md bg-blue-600 px-3 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60 sm:w-auto"
         >
           {busy ? '…' : 'Проверить и отправить'}
         </button>
@@ -476,7 +476,7 @@ function DeadlineNotifyPanel() {
           type="button"
           disabled={busy}
           onClick={() => void run(true)}
-          className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 hover:bg-gray-50 disabled:opacity-60"
+          className="inline-flex h-10 w-full items-center justify-center rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-800 hover:bg-gray-50 disabled:opacity-60 sm:w-auto"
         >
           Принудительно
         </button>

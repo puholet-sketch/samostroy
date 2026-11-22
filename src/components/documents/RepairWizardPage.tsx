@@ -250,11 +250,11 @@ export default function RepairWizardPage() {
     <WizardShell
       title="Договор ремонта"
       footer={
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center">
           {step > 1 && step < 4 && (
             <button
               type="button"
-              className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
+              className="inline-flex h-10 w-full items-center justify-center rounded-md border border-gray-300 px-3 text-sm sm:w-auto"
               onClick={() => setStep((s) => s - 1)}
             >
               Назад
@@ -264,7 +264,7 @@ export default function RepairWizardPage() {
             <button
               type="button"
               disabled={!picker.client || !picker.objectId}
-              className="rounded-md bg-blue-600 px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-40"
+              className="col-span-2 inline-flex h-10 w-full items-center justify-center rounded-md bg-blue-600 px-3 text-sm font-semibold text-white disabled:opacity-40 sm:col-auto sm:w-auto"
               onClick={() => setStep(2)}
             >
               Далее: смета
@@ -274,7 +274,7 @@ export default function RepairWizardPage() {
             <button
               type="button"
               disabled={!agreed && !(activeVersion?.agreed)}
-              className="rounded-md bg-blue-600 px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-40"
+              className="col-span-2 inline-flex h-10 w-full items-center justify-center rounded-md bg-blue-600 px-3 text-sm font-semibold text-white disabled:opacity-40 sm:col-auto sm:w-auto"
               onClick={() => setStep(3)}
             >
               Далее: согласование и выпуск
@@ -284,13 +284,13 @@ export default function RepairWizardPage() {
             <button
               type="button"
               disabled={busy}
-              className="rounded-md bg-emerald-600 px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-40"
+              className="col-span-2 inline-flex h-10 w-full items-center justify-center rounded-md bg-emerald-600 px-3 text-sm font-semibold text-white disabled:opacity-40 sm:col-auto sm:w-auto"
               onClick={() => void issueContract()}
             >
               {busy ? 'Формируем…' : 'Согласовать договор + скачать PDF'}
             </button>
           )}
-          {msg && <span className="text-sm text-gray-600">{msg}</span>}
+          {msg && <span className="col-span-2 text-sm text-gray-600 sm:col-auto">{msg}</span>}
         </div>
       }
     >
@@ -319,17 +319,17 @@ export default function RepairWizardPage() {
               Открыть калькулятор
             </Link>
           </p>
-          <div className="flex flex-wrap gap-2">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             <button
               type="button"
-              className="rounded-md border border-gray-300 px-2.5 py-1.5 text-xs font-medium"
+              className="inline-flex h-9 w-full items-center justify-center rounded-md border border-gray-300 px-2.5 text-xs font-medium"
               onClick={saveCurrentAsVersion}
             >
               Сохранить текущий расчёт как версию
             </button>
             <button
               type="button"
-              className="rounded-md border border-emerald-300 bg-emerald-50 px-2.5 py-1.5 text-xs font-medium text-emerald-900"
+              className="inline-flex h-9 w-full items-center justify-center rounded-md border border-emerald-300 bg-emerald-50 px-2.5 text-xs font-medium text-emerald-900"
               onClick={markAgreed}
             >
               Пометить выбранную согласованной

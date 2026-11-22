@@ -286,7 +286,7 @@ export default function CalculatorPage() {
       <Panel>
         <div className="flex flex-wrap items-center gap-x-3 gap-y-2 md:flex-nowrap">
           <div
-            className="inline-flex shrink-0 rounded-lg border border-gray-200 bg-gray-100 p-0.5 text-xs"
+            className="grid w-full grid-cols-3 gap-0.5 rounded-lg border border-gray-200 bg-gray-100 p-0.5 text-xs sm:inline-flex sm:w-auto sm:shrink-0"
             role="group"
             aria-label="Тип работ"
           >
@@ -304,7 +304,7 @@ export default function CalculatorPage() {
                   type="button"
                   aria-pressed={on}
                   onClick={() => setMode(activeSection, id)}
-                  className={`rounded-md px-2.5 py-1.5 font-semibold transition-colors ${
+                  className={`inline-flex h-8 items-center justify-center rounded-md px-2.5 font-semibold transition-colors ${
                     on
                       ? 'bg-blue-600 text-white shadow-sm'
                       : 'text-gray-500 hover:bg-white/70 hover:text-gray-800'
