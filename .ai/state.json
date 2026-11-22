@@ -3,7 +3,7 @@
   "updated": "2026-11-22",
   "status": "active",
   "goal": "Lenovo API via public HTTPS for GitHub Pages",
-  "next": "Confirm CDN after 2026-11-22-b; watch LHR hostname rotation",
+  "next": "Confirm CDN index-CM69HdHd.js; watch LHR rotation",
   "blockers": [],
   "hot_files": [
     "src/lib/errorLog.ts",
