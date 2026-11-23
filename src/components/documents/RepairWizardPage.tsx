@@ -2,18 +2,21 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import {
   agreeCalcVersion,
+  applyVersionToTransfer,
+  getCalcVersion,
   listCalcVersions,
   saveCalcVersionFromTransfer,
   versionStatusLabel,
   type CalcVersion,
 } from '../../lib/calcVersions'
-import { loadCalcTransfer } from '../../lib/calcTransfer'
+import { loadCalcTransfer, saveCalcTransfer } from '../../lib/calcTransfer'
 import { loadClients, saveClients } from '../../lib/clients'
 import { CONTRACTOR } from '../../lib/contractor'
 import {
   allocateContractNumber,
   getIssuedDoc,
   listIssuedDocs,
+  markDocIssued,
   upsertIssuedDoc,
   updateIssuedDoc,
 } from '../../lib/docRegistry'
@@ -36,7 +39,9 @@ import {
 export default function RepairWizardPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const docIdParam = searchParams.get('docId') || ''
+  const fromSmetaId = searchParams.get('fromSmetaId') || ''
   const hydratedRef = useRef('')
+  const fromSmetaHydratedRef = useRef('')
   const picker = useClientObjectPicker(
     searchParams.get('clientId') || '',
     searchParams.get('objectId') || '',
@@ -56,6 +61,7 @@ export default function RepairWizardPage() {
   const [lockedNumber, setLockedNumber] = useState('')
   const [tzDocId, setTzDocId] = useState('')
   const [smetaDocId, setSmetaDocId] = useState('')
+  const [importedSmetaHint, setImportedSmetaHint] = useState('')
 
   useEffect(() => {
     document.title = 'Договор ремонта — СамоСтрой'
@@ -89,6 +95,59 @@ export default function RepairWizardPage() {
     setMsg(`Редактирование договора № ${doc.contractNumber || '—'}`)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [docIdParam])
+
+  /** Перенос сметы без договора → мастер ремонта (смета уже в буфере). */
+  useEffect(() => {
+    if (!fromSmetaId || fromSmetaHydratedRef.current === fromSmetaId) return
+    const smeta = getIssuedDoc(fromSmetaId)
+    if (!smeta || smeta.kind !== 'smeta') return
+    fromSmetaHydratedRef.current = fromSmetaId
+    if (smeta.city) setCity(smeta.city)
+    if (smeta.workDays) setWorkDays(smeta.workDays)
+    if (smeta.docDate) setDate(smeta.docDate)
+    const ver = smeta.calcVersionId ? getCalcVersion(smeta.calcVersionId) : undefined
+    if (ver) {
+      applyVersionToTransfer(ver)
+      setVersionId(ver.id)
+    } else if (smeta.actLines?.length) {
+      const base =
+        smeta.baseTotal ??
+        smeta.actLines.reduce((s, l) => s + l.qty * l.price, 0)
+      const discountPct = smeta.discountPct ?? 0
+      const total =
+        smeta.total ??
+        Math.round(base * (1 - discountPct / 100) * 100) / 100
+      saveCalcTransfer({
+        transferToRemont: true,
+        withDetails: true,
+        total,
+        baseTotal: base,
+        discountPct,
+        lines: smeta.actLines.map((l) => ({
+          name: l.name,
+          unit: l.unit,
+          qty: l.qty,
+          price: l.price,
+          section: l.section,
+        })),
+        updatedAt: new Date().toISOString(),
+      })
+    }
+    setImportedSmetaHint(
+      [
+        smeta.contractNumber ? `смета № ${smeta.contractNumber}` : 'смета без договора',
+        smeta.objectAddress,
+        smeta.total != null ? `${smeta.total.toLocaleString('ru-RU')} ₽` : '',
+      ]
+        .filter(Boolean)
+        .join(' · '),
+    )
+    // Не подставляем id standalone-сметы: при выпуске создастся новая смета к договору.
+    setStep(1)
+    setMsg(
+      'Смета перенесена в буфер. Выберите клиента и объект — на шаге «Смета» расчёт уже заполнен.',
+    )
+  }, [fromSmetaId])
 
   useEffect(() => {
     if (picker.client?.city && !editDocId) setCity(picker.client.city)
@@ -310,6 +369,10 @@ export default function RepairWizardPage() {
         }),
       )
 
+      markDocIssued(doc.id)
+      markDocIssued(tz.id)
+      markDocIssued(smeta.id)
+
       setContractId(doc.id)
       setEditDocId(doc.id)
       setContractNumber(number)
@@ -383,6 +446,13 @@ export default function RepairWizardPage() {
         <p className="rounded-md border border-blue-100 bg-blue-50 px-3 py-2 text-xs text-blue-900">
           Редактирование записи реестра. При сохранении останется №{' '}
           <strong>{lockedNumber}</strong>; связанные смета и ТЗ обновятся без новых номеров.
+        </p>
+      )}
+
+      {importedSmetaHint && step < 4 && (
+        <p className="rounded-md border border-emerald-100 bg-emerald-50 px-3 py-2 text-xs text-emerald-950">
+          Импорт: <strong>{importedSmetaHint}</strong>. На шаге 2 сохраните/согласуйте версию
+          для выбранного объекта (расчёт уже в буфере калькулятора).
         </p>
       )}
 

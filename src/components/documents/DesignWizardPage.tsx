@@ -10,6 +10,7 @@ import {
 import {
   allocateContractNumber,
   getIssuedDoc,
+  markDocIssued,
   upsertIssuedDoc,
 } from '../../lib/docRegistry'
 import { generateDesignDoc } from '../../lib/generateDocs'
@@ -159,7 +160,7 @@ export default function DesignWizardPage() {
         executorName: CONTRACTOR.name,
         tariffId,
       })
-      upsertIssuedDoc({
+      const saved = upsertIssuedDoc({
         id: editDocId || undefined,
         kind: 'design',
         contractNumber: number,
@@ -176,6 +177,7 @@ export default function DesignWizardPage() {
         objectAddress: addr,
         docDate: date,
       })
+      markDocIssued(saved.id)
       const all = loadClients()
       const next = all.map((c) => {
         if (c.id !== picker.client!.id) return c
@@ -194,6 +196,7 @@ export default function DesignWizardPage() {
       picker.reloadClients()
       setIssuedNumber(number)
       setLockedNumber(number)
+      setEditDocId(saved.id)
       setStep(4)
       setMsg(
         editing

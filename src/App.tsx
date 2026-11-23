@@ -11,6 +11,7 @@ import DesignWizardPage from './components/documents/DesignWizardPage'
 import RepairWizardPage from './components/documents/RepairWizardPage'
 import ActsWizardPage from './components/documents/ActsWizardPage'
 import FurnitureStubPage from './components/documents/FurnitureStubPage'
+import SmetaWizardPage from './components/documents/SmetaWizardPage'
 import DocRegistryPage from './components/documents/DocRegistryPage'
 import ObjectControlPage from './components/control/ObjectControlPage'
 import PeriodReportPage from './components/control/PeriodReportPage'
@@ -131,6 +132,14 @@ export default function App() {
                 element={
                   <ProtectedRoute module="documents">
                     <ActsWizardPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/documents/smeta"
+                element={
+                  <ProtectedRoute module="documents">
+                    <SmetaWizardPage />
                   </ProtectedRoute>
                 }
               />

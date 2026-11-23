@@ -1,17 +1,20 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { loadClients } from '../../lib/clients'
 import {
   downloadIssuedDocPdf,
   wizardHrefForDoc,
 } from '../../lib/docActions'
 import {
+  isDocDirtyVsIssued,
+  isStandaloneSmeta,
   kindLabel,
   listIssuedDocs,
   statusLabel,
   type IssuedDoc,
   type IssuedDocKind,
 } from '../../lib/docRegistry'
+import DocCardModal from './DocCardModal'
 import { Field, inputCls } from './docUi'
 
 const KINDS: { id: '' | IssuedDocKind; label: string }[] = [
@@ -24,9 +27,8 @@ const KINDS: { id: '' | IssuedDocKind; label: string }[] = [
   { id: 'furniture', label: 'Мебель' },
 ]
 
-/** Full contracts registry: filters + table (open / edit / PDF). Newest first via listIssuedDocs. */
+/** Full contracts registry: filters + table. Row → modal card. */
 export default function DocRegistryPanel({ title = 'Реестр договоров' }: { title?: string }) {
-  const navigate = useNavigate()
   const [params, setParams] = useSearchParams()
   const kind = (params.get('kind') || '') as '' | IssuedDocKind
   const [q, setQ] = useState(params.get('q') || '')
@@ -35,6 +37,7 @@ export default function DocRegistryPanel({ title = 'Реестр договор�
   const [tick, setTick] = useState(0)
   const [busyId, setBusyId] = useState('')
   const [err, setErr] = useState('')
+  const [cardDocId, setCardDocId] = useState('')
   const clients = useMemo(() => {
     void tick
     return loadClients()
@@ -70,9 +73,8 @@ export default function DocRegistryPanel({ title = 'Реестр договор�
     setParams(next, { replace: true })
   }
 
-  function openDoc(d: IssuedDoc) {
-    const href = wizardHrefForDoc(d)
-    if (href) navigate(href)
+  function openCard(d: IssuedDoc) {
+    setCardDocId(d.id)
   }
 
   async function downloadPdf(d: IssuedDoc, e?: React.MouseEvent) {
@@ -81,6 +83,7 @@ export default function DocRegistryPanel({ title = 'Реестр договор�
     setBusyId(d.id)
     try {
       await downloadIssuedDocPdf(d)
+      setTick((t) => t + 1)
     } catch (ex) {
       setErr(ex instanceof Error ? ex.message : 'Не удалось скачать PDF')
     } finally {
@@ -189,14 +192,20 @@ export default function DocRegistryPanel({ title = 'Реестр договор�
               docs.map((d) => {
                 const c = clients.find((x) => x.id === d.clientId)
                 const href = wizardHrefForDoc(d)
+                const dirty = isDocDirtyVsIssued(d)
                 return (
                   <tr
                     key={d.id}
-                    className={`hover:bg-gray-50/80 ${href ? 'cursor-pointer' : ''}`}
-                    onClick={() => openDoc(d)}
+                    className="cursor-pointer hover:bg-gray-50/80"
+                    onClick={() => openCard(d)}
                   >
                     <td className="px-3 py-2 font-medium text-gray-900">
                       {kindLabel(d.kind)}
+                      {isStandaloneSmeta(d) && (
+                        <span className="mt-0.5 block text-[10px] font-normal text-gray-500">
+                          без договора
+                        </span>
+                      )}
                     </td>
                     <td className="px-3 py-2 text-gray-700">
                       {d.kind === 'act'
@@ -211,6 +220,8 @@ export default function DocRegistryPanel({ title = 'Реестр договор�
                         >
                           {c.name}
                         </Link>
+                      ) : isStandaloneSmeta(d) ? (
+                        <span className="text-gray-400">—</span>
                       ) : (
                         d.clientId
                       )}
@@ -222,6 +233,11 @@ export default function DocRegistryPanel({ title = 'Реестр договор�
                       <span className="rounded bg-gray-100 px-1.5 py-0.5 text-[11px]">
                         {statusLabel(d.status)}
                       </span>
+                      {dirty && (
+                        <span className="ml-1 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] text-amber-900">
+                          изм.
+                        </span>
+                      )}
                     </td>
                     <td className="hidden px-3 py-2 text-gray-700 sm:table-cell">
                       {d.total != null
@@ -233,14 +249,13 @@ export default function DocRegistryPanel({ title = 'Реестр договор�
                       onClick={(e) => e.stopPropagation()}
                     >
                       <div className="flex min-w-[7.5rem] flex-col gap-1 sm:min-w-0 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-2 sm:gap-y-0.5">
-                        {href && (
-                          <Link
-                            to={href}
-                            className="text-xs font-medium text-blue-700 hover:underline"
-                          >
-                            Открыть
-                          </Link>
-                        )}
+                        <button
+                          type="button"
+                          className="text-left text-xs font-medium text-blue-700 hover:underline"
+                          onClick={() => openCard(d)}
+                        >
+                          Открыть
+                        </button>
                         {d.kind !== 'furniture' && (
                           <button
                             type="button"
@@ -248,7 +263,7 @@ export default function DocRegistryPanel({ title = 'Реестр договор�
                             className="text-left text-xs font-medium text-blue-700 hover:underline disabled:opacity-40"
                             onClick={(e) => void downloadPdf(d, e)}
                           >
-                            {busyId === d.id ? 'PDF…' : 'Скачать PDF'}
+                            {busyId === d.id ? 'PDF…' : 'Скачать'}
                           </button>
                         )}
                         {href && d.kind !== 'furniture' && (
@@ -268,6 +283,16 @@ export default function DocRegistryPanel({ title = 'Реестр договор�
           </tbody>
         </table>
       </div>
+
+      {cardDocId && (
+        <DocCardModal
+          docId={cardDocId}
+          onClose={() => {
+            setCardDocId('')
+            setTick((t) => t + 1)
+          }}
+        />
+      )}
     </section>
   )
 }

@@ -2,14 +2,14 @@
   "v": 4,
   "updated": "2026-11-24",
   "status": "active",
-  "goal": "Documents hub = contracts registry + Pages deploy",
-  "next": "Confirm CDN after 2026-11-24-b deploy",
+  "goal": "Doc card modal + standalone smeta + Pages deploy",
+  "next": "CDN check after 2026-11-24-c; named CF+DNS when domain ready",
   "blockers": [],
   "hot_files": [
-    "src/components/documents/DocumentsHub.tsx",
+    "src/components/documents/DocCardModal.tsx",
+    "src/components/documents/SmetaWizardPage.tsx",
     "src/components/documents/DocRegistryPanel.tsx",
-    "data/changelog.json",
-    "src/lib/buildStamp.ts",
-    "src/lib/docRegistry.ts"
+    "src/lib/docRegistry.ts",
+    "data/changelog.json"
   ]
 }

@@ -14,6 +14,7 @@ import { CONTRACTOR } from '../../lib/contractor'
 import {
   getIssuedDoc,
   listAgreedRepairContracts,
+  markDocIssued,
   nextActStageNumber,
   upsertIssuedDoc,
   type IssuedDoc,
@@ -217,7 +218,7 @@ export default function ActsWizardPage() {
           section: l.section || 'Прочее',
         })),
       })
-      upsertIssuedDoc({
+      const saved = upsertIssuedDoc({
         id: editDocId || undefined,
         kind: 'act',
         actStageNumber: stageNo,
@@ -241,6 +242,7 @@ export default function ActsWizardPage() {
           section: l.section,
         })),
       })
+      markDocIssued(saved.id)
       setContracts(listAgreedRepairContracts())
       setLockedStage(stageNo)
       setMsg(

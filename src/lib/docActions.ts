@@ -4,11 +4,13 @@
  */
 
 import { getCalcVersion } from './calcVersions'
-import { loadClients, type ClientCard } from './clients'
+import { emptyClient, loadClients, type ClientCard } from './clients'
 import { CONTRACTOR } from './contractor'
 import type { DesignTariffId } from './designTariffs'
 import {
   getIssuedDoc,
+  isStandaloneSmeta,
+  markDocIssued,
   type IssuedDoc,
   type IssuedDocKind,
 } from './docRegistry'
@@ -28,7 +30,16 @@ export function wizardHrefForDoc(doc: IssuedDoc): string | null {
       return `/documents/repair?docId=${encodeURIComponent(doc.id)}`
     case 'act':
       return `/documents/acts?docId=${encodeURIComponent(doc.id)}`
-    case 'smeta':
+    case 'smeta': {
+      if (isStandaloneSmeta(doc)) {
+        return `/documents/smeta?docId=${encodeURIComponent(doc.id)}`
+      }
+      const parentId = doc.parentContractId
+      if (parentId) {
+        return `/documents/repair?docId=${encodeURIComponent(parentId)}`
+      }
+      return `/documents/smeta?docId=${encodeURIComponent(doc.id)}`
+    }
     case 'tz': {
       const parentId = doc.parentContractId
       if (parentId) {
@@ -44,7 +55,21 @@ export function wizardHrefForDoc(doc: IssuedDoc): string | null {
 }
 
 function clientOf(doc: IssuedDoc): ClientCard | undefined {
+  if (!doc.clientId || doc.clientId.startsWith('__')) return undefined
   return loadClients().find((c) => c.id === doc.clientId)
+}
+
+/** Клиент для PDF: из КК или заглушка (смета без ФИО). */
+function clientForPdf(doc: IssuedDoc): ClientCard {
+  return (
+    clientOf(doc) ??
+    emptyClient({
+      id: 'anon',
+      name: 'Заказчик не указан',
+      city: doc.city || 'Москва',
+      address: doc.objectAddress || '',
+    })
+  )
 }
 
 function designTariffId(doc: IssuedDoc): DesignTariffId {
@@ -52,11 +77,29 @@ function designTariffId(doc: IssuedDoc): DesignTariffId {
   return t === 'standard' || t === 'full' || t === 'max' ? t : 'full'
 }
 
+function smetaLinesOf(doc: IssuedDoc) {
+  const ver = doc.calcVersionId ? getCalcVersion(doc.calcVersionId) : undefined
+  if (ver?.lines?.length) {
+    return ver.lines.map((l) => ({
+      name: l.name,
+      unit: l.unit,
+      qty: l.qty,
+      price: l.price,
+      section: l.section || 'Прочее',
+    }))
+  }
+  return (doc.actLines ?? []).map((l) => ({
+    name: l.name,
+    unit: l.unit,
+    qty: l.qty,
+    price: l.price,
+    section: l.section || 'Прочее',
+  }))
+}
+
 /** Пересобрать PDF из текущих полей записи реестра (как при выпуске). */
 export async function downloadIssuedDocPdf(doc: IssuedDoc): Promise<void> {
-  const client = clientOf(doc)
-  if (!client) throw new Error('Клиент не найден')
-
+  const client = clientForPdf(doc)
   const date = doc.docDate || doc.updatedAt.slice(0, 10)
   const city = doc.city || client.city || 'Москва'
   const addr = doc.objectAddress || ''
@@ -76,12 +119,13 @@ export async function downloadIssuedDocPdf(doc: IssuedDoc): Promise<void> {
       executorName: CONTRACTOR.name,
       tariffId,
     })
+    markDocIssued(doc.id)
     return
   }
 
   if (doc.kind === 'repair') {
     const ver = doc.calcVersionId ? getCalcVersion(doc.calcVersionId) : undefined
-    const lines = (ver?.lines ?? []).map((l) => ({
+    const lines = (ver?.lines ?? doc.actLines ?? []).map((l) => ({
       name: l.name,
       unit: l.unit,
       qty: l.qty,
@@ -101,18 +145,14 @@ export async function downloadIssuedDocPdf(doc: IssuedDoc): Promise<void> {
       baseTotal: doc.baseTotal ?? ver?.baseTotal,
       smetaLines: lines,
     })
+    markDocIssued(doc.id)
     return
   }
 
   if (doc.kind === 'smeta') {
     const ver = doc.calcVersionId ? getCalcVersion(doc.calcVersionId) : undefined
-    const lines = (ver?.lines ?? []).map((l) => ({
-      name: l.name,
-      unit: l.unit,
-      qty: l.qty,
-      price: l.price,
-      section: l.section || 'Прочее',
-    }))
+    const lines = smetaLinesOf(doc)
+    if (!lines.length) throw new Error('В смете нет сохранённых строк')
     await generateSmetaDoc(client, {
       number,
       date,
@@ -126,6 +166,7 @@ export async function downloadIssuedDocPdf(doc: IssuedDoc): Promise<void> {
       lines,
       executorName: CONTRACTOR.name,
     })
+    markDocIssued(doc.id)
     return
   }
 
@@ -138,6 +179,7 @@ export async function downloadIssuedDocPdf(doc: IssuedDoc): Promise<void> {
       contractNumber: doc.contractNumber || number,
       executorName: CONTRACTOR.name,
     })
+    markDocIssued(doc.id)
     return
   }
 
@@ -161,6 +203,7 @@ export async function downloadIssuedDocPdf(doc: IssuedDoc): Promise<void> {
       contractNumber: doc.contractNumber,
       lines,
     })
+    markDocIssued(doc.id)
     return
   }
 

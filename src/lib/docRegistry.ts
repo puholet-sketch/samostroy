@@ -1,6 +1,7 @@
 /**
  * Реестр выданных документов + сквозной нумератор договоров
  * (дизайн / ремонт / мебелировка). Акты — по этапам 1…N на договор.
+ * Сметы без договора — отдельный счётчик С-N.
  */
 
 export type ContractDocKind = 'design' | 'repair' | 'furniture'
@@ -8,10 +9,14 @@ export type IssuedDocKind = ContractDocKind | 'act' | 'tz' | 'smeta'
 
 export type DesignTariffId = 'standard' | 'full' | 'max'
 
+/** Сентинелы для версий калькулятора у сметы без клиента/объекта. */
+export const STANDALONE_SMETA_CLIENT = '__standalone_smeta__'
+export const STANDALONE_SMETA_OBJECT_DRAFT = '__standalone_smeta_draft__'
+
 export type IssuedDoc = {
   id: string
   kind: IssuedDocKind
-  /** Сквозной № договора (design/repair/furniture) */
+  /** Сквозной № договора (design/repair/furniture) или № сметы С-N */
   contractNumber?: string
   /** Номер акта по этапам работ: 1…N */
   actStageNumber?: number
@@ -40,7 +45,7 @@ export type IssuedDoc = {
   baseTotal?: number
   /** Для актов / ТЗ — родительский договор ремонта */
   parentContractId?: string
-  /** Снимок выбранных строк акта */
+  /** Снимок выбранных строк акта / сметы без договора */
   actLines?: {
     name: string
     unit: string
@@ -49,12 +54,17 @@ export type IssuedDoc = {
     section?: string
   }[]
   stageName?: string
+  /** ISO момента последнего выпуска/скачивания PDF */
+  lastIssuedAt?: string
+  /** Отпечаток полей на момент lastIssuedAt (dirty → перевыпуск) */
+  issuedFingerprint?: string
   createdAt: string
   updatedAt: string
 }
 
 const DOCS_KEY = 'samostroy:issued_docs_v1'
 const COUNTER_KEY = 'samostroy:contract_counter_v1'
+const SMETA_COUNTER_KEY = 'samostroy:smeta_counter_v1'
 
 function loadAll(): IssuedDoc[] {
   try {
@@ -129,6 +139,80 @@ export function allocateContractNumber(): string {
   const next = peekContractCounter() + 1
   localStorage.setItem(COUNTER_KEY, String(next))
   return String(next)
+}
+
+/** Текущее значение счётчика смет без договора. */
+export function peekSmetaCounter(): number {
+  try {
+    const n = Number(localStorage.getItem(SMETA_COUNTER_KEY) || '0')
+    return Number.isFinite(n) && n >= 0 ? Math.floor(n) : 0
+  } catch {
+    return 0
+  }
+}
+
+/** Следующий № сметы без договора: «С-1», «С-2», … (отдельный счётчик). */
+export function allocateSmetaNumber(): string {
+  const next = peekSmetaCounter() + 1
+  localStorage.setItem(SMETA_COUNTER_KEY, String(next))
+  return `С-${next}`
+}
+
+/** Смета без договора: kind=smeta и нет parentContractId. */
+export function isStandaloneSmeta(doc: IssuedDoc): boolean {
+  return doc.kind === 'smeta' && !doc.parentContractId
+}
+
+/** Отпечаток полей, влияющих на PDF (для dirty / перевыпуск). */
+export function docIssueFingerprint(doc: IssuedDoc): string {
+  const payload = {
+    kind: doc.kind,
+    contractNumber: doc.contractNumber ?? '',
+    actStageNumber: doc.actStageNumber ?? null,
+    clientId: doc.clientId,
+    objectId: doc.objectId,
+    tariffId: doc.tariffId ?? '',
+    ratePerM2: doc.ratePerM2 ?? null,
+    calcVersionId: doc.calcVersionId ?? '',
+    total: doc.total ?? null,
+    areaM2: doc.areaM2 ?? null,
+    city: doc.city ?? '',
+    objectAddress: doc.objectAddress ?? '',
+    objectTitle: doc.objectTitle ?? '',
+    docDate: doc.docDate ?? '',
+    workDays: doc.workDays ?? null,
+    paid: doc.paid ?? null,
+    discountPct: doc.discountPct ?? null,
+    baseTotal: doc.baseTotal ?? null,
+    stageName: doc.stageName ?? '',
+    plannedStartDate: doc.plannedStartDate ?? '',
+    actLines: doc.actLines ?? null,
+    excludedClauses: doc.excludedClauses ?? null,
+  }
+  return JSON.stringify(payload)
+}
+
+/**
+ * Были ли изменения после последнего выпуска PDF.
+ * Без lastIssuedAt/fingerprint — не считаем dirty (первое «Скачать» без «перевыпуск»).
+ */
+export function isDocDirtyVsIssued(doc: IssuedDoc): boolean {
+  if (!doc.lastIssuedAt || !doc.issuedFingerprint) return false
+  return doc.issuedFingerprint !== docIssueFingerprint(doc)
+}
+
+/** Пометить запись как только что выпущенную/скачанную (снять dirty). */
+export function markDocIssued(id: string): IssuedDoc | null {
+  const list = loadAll()
+  const idx = list.findIndex((d) => d.id === id)
+  if (idx < 0) return null
+  const now = new Date().toISOString()
+  const next = { ...list[idx], updatedAt: now }
+  next.lastIssuedAt = now
+  next.issuedFingerprint = docIssueFingerprint(next)
+  list[idx] = next
+  saveAll(list)
+  return next
 }
 
 export function upsertIssuedDoc(
