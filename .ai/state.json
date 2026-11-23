@@ -1,15 +1,15 @@
 {
   "v": 4,
-  "updated": "2026-11-23",
+  "updated": "2026-11-24",
   "status": "active",
-  "goal": "Registry→wizard edit + embed calc; Pages deploy",
-  "next": "Verify Pages CDN after 2026-11-23-a deploy",
+  "goal": "Comic strip История ремонта + Pages deploy",
+  "next": "Named CF+DNS when domain ready; optional GITHUB_TOKEN on Lenovo",
   "blockers": [],
   "hot_files": [
-    "src/components/documents/DocRegistryPage.tsx",
-    "src/components/calculator/CalculatorPanel.tsx",
-    "src/lib/docActions.ts",
-    "src/components/documents/RepairWizardPage.tsx",
-    "data/changelog.json"
+    "src/components/control/WeeklyPackPage.tsx",
+    "src/components/control/ObjectControlPage.tsx",
+    "data/changelog.json",
+    "src/lib/buildStamp.ts",
+    "docs/modules/object_control.md"
   ]
 }

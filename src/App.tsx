@@ -29,7 +29,7 @@ function HomeRedirect() {
   return <Navigate to={to} replace />
 }
 
-/** Сводный / пакет клиенту — не для прораба */
+/** Сводный / история ремонта — не для прораба */
 function DenyForeman({ children }: { children: React.ReactNode }) {
   const { user } = useAuth()
   if (user?.role === 'foreman') return <Navigate to="/control" replace />

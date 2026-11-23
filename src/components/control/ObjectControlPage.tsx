@@ -313,8 +313,10 @@ function ObjectCalendarCard({
           type="button"
           onClick={openWeeklyPack}
           className="shrink-0 rounded-md border border-indigo-300 bg-indigo-50 px-2 py-1 text-[11px] font-medium text-indigo-900 hover:bg-indigo-100"
+          title="История ремонта"
         >
-          Пакет сб→пт
+          <span className="sm:hidden">История</span>
+          <span className="hidden sm:inline">История ремонта</span>
         </button>
       </div>
 
@@ -575,14 +577,15 @@ export default function ObjectControlPage() {
                 onClick={openWeeklyPack}
                 disabled={!clientId}
                 className="inline-flex h-[34px] w-full items-center justify-center rounded-md border border-indigo-300 bg-indigo-50 px-3 text-sm font-medium text-indigo-900 shadow-sm hover:bg-indigo-100 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
-                title={!clientId ? 'Сначала выберите клиента' : undefined}
+                title={!clientId ? 'Сначала выберите клиента' : 'История ремонта'}
               >
-                Пакет клиенту
+                <span className="sm:hidden">История</span>
+                <span className="hidden sm:inline">История ремонта</span>
               </button>
             </div>
           </div>
           <p className="mt-1 text-[11px] text-gray-500">
-            Период сохраняется на устройстве. Сводный и «Пакет» — С→По выше; «← нед.» /
+            Период сохраняется на устройстве. Сводный и «История ремонта» — С→По выше; «← нед.» /
             «нед. →» — сб→пт (октябрь доступен сдвигами). Календарь: прошлый + текущий месяц.
           </p>
         </div>

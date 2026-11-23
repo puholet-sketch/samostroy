@@ -1,2 +1,2 @@
 /** Visible in Updates + feedback metadata; bump on every Pages deploy. */
-export const BUILD_STAMP = '2026-11-23 · registry edit + embed calc'
+export const BUILD_STAMP = '2026-11-24 · comic strip + история ремонта'
