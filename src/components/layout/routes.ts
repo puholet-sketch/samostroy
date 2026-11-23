@@ -46,7 +46,7 @@ export function routeTitle(pathname: string): string {
     if (pathname.includes('/repair')) return 'Договор ремонта'
     if (pathname.includes('/acts')) return 'Акты'
     if (pathname.includes('/furniture')) return 'Мебелировка'
-    if (pathname.includes('/registry')) return 'Реестр документов'
+    if (pathname.includes('/registry')) return 'Договоры'
   }
   const hit = MVP_ROUTES.find(
     (r) => pathname === r.path || (r.path !== '/' && pathname.startsWith(`${r.path}/`)),

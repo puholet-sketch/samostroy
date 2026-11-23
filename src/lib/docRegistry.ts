@@ -98,7 +98,13 @@ export function listIssuedDocs(filter?: {
         .includes(s),
     )
   }
-  return list.sort((a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt))
+  /** Newest first by issue/doc date (fallback: created → updated). */
+  const ts = (d: IssuedDoc) => {
+    const raw = d.docDate || d.createdAt || d.updatedAt
+    const n = Date.parse(raw)
+    return Number.isFinite(n) ? n : 0
+  }
+  return list.sort((a, b) => ts(b) - ts(a))
 }
 
 export function getIssuedDoc(id: string): IssuedDoc | undefined {

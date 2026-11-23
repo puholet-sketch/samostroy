@@ -568,7 +568,7 @@ export default function ClientCardPage() {
                         ) : null}
                       </p>
                       <Link
-                        to={`/documents/registry?clientId=${client.id}&objectId=${o.id}`}
+                        to={`/documents?clientId=${client.id}&objectId=${o.id}`}
                         className="text-[11px] text-blue-700 hover:underline"
                       >
                         Реестр →

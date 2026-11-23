@@ -2,14 +2,14 @@
   "v": 4,
   "updated": "2026-11-24",
   "status": "active",
-  "goal": "Comic strip История ремонта + Pages deploy",
-  "next": "Named CF+DNS when domain ready; optional GITHUB_TOKEN on Lenovo",
+  "goal": "Documents hub = contracts registry + Pages deploy",
+  "next": "Confirm CDN after 2026-11-24-b deploy",
   "blockers": [],
   "hot_files": [
-    "src/components/control/WeeklyPackPage.tsx",
-    "src/components/control/ObjectControlPage.tsx",
+    "src/components/documents/DocumentsHub.tsx",
+    "src/components/documents/DocRegistryPanel.tsx",
     "data/changelog.json",
     "src/lib/buildStamp.ts",
-    "docs/modules/object_control.md"
+    "src/lib/docRegistry.ts"
   ]
 }

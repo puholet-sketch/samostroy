@@ -271,7 +271,7 @@ export default function DesignWizardPage() {
           )}
           {step === 4 && (
             <Link
-              to="/documents/registry?kind=design"
+              to="/documents?kind=design"
               className="col-span-2 inline-flex h-10 w-full items-center justify-center rounded-md bg-blue-600 px-3 text-sm font-semibold text-white sm:col-auto sm:w-auto"
             >
               В реестр дизайна
