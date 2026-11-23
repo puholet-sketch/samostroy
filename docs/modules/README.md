@@ -3,8 +3,7 @@
 | Модуль | Код | Документ |
 |--------|-----|----------|
 | Клиенты | `clients` | [crm_client_card_fields.md](../crm_client_card_fields.md) |
-| Калькулятор | `calculator` | — |
-| Договоры и акты | `documents` | [crm_client_card_fields.md](../crm_client_card_fields.md), `src/lib/generateDocs.ts` |
+| Договоры | `documents` | [crm_client_card_fields.md](../crm_client_card_fields.md), `src/lib/generateDocs.ts` (смета/калькулятор в мастерах) |
 | Контроль объекта | `object_control` | [object_control.md](object_control.md) |
 | Обновления | `updates` | [updates.md](updates.md), `data/changelog.json`, `data/releases/` |
 | Настройки (безопасность) | `security` | [security.md](security.md) · `/settings/security` |

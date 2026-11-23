@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { CONTRACTOR } from '../../lib/contractor'
 import {
@@ -9,6 +9,7 @@ import {
 } from '../../lib/designTariffs'
 import {
   allocateContractNumber,
+  getIssuedDoc,
   upsertIssuedDoc,
 } from '../../lib/docRegistry'
 import { generateDesignDoc } from '../../lib/generateDocs'
@@ -29,6 +30,8 @@ function isDesignTariffId(v: string | null): v is DesignTariffId {
 
 export default function DesignWizardPage() {
   const [searchParams, setSearchParams] = useSearchParams()
+  const docIdParam = searchParams.get('docId') || ''
+  const hydratedRef = useRef('')
   const picker = useClientObjectPicker(
     searchParams.get('clientId') || '',
     searchParams.get('objectId') || '',
@@ -46,10 +49,30 @@ export default function DesignWizardPage() {
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState('')
   const [issuedNumber, setIssuedNumber] = useState('')
+  const [editDocId, setEditDocId] = useState(docIdParam)
+  const [lockedNumber, setLockedNumber] = useState('')
 
   useEffect(() => {
     document.title = 'Договор дизайна — СамоСтрой'
   }, [])
+
+  // Rehydrate from registry when ?docId=
+  useEffect(() => {
+    if (!docIdParam || hydratedRef.current === docIdParam) return
+    const doc = getIssuedDoc(docIdParam)
+    if (!doc || doc.kind !== 'design') return
+    hydratedRef.current = docIdParam
+    setEditDocId(doc.id)
+    setLockedNumber(doc.contractNumber || '')
+    picker.hydrate(doc.clientId, doc.objectId)
+    if (doc.tariffId && isDesignTariffId(doc.tariffId)) setTariffId(doc.tariffId)
+    if (doc.docDate) setDate(doc.docDate)
+    if (doc.city) setCity(doc.city)
+    setStep(1)
+    setIssuedNumber('')
+    setMsg(`Редактирование договора № ${doc.contractNumber || '—'}`)
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- hydrate once per docId
+  }, [docIdParam])
 
   // После правки площади в КК — подтянуть свежие данные
   useEffect(() => {
@@ -67,13 +90,16 @@ export default function DesignWizardPage() {
   }, [])
 
   useEffect(() => {
-    if (picker.client?.city && !searchParams.get('city')) setCity(picker.client.city)
+    if (picker.client?.city && !searchParams.get('city') && !editDocId) {
+      setCity(picker.client.city)
+    }
   }, [picker.client?.id])
 
   // Сохраняем выбор в URL (для returnTo с карточки объекта)
   useEffect(() => {
     if (step >= 4) return
     const next = new URLSearchParams()
+    if (editDocId) next.set('docId', editDocId)
     if (picker.clientId) next.set('clientId', picker.clientId)
     if (picker.objectId) next.set('objectId', picker.objectId)
     next.set('tariff', tariffId)
@@ -83,15 +109,17 @@ export default function DesignWizardPage() {
     const cur = searchParams.toString()
     const want = next.toString()
     if (cur !== want) setSearchParams(next, { replace: true })
-  }, [picker.clientId, picker.objectId, tariffId, step, date, city])
+  }, [picker.clientId, picker.objectId, tariffId, step, date, city, editDocId])
 
   const area = picker.selectedObject?.areaM2 || 0
   const tariff = getDesignTariff(tariffId)
   const stages = useMemo(() => includedDesignStages(tariffId), [tariffId])
   const total = area * tariff.ratePerM2
+  const editing = Boolean(editDocId && lockedNumber)
 
   function wizardReturnPath() {
     const p = new URLSearchParams()
+    if (editDocId) p.set('docId', editDocId)
     if (picker.clientId) p.set('clientId', picker.clientId)
     if (picker.objectId) p.set('objectId', picker.objectId)
     p.set('tariff', tariffId)
@@ -120,7 +148,7 @@ export default function DesignWizardPage() {
     }
     setBusy(true)
     try {
-      const number = allocateContractNumber()
+      const number = lockedNumber || allocateContractNumber()
       const addr = picker.selectedObject.address || picker.selectedObject.title
       await generateDesignDoc(picker.client, {
         number,
@@ -132,6 +160,7 @@ export default function DesignWizardPage() {
         tariffId,
       })
       upsertIssuedDoc({
+        id: editDocId || undefined,
         kind: 'design',
         contractNumber: number,
         clientId: picker.client.id,
@@ -145,6 +174,7 @@ export default function DesignWizardPage() {
         areaM2: area,
         city,
         objectAddress: addr,
+        docDate: date,
       })
       const all = loadClients()
       const next = all.map((c) => {
@@ -163,8 +193,13 @@ export default function DesignWizardPage() {
       saveClients(next)
       picker.reloadClients()
       setIssuedNumber(number)
+      setLockedNumber(number)
       setStep(4)
-      setMsg(`Договор № ${number} скачан (PDF) и записан в реестр`)
+      setMsg(
+        editing
+          ? `Договор № ${number} обновлён (PDF скачан, тот же номер)`
+          : `Договор № ${number} скачан (PDF) и записан в реестр`,
+      )
     } catch (e) {
       setMsg(e instanceof Error ? e.message : 'Ошибка')
     } finally {
@@ -189,7 +224,7 @@ export default function DesignWizardPage() {
 
   return (
     <WizardShell
-      title="Договор дизайна"
+      title={editing ? `Договор дизайна № ${lockedNumber}` : 'Договор дизайна'}
       footer={
         <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center">
           {step > 1 && step < 4 && (
@@ -227,7 +262,11 @@ export default function DesignWizardPage() {
               className="col-span-2 inline-flex h-10 w-full items-center justify-center rounded-md bg-emerald-600 px-3 text-sm font-semibold text-white disabled:opacity-40 sm:col-auto sm:w-auto"
               onClick={() => void issue()}
             >
-              {busy ? 'Формируем…' : 'Выпустить и скачать PDF'}
+              {busy
+                ? 'Формируем…'
+                : editing
+                  ? 'Сохранить и скачать PDF'
+                  : 'Выпустить и скачать PDF'}
             </button>
           )}
           {step === 4 && (
@@ -242,6 +281,13 @@ export default function DesignWizardPage() {
         </div>
       }
     >
+      {editing && step < 4 && (
+        <p className="rounded-md border border-blue-100 bg-blue-50 px-3 py-2 text-xs text-blue-900">
+          Редактирование записи реестра. При сохранении останется №{' '}
+          <strong>{lockedNumber}</strong> (новый номер не выделяется).
+        </p>
+      )}
+
       <ol className="flex flex-wrap gap-2 text-xs font-medium text-gray-500">
         {['Клиент и объект', 'Тариф', 'Выпуск', 'Готово'].map((label, i) => (
           <li
@@ -340,7 +386,9 @@ export default function DesignWizardPage() {
               {formatMoney(total)} ₽
             </p>
             <p className="mt-1 text-xs text-gray-500">
-              Номер договора будет выделен из сквозного счётчика при выпуске.
+              {editing
+                ? `Номер договора № ${lockedNumber} сохранится.`
+                : 'Номер договора будет выделен из сквозного счётчика при выпуске.'}
             </p>
           </div>
         </div>
@@ -348,7 +396,9 @@ export default function DesignWizardPage() {
 
       {step === 4 && (
         <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-950">
-          <p className="font-semibold">Договор дизайна № {issuedNumber} выпущен</p>
+          <p className="font-semibold">
+            Договор дизайна № {issuedNumber} {editing ? 'обновлён' : 'выпущен'}
+          </p>
           <p className="mt-1">PDF скачан. Запись в реестре и на карточке клиента.</p>
           <div className="mt-3 flex flex-wrap gap-3">
             <Link to="/documents" className="font-medium text-blue-700 hover:underline">
@@ -360,7 +410,11 @@ export default function DesignWizardPage() {
               onClick={() => {
                 setStep(1)
                 setIssuedNumber('')
+                setEditDocId('')
+                setLockedNumber('')
+                hydratedRef.current = ''
                 setMsg('')
+                setSearchParams({}, { replace: true })
               }}
             >
               Ещё один договор

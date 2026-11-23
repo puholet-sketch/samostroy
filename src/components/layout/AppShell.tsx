@@ -3,7 +3,6 @@ import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import {
   RiArrowLeftLine,
   RiBuilding2Fill,
-  RiCalculatorFill,
   RiCloseLine,
   RiFileTextFill,
   RiIdCardFill,
@@ -35,7 +34,6 @@ type NavIcon = {
 
 const NAV_ICONS: Record<string, NavIcon> = {
   clients: { Icon: RiUserFill, ink: 'text-blue-600' },
-  calculator: { Icon: RiCalculatorFill, ink: 'text-violet-600' },
   documents: { Icon: RiFileTextFill, ink: 'text-amber-600' },
   object_control: { Icon: RiBuilding2Fill, ink: 'text-emerald-600' },
   updates: { Icon: RiHistoryFill, ink: 'text-sky-600' },
@@ -134,11 +132,7 @@ function ClientContextNav({
       </p>
       <NavLink to="/documents" onClick={onNavigate} className={linkCls}>
         <ColoredIcon {...NAV_ICONS.documents} />
-        Договоры и акты
-      </NavLink>
-      <NavLink to="/calculator" onClick={onNavigate} className={linkCls}>
-        <ColoredIcon {...NAV_ICONS.calculator} />
-        Калькулятор
+        Договоры
       </NavLink>
     </nav>
   )

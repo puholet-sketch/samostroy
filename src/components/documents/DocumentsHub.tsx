@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { usePageHeaderActions } from '../../contexts/PageHeaderContext'
+import { wizardHrefForDoc } from '../../lib/docActions'
 import {
   kindLabel,
   listIssuedDocs,
@@ -23,12 +24,12 @@ const TILES: {
   {
     to: '/documents/repair',
     title: 'Договор ремонта',
-    desc: 'Смета, согласование, договор + ТЗ',
+    desc: 'Калькулятор сметы в мастере → согласование → договор + ТЗ',
   },
   {
     to: '/documents/acts',
     title: 'Акты',
-    desc: 'Только из согласованных договоров ремонта',
+    desc: 'Смета в мастере · строки из согласованного договора',
   },
   {
     to: '/documents/furniture',
@@ -53,7 +54,7 @@ export default function DocumentsHub() {
   const listRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    document.title = 'Документы — СамоСтрой'
+    document.title = 'Договоры — СамоСтрой'
   }, [])
 
   const headerBtn = useMemo(
@@ -153,19 +154,33 @@ export default function DocumentsHub() {
             <p className="text-sm text-gray-500">Пока пусто — выпустите первый договор из плитки.</p>
           ) : (
             <ul className="divide-y divide-gray-100 text-sm">
-              {recent.map((d) => (
-                <li key={d.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2">
-                  <span className="font-medium text-gray-900">
-                    {kindLabel(d.kind as IssuedDocKind)}
-                    {d.contractNumber ? ` № ${d.contractNumber}` : ''}
-                    {d.actStageNumber != null ? ` · этап ${d.actStageNumber}` : ''}
-                  </span>
-                  <span className="text-gray-500">{nameOf(d.clientId)}</span>
-                  <span className="rounded bg-gray-100 px-1.5 py-0.5 text-[11px] text-gray-700">
-                    {statusLabel(d.status)}
-                  </span>
-                </li>
-              ))}
+              {recent.map((d) => {
+                const href = wizardHrefForDoc(d)
+                return (
+                  <li key={d.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2">
+                    {href ? (
+                      <Link
+                        to={href}
+                        className="font-medium text-blue-700 hover:underline"
+                      >
+                        {kindLabel(d.kind as IssuedDocKind)}
+                        {d.contractNumber ? ` № ${d.contractNumber}` : ''}
+                        {d.actStageNumber != null ? ` · этап ${d.actStageNumber}` : ''}
+                      </Link>
+                    ) : (
+                      <span className="font-medium text-gray-900">
+                        {kindLabel(d.kind as IssuedDocKind)}
+                        {d.contractNumber ? ` № ${d.contractNumber}` : ''}
+                        {d.actStageNumber != null ? ` · этап ${d.actStageNumber}` : ''}
+                      </span>
+                    )}
+                    <span className="text-gray-500">{nameOf(d.clientId)}</span>
+                    <span className="rounded bg-gray-100 px-1.5 py-0.5 text-[11px] text-gray-700">
+                      {statusLabel(d.status)}
+                    </span>
+                  </li>
+                )
+              })}
             </ul>
           )}
         </div>

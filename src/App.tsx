@@ -6,7 +6,6 @@ import { AppShell } from './components/layout/AppShell'
 import LoginPage from './components/auth/LoginPage'
 import ClientsListPage from './components/clients/ClientsListPage'
 import ClientCardPage from './components/clients/ClientCardPage'
-import CalculatorPage from './components/calculator/CalculatorPage'
 import DocumentsHub from './components/documents/DocumentsHub'
 import DesignWizardPage from './components/documents/DesignWizardPage'
 import RepairWizardPage from './components/documents/RepairWizardPage'
@@ -101,11 +100,7 @@ export default function App() {
               />
               <Route
                 path="/calculator"
-                element={
-                  <ProtectedRoute module="calculator">
-                    <CalculatorPage />
-                  </ProtectedRoute>
-                }
+                element={<Navigate to="/documents/repair" replace />}
               />
               <Route
                 path="/documents"

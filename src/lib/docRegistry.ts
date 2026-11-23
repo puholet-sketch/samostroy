@@ -28,6 +28,16 @@ export type IssuedDoc = {
   areaM2?: number
   city?: string
   objectAddress?: string
+  /** Дата в документе (договор / акт / смета) — для rehydrate и PDF */
+  docDate?: string
+  /** Срок работ, раб. дней (ремонт / смета) */
+  workDays?: number
+  /** Оплачено по акту, ₽ */
+  paid?: number
+  /** Заголовок объекта для сметы */
+  objectTitle?: string
+  discountPct?: number
+  baseTotal?: number
   /** Для актов / ТЗ — родительский договор ремонта */
   parentContractId?: string
   /** Снимок выбранных строк акта */

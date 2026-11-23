@@ -85,6 +85,11 @@ export function useClientObjectPicker(initialClientId = '', initialObjectId = ''
     setObjectId('')
   }
 
+  function hydrate(nextClientId: string, nextObjectId: string) {
+    setClientId(nextClientId)
+    setObjectId(nextObjectId)
+  }
+
   return {
     clients,
     filtered,
@@ -99,6 +104,7 @@ export function useClientObjectPicker(initialClientId = '', initialObjectId = ''
     pickClient,
     clearClient,
     reloadClients,
+    hydrate,
   }
 }
 
@@ -226,7 +232,7 @@ export function WizardShell({
           to={backTo}
           className="text-sm font-medium text-blue-700 hover:underline"
         >
-          ← Хаб документов
+          ← Хаб договоров
         </Link>
         <h1 className="text-lg font-semibold text-gray-900">{title}</h1>
       </div>

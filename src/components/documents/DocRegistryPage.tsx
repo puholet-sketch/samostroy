@@ -1,10 +1,15 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { loadClients } from '../../lib/clients'
+import {
+  downloadIssuedDocPdf,
+  wizardHrefForDoc,
+} from '../../lib/docActions'
 import {
   kindLabel,
   listIssuedDocs,
   statusLabel,
+  type IssuedDoc,
   type IssuedDocKind,
 } from '../../lib/docRegistry'
 import { Field, WizardShell, inputCls } from './docUi'
@@ -20,11 +25,14 @@ const KINDS: { id: '' | IssuedDocKind; label: string }[] = [
 ]
 
 export default function DocRegistryPage() {
+  const navigate = useNavigate()
   const [params, setParams] = useSearchParams()
   const kind = (params.get('kind') || '') as '' | IssuedDocKind
   const [q, setQ] = useState(params.get('q') || '')
   const [clientId, setClientId] = useState(params.get('clientId') || '')
   const [objectId, setObjectId] = useState(params.get('objectId') || '')
+  const [busyId, setBusyId] = useState('')
+  const [err, setErr] = useState('')
   const clients = useMemo(() => loadClients(), [])
 
   useEffect(() => {
@@ -57,6 +65,24 @@ export default function DocRegistryPage() {
     if (k) next.set('kind', k)
     else next.delete('kind')
     setParams(next)
+  }
+
+  function openDoc(d: IssuedDoc) {
+    const href = wizardHrefForDoc(d)
+    if (href) navigate(href)
+  }
+
+  async function downloadPdf(d: IssuedDoc, e?: React.MouseEvent) {
+    e?.stopPropagation()
+    setErr('')
+    setBusyId(d.id)
+    try {
+      await downloadIssuedDocPdf(d)
+    } catch (ex) {
+      setErr(ex instanceof Error ? ex.message : 'Не удалось скачать PDF')
+    } finally {
+      setBusyId('')
+    }
   }
 
   return (
@@ -119,6 +145,12 @@ export default function DocRegistryPage() {
         </Field>
       </div>
 
+      {err && (
+        <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
+          {err}
+        </p>
+      )}
+
       <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white shadow-sm">
         <table className="min-w-full text-left text-sm">
           <thead className="bg-gray-50 text-[11px] uppercase text-gray-500">
@@ -126,23 +158,29 @@ export default function DocRegistryPage() {
               <th className="px-3 py-2">Тип</th>
               <th className="px-3 py-2">№</th>
               <th className="px-3 py-2">Клиент</th>
-              <th className="px-3 py-2">Объект</th>
+              <th className="hidden px-3 py-2 md:table-cell">Объект</th>
               <th className="px-3 py-2">Статус</th>
-              <th className="px-3 py-2">Сумма</th>
+              <th className="hidden px-3 py-2 sm:table-cell">Сумма</th>
+              <th className="px-3 py-2">Действия</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
             {docs.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-3 py-6 text-center text-gray-500">
+                <td colSpan={7} className="px-3 py-6 text-center text-gray-500">
                   Нет записей
                 </td>
               </tr>
             ) : (
               docs.map((d) => {
                 const c = clients.find((x) => x.id === d.clientId)
+                const href = wizardHrefForDoc(d)
                 return (
-                  <tr key={d.id} className="hover:bg-gray-50/80">
+                  <tr
+                    key={d.id}
+                    className={`hover:bg-gray-50/80 ${href ? 'cursor-pointer' : ''}`}
+                    onClick={() => openDoc(d)}
+                  >
                     <td className="px-3 py-2 font-medium text-gray-900">
                       {kindLabel(d.kind)}
                     </td>
@@ -151,7 +189,7 @@ export default function DocRegistryPage() {
                         ? `этап ${d.actStageNumber ?? '—'}`
                         : d.contractNumber || '—'}
                     </td>
-                    <td className="px-3 py-2">
+                    <td className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
                       {c ? (
                         <Link
                           to={`/clients/${c.id}/docs`}
@@ -163,7 +201,7 @@ export default function DocRegistryPage() {
                         d.clientId
                       )}
                     </td>
-                    <td className="max-w-[14rem] truncate px-3 py-2 text-gray-600">
+                    <td className="hidden max-w-[14rem] truncate px-3 py-2 text-gray-600 md:table-cell">
                       {d.objectAddress || '—'}
                     </td>
                     <td className="px-3 py-2">
@@ -171,10 +209,43 @@ export default function DocRegistryPage() {
                         {statusLabel(d.status)}
                       </span>
                     </td>
-                    <td className="px-3 py-2 text-gray-700">
+                    <td className="hidden px-3 py-2 text-gray-700 sm:table-cell">
                       {d.total != null
                         ? `${d.total.toLocaleString('ru-RU')} ₽`
                         : '—'}
+                    </td>
+                    <td
+                      className="px-3 py-2"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <div className="flex min-w-[7.5rem] flex-col gap-1 sm:min-w-0 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-2 sm:gap-y-0.5">
+                        {href && (
+                          <Link
+                            to={href}
+                            className="text-xs font-medium text-blue-700 hover:underline"
+                          >
+                            Открыть
+                          </Link>
+                        )}
+                        {d.kind !== 'furniture' && (
+                          <button
+                            type="button"
+                            disabled={busyId === d.id}
+                            className="text-left text-xs font-medium text-blue-700 hover:underline disabled:opacity-40"
+                            onClick={(e) => void downloadPdf(d, e)}
+                          >
+                            {busyId === d.id ? 'PDF…' : 'Скачать PDF'}
+                          </button>
+                        )}
+                        {href && d.kind !== 'furniture' && (
+                          <Link
+                            to={href}
+                            className="text-xs font-medium text-gray-600 hover:underline"
+                          >
+                            Изменить
+                          </Link>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 )

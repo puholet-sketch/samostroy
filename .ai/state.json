@@ -1,15 +1,15 @@
 {
   "v": 4,
-  "updated": "2026-11-22",
+  "updated": "2026-11-23",
   "status": "active",
-  "goal": "Lenovo API via public HTTPS for GitHub Pages",
-  "next": "Named CF tunnel+DNS for stable URL (avoid LHR rotate redeploys)",
+  "goal": "Registry→wizard edit + embed calc; Pages deploy",
+  "next": "Verify Pages CDN after 2026-11-23-a deploy",
   "blockers": [],
   "hot_files": [
-    ".env.production",
-    "src/lib/buildStamp.ts",
-    "data/changelog.json",
-    "deploy/server/watchdog-samostroy.sh",
-    "docs/modules/lenovo-server.md"
+    "src/components/documents/DocRegistryPage.tsx",
+    "src/components/calculator/CalculatorPanel.tsx",
+    "src/lib/docActions.ts",
+    "src/components/documents/RepairWizardPage.tsx",
+    "data/changelog.json"
   ]
 }

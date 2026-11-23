@@ -10,8 +10,7 @@ export type NavRoute = {
 
 export const MVP_ROUTES: NavRoute[] = [
   { path: '/clients', name: 'Клиенты', module: 'clients' },
-  { path: '/calculator', name: 'Калькулятор', module: 'calculator' },
-  { path: '/documents', name: 'Договоры и акты', module: 'documents' },
+  { path: '/documents', name: 'Договоры', module: 'documents' },
   { path: '/control', name: 'Контроль объекта', module: 'object_control' },
   { path: '/updates', name: 'Обновления', module: 'updates' },
   /** Права модуля `security`; UI — раздел «Настройки» */
@@ -41,7 +40,7 @@ export function routeTitle(pathname: string): string {
     return rel?.title ?? 'Обновления'
   }
   if (pathname.startsWith('/control/report/')) return 'Отчёт по объекту'
-  if (pathname === '/documents') return 'Документы'
+  if (pathname === '/documents') return 'Договоры'
   if (pathname.startsWith('/documents/')) {
     if (pathname.includes('/design')) return 'Договор дизайна'
     if (pathname.includes('/repair')) return 'Договор ремонта'
